@@ -29,8 +29,15 @@ var scoreStations = [
   {tag:"line-003-Begin", pageId:"pg01", x:0, y:1464, pause:fullLineInSec},
   {tag:"line-004-Begin", pageId:"pg01", x:0, y:1840, pause:fullLineInSec},
   {tag:"line-005-Begin", pageId:"pg01", x:0, y:2220, pause:fullLineInSec},
-  {tag:"line-006-Begin", pageId:"pg01", x:0, y:2592, pause:2/3*fullLineInSec},
+  {tag:"line-006-Begin", pageId:"pg01", x:0, y:2592, pause:2/3*fullLineInSec},  
 ];
+  
+// To facilitate passing parameters to event handlers, use an anonymous function
+window.addEventListener("onclick", (event) => {
+                                                scroll_stop_handler(event)});
+window.addEventListener("contextmenu", (event) => {
+                                                scroll_start_handler(event)});
+
 
 
 // Scrolls to line-01
@@ -53,11 +60,19 @@ function message__onMouseOver(event)
 }
 
 
-function message__onMouseClick(event)
+function scroll_start_handler(event)
 {
-alert("onMouseClick event on " + event.target.id);
+  event.preventDefault();
+  alert(`onRightClick event on ${event.target.id};\tSTART SCROLLING`);
+  scrollIsOn = true;
 }
 
+
+function scroll_stop_handler(event)
+{
+  alert(`onLeftClick event on ${event.target.id};\tSTOP SCROLLING`);
+  scrollIsOn = false;
+}
 
 function messge_onKeyPress(event)
 {
