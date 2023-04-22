@@ -11,7 +11,7 @@ var beatsInTact = 4;
 const beatsForFullLine = tactsInLine * beatsInTact;
 const fullLineInSec = beatsForFullLine * tempo / 60;
 
-var currLine = -1;  // not started
+var currStep = -1;  // not started
 var scrollIsOn = false;
 
 // TODO: specify target coordinates for image, not HTML page
@@ -52,6 +52,7 @@ function scroll__onload(x, y)
   alert(`Page onload event; scroll to the first page (${firstPageId}) at y=${topPos}`);
   window.scrollTo({ top: topPos, behavior: 'smooth'});
   scrollIsOn = false;
+  currStep = -1;
 }
 
 function message__onMouseOver(event)
@@ -63,7 +64,15 @@ function message__onMouseOver(event)
 function scroll_start_handler(event)
 {
   event.preventDefault();
-  alert(`onRightClick event on ${event.target.id};\tSTART SCROLLING`);
+  if (currStep == -1) {
+    currStep = 0;
+    alert(`START SCROLLING FROM THE TOP`);
+  } else if (scrollIsOn == true)  {
+    currStep = 0;
+    alert(`START SCROLLING FROM THE TOP`);
+  } else  {  // scrollIsOn == falsa
+    alert(`RESUME SCROLLING FROM STEP ${currStep}`);
+  }
   scrollIsOn = true;
 }
 
@@ -78,3 +87,7 @@ function messge_onKeyPress(event)
 {
   alert("onkeypress event - pressed " + event.code);
 }
+
+
+//////////////////////////////////////////////////
+function scrol_one_step(
