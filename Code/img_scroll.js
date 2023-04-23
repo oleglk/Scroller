@@ -11,6 +11,7 @@ var g_beatsInTact = 4;
 const g_beatsForFullLine = g_tactsInLine * g_beatsInTact;
 const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
 
+var g_totalHeight = -1; // for document scroll height
 var g_currStep = -1;  // not started
 var g_scrollIsOn = false;
 
@@ -49,12 +50,15 @@ function scroll__onload(x, y)
   //~ alert(`Page onload event; will scroll to ${x}, ${y}`);
   //~ window.scrollTo(x, y);
   
+  g_totalHeight = get_scroll_height();
+  
   const firstPageId = g_scoreStations[0].pageId;
   const firstPage = document.getElementById(firstPageId);
   const topPos = firstPage.offsetTop;
   //alert(`Page onload event; scroll to the first page (${firstPageId}) at y=${topPos}`);
   console.log(`Scroll to the first page (${firstPageId}) at y=${topPos}`);
-  window.scrollTo({ top: topPos, behavior: 'smooth'});
+  // window.scrollTo({ top: topPos, behavior: 'smooth'});
+  window.scrollTo(0, topPos);
   g_scrollIsOn = false;
   g_currStep = -1;
 }
@@ -137,9 +141,28 @@ function scroll_one_step(stepNum)
   const currPos = currPage.offsetTop + rec.y;
 
   console.log(`-I- Scroll to ${rec.pageId}:${currPos}) for step ${stepNum}`);
-  window.scrollTo({ top: currPos, behavior: 'smooth'});
+  // (scrolls absolute pixels) window.scrollTo({ top: currPos, behavior: 'smooth'});
+  window.scrollTo(rec.x/*TODO:calc*/, currPos);
   g_currStep = stepNum + 1;
+  
+////scroll_abort(); // OK_TMP
   // the next line causes async wait
   scroll_schedule(rec.timeSec, rec.tag);
   return  1;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+// See https://javascript.info/size-and-scroll-window
+function get_scroll_height()
+{
+  let scrollHeight = Math.max(
+    document.body.scrollHeight, document.documentElement.scrollHeight,
+    document.body.offsetHeight, document.documentElement.offsetHeight,
+    document.body.clientHeight, document.documentElement.clientHeight);
+
+  alert('Full document height, with scrolled out part: ' + scrollHeight);
+  return  scrollHeight;
+}
+
+// TODO find scale factor for the coordinates
