@@ -3,13 +3,13 @@
 
 // TODO: pass 'g_tempo', 'g_tactsInLine', 'g_beatsInTact' from the HTML
 // TODO: provide a way for user to force alternative 'g_tempo'
-var g_tempo = 60; // beats-per-minute
+var g_tempo = 20*60;  //60; // beats-per-minute
 var g_tactsInLine = 7;
 var g_beatsInTact = 4;
 
 
 const g_beatsForFullLine = g_tactsInLine * g_beatsInTact;
-const g_fullLineInSec = g_beatsForFullLine * g_tempo / 60;
+const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
 
 var g_currStep = -1;  // not started
 var g_scrollIsOn = false;
@@ -19,7 +19,7 @@ var g_nextTimerIntervalId = 0;
 
 // TODO: specify target coordinates for image, not HTML page
 // TODO, pass the whole array from the HTML
-var g_scoreStations = [timeSec
+var g_scoreStations = [
   {tag:"line-001-Begin", pageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec},
   {tag:"line-002-Begin", pageId:"pg01", x:0, y:1044, timeSec:g_fullLineInSec},
   {tag:"line-003-Begin", pageId:"pg01", x:0, y:1464, timeSec:2/3*g_fullLineInSec},
@@ -52,16 +52,17 @@ function scroll__onload(x, y)
   const firstPageId = g_scoreStations[0].pageId;
   const firstPage = document.getElementById(firstPageId);
   const topPos = firstPage.offsetTop;
-  alert(`Page onload event; scroll to the first page (${firstPageId}) at y=${topPos}`);
+  //alert(`Page onload event; scroll to the first page (${firstPageId}) at y=${topPos}`);
+  console.log(`Scroll to the first page (${firstPageId}) at y=${topPos}`);
   window.scrollTo({ top: topPos, behavior: 'smooth'});
   g_scrollIsOn = false;
   g_currStep = -1;
 }
 
-function message__onMouseOver(event)
-{
-  alert("onMouseOver event on " + event.target.id);
-}
+//~ function message__onMouseOver(event)
+//~ {
+  //~ alert("onMouseOver event on " + event.target.id);
+//~ }
 
 
 function scroll_start_handler(event)
@@ -69,15 +70,16 @@ function scroll_start_handler(event)
   event.preventDefault();
   if ( g_currStep == -1 ) {
     g_currStep = 0;
-    alert(`START SCROLLING FROM THE TOP`);
+    console.log(`START SCROLLING FROM THE TOP`);
   } else if ( g_scrollIsOn == true )  {
     g_currStep = 0;
-    alert(`START SCROLLING FROM THE TOP`);
+    console.log(`START SCROLLING FROM THE TOP`);
   } else  {  // g_scrollIsOn == falsa
-    alert(`RESUME SCROLLING FROM STEP ${g_currStep}`);
+    console.log(`RESUME SCROLLING FROM STEP ${g_currStep}`);
   }
   g_scrollIsOn = true;
-  scroll_schedule(g_scoreStations[g_currStep].timeSec)
+  rec = g_scoreStations[g_currStep];
+  scroll_schedule(rec.timeSec, rec.tag);
 }
 
 
@@ -88,9 +90,11 @@ function scroll_stop_handler(event)
 }
 
 
-function scroll_schedule(currDelaySec)
+function scroll_schedule(currDelaySec, descr)
 {
-  g_nextTimerIntervalId = setTimeout(scroll_step_handler, currDelaySec);
+  console.log(`-I- Scheduling wait for ${currDelaySec} second(s) at ${descr}`);
+  g_nextTimerIntervalId = setTimeout(scroll_step_handler,
+                                      currDelaySec * 1000/*msec*/);
 }
 
 
@@ -122,7 +126,7 @@ function messge_onKeyPress(event)
 function scroll_one_step(stepNum)
 {
   if ( g_scrollIsOn == false )  { return }
-  if ( (stepNum < 0) || (stepNum > g_scoreStations.length) )  {
+  if ( (stepNum < 0) || (stepNum >= g_scoreStations.length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
     scroll_abort();
     return  0;
@@ -132,10 +136,10 @@ function scroll_one_step(stepNum)
   const currPage = document.getElementById(rec.pageId);
   const currPos = currPage.offsetTop + rec.y;
 
-  console.log('-I- Scroll to ${rec.pageId}:${currPos}) for step ${stepNum}');
+  console.log(`-I- Scroll to ${rec.pageId}:${currPos}) for step ${stepNum}`);
   window.scrollTo({ top: currPos, behavior: 'smooth'});
   g_currStep = stepNum + 1;
   // the next line causes async wait
-  scroll_schedule(rec.timeSec);
+  scroll_schedule(rec.timeSec, rec.tag);
   return  1;
 }
