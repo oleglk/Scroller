@@ -34,6 +34,7 @@ var g_scoreStations = [
   {tag:"line-004-Begin", pageId:"pg01", x:0, y:1840, timeSec:g_fullLineInSec},
   {tag:"line-005-Begin", pageId:"pg01", x:0, y:2220, timeSec:g_fullLineInSec},
   {tag:"line-006-Begin", pageId:"pg01", x:0, y:2592, timeSec:2/3*g_fullLineInSec},  
+  {tag:"Control-Height", pageId:"pg01", x:0, y:3504, timeSec:0},  
 ];
   
 // To facilitate passing parameters to event handlers, use an anonymous function
@@ -52,7 +53,7 @@ function scroll__onload(x, y)
   
   g_totalHeight = get_scroll_height();
   
-  const firstPageId = g_scoreStations[0].pageId;
+  const firstPageId = filter_positions(g_scoreStations)[0].pageId;
   const firstPage = document.getElementById(firstPageId);
   const topPos = firstPage.offsetTop;
   //alert(`Page onload event; scroll to the first page (${firstPageId}) at y=${topPos}`);
@@ -82,7 +83,7 @@ function scroll_start_handler(event)
     console.log(`RESUME SCROLLING FROM STEP ${g_currStep}`);
   }
   g_scrollIsOn = true;
-  rec = g_scoreStations[g_currStep];
+  rec = filter_positions(g_scoreStations)[g_currStep];
   scroll_schedule(rec.timeSec, rec.tag);
 }
 
@@ -130,13 +131,13 @@ function messge_onKeyPress(event)
 function scroll_one_step(stepNum)
 {
   if ( g_scrollIsOn == false )  { return }
-  if ( (stepNum < 0) || (stepNum >= g_scoreStations.length) )  {
+  if ( (stepNum < 0) || (stepNum >= filter_positions(g_scoreStations).length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
     scroll_abort();
     return  0;
   }
   //  {tag:"line-001-Begin", pageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec}
-  const rec = g_scoreStations[stepNum];
+  const rec = filter_positions(g_scoreStations)[stepNum];
   const currPage = document.getElementById(rec.pageId);
   const currPos = currPage.offsetTop + rec.y;
 
@@ -165,4 +166,28 @@ function get_scroll_height()
   return  scrollHeight;
 }
 
-// TODO find scale factor for the coordinates
+
+// Returns newarray with only position-related lines from 'scoreStationsArray'
+function filter_positions(scoreStationsArray)
+{
+  return  scoreStationsArray.filter((rec) =>  {
+    return  !rec.tag.startsWith("Control-");
+  })
+}
+
+function read_image_size_record(scoreStationsArray)
+{
+  const elem = scoreStationsArray.find(TODO:function);
+  /*
+Example
+const numbers = [4, 9, 16, 25, 29];
+let first = numbers.find(myFunction);
+
+function myFunction(value, index, array) {
+  return value > 18;
+} 
+  */
+}
+
+
+// TODO find scale factor for the coordinates; see HTMLElement.offsetHeight
