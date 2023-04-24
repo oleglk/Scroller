@@ -30,7 +30,7 @@ var g_scoreStations = [
   {tag:"line-004-Begin", pageId:"pg01", x:0, y:1840, timeSec:g_fullLineInSec},
   {tag:"line-005-Begin", pageId:"pg01", x:0, y:2220, timeSec:g_fullLineInSec},
   {tag:"line-006-Begin", pageId:"pg01", x:0, y:2592, timeSec:2/3*g_fullLineInSec},
-  {tag:"line-003-Begin", pageId:"pg01", x:0, y:1464, timeSec:g_fullLineInSec},
+  {tag:"line-003-Repeat", pageId:"pg01", x:0, y:1464, timeSec:g_fullLineInSec},
   {tag:"line-004-Begin", pageId:"pg01", x:0, y:1840, timeSec:g_fullLineInSec},
   {tag:"line-005-Begin", pageId:"pg01", x:0, y:2220, timeSec:g_fullLineInSec},
   {tag:"line-006-Begin", pageId:"pg01", x:0, y:2592, timeSec:2/3*g_fullLineInSec},  
@@ -79,12 +79,15 @@ function scroll_start_handler(event)
   } else if ( g_scrollIsOn == true )  {
     g_currStep = 0;
     console.log(`START SCROLLING FROM THE TOP`);
+  } else if ( g_currStep  >= filter_positions(g_scoreStations).length )  {
+    g_currStep = 0;
+    console.log(`RESTART SCROLLING FROM THE TOP`);
   } else  {  // g_scrollIsOn == falsa
     console.log(`RESUME SCROLLING FROM STEP ${g_currStep}`);
   }
   g_scrollIsOn = true;
   rec = filter_positions(g_scoreStations)[g_currStep];
-  scroll_schedule(rec.timeSec, rec.tag);
+  scroll_step_handler();
 }
 
 
