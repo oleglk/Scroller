@@ -3,7 +3,7 @@
 
 // TODO: pass 'g_tempo', 'g_tactsInLine', 'g_beatsInTact' from the HTML
 // TODO: provide a way for user to force alternative 'g_tempo'
-var g_tempo = 20*60;  //60; // beats-per-minute
+var g_tempo = 10*60;  //60; // beats-per-minute
 var g_tactsInLine = 7;
 var g_beatsInTact = 4;
 
@@ -139,7 +139,8 @@ function scroll_one_step(stepNum)
   //  {tag:"line-001-Begin", pageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec}
   const rec = filter_positions(g_scoreStations)[stepNum];
   const currPage = document.getElementById(rec.pageId);
-  const currPos = currPage.offsetTop + rec.y;
+  const currPageScaleY = get_image_scale_y(g_scoreStations, rec.pageId)
+  const currPos = currPage.offsetTop + rec.y * currPageScaleY;
 
   console.log(`-I- Scroll to ${rec.pageId}:${currPos}) for step ${stepNum}`);
   // (scrolls absolute pixels) window.scrollTo({ top: currPos, behavior: 'smooth'});
@@ -154,6 +155,15 @@ function scroll_one_step(stepNum)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+function get_image_scale_y(scoreStationsArray, pageId)
+{
+  const imgHtmlElem   = document.getElementById(pageId);
+  const renderHeight  = imgHtmlElem.offsetHeight;
+  const origHeight    = read_image_size_record(scoreStationsArray, pageId);
+  return  renderHeight / origHeight;
+}
+
+
 // See https://javascript.info/size-and-scroll-window
 function get_scroll_height()
 {
@@ -175,18 +185,13 @@ function filter_positions(scoreStationsArray)
   })
 }
 
-function read_image_size_record(scoreStationsArray)
-{
-  const elem = scoreStationsArray.find(TODO:function);
-  /*
-Example
-const numbers = [4, 9, 16, 25, 29];
-let first = numbers.find(myFunction);
 
-function myFunction(value, index, array) {
-  return value > 18;
-} 
-  */
+function read_image_size_record(scoreStationsArray, pageId)
+{
+  const rec = scoreStationsArray.find((value, index, array) => {
+    return  ( (value.tag == "Control-Height") && (value.pageId == pageId) )
+  });
+  return  rec.y;
 }
 
 
