@@ -47,15 +47,23 @@ function scroll_start_handler(event)
   event.preventDefault();
   if ( g_currStep == -1 ) {
     g_currStep = 0;
-    console.log(`START SCROLLING FROM THE TOP`);
+    msg = `START SCROLLING FROM THE TOP`;
+    console.log(msg);
+    timed_alert(msg, 2/*sec*/);
   } else if ( g_scrollIsOn == true )  {
     g_currStep = 0;
-    console.log(`START SCROLLING FROM THE TOP`);
+    msg = `START SCROLLING FROM THE TOP`;
+    console.log(msg);
+    timed_alert(msg, 2/*sec*/);
   } else if ( g_currStep  >= filter_positions(g_scoreStations).length )  {
     g_currStep = 0;
-    console.log(`RESTART SCROLLING FROM THE TOP`);
+    msg = `RESTART SCROLLING FROM THE TOP`;
+    console.log(msg);
+    timed_alert(msg, 2/*sec*/);
   } else  {  // g_scrollIsOn == falsa
-    console.log(`RESUME SCROLLING FROM STEP ${g_currStep}`);
+    msg = `RESUME SCROLLING FROM STEP ${g_currStep}`;
+    console.log(msg);
+    timed_alert(msg, 2/*sec*/);
     // it immediately scrolls, since the step is already advanced
     // TODO: is the above OK?
   }
@@ -173,4 +181,15 @@ function read_image_size_record(scoreStationsArray, pageId)
 }
 
 
-// TODO find scale factor for the coordinates; see HTMLElement.offsetHeight
+/*******************************************************************************
+ * Automatically closing alert/message.
+ * (from: https://stackoverflow.com/questions/15466802/how-can-i-auto-hide-alert-box-after-it-showing-it)
+ ******************************************************************************/
+function timed_alert(msg, durationSec)
+{
+  var el = document.createElement("div");
+  el.setAttribute("style","position:absolute;top:80%;left:20%;background-color:lightblue;");
+  el.innerHTML = msg;
+  setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
+  document.body.appendChild(el);
+}
