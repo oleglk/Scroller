@@ -75,8 +75,12 @@ function scroll_start_handler(event)
 
 function scroll_stop_handler(event)
 {
-  console.log(`STOP/PAUSE SCROLLING AT STEP ${g_currStep}`);
-  alert(`onLeftClick event on ${event.target.id};\tSTOP SCROLLING`);
+  if ( !g_scrollIsOn )  { return }  // double-stop - silently ignore
+  if ( g_currStep > 0 ) { g_currStep -= 1 }   // it was already advanced
+  rec = filter_positions(g_scoreStations)[g_currStep];
+  msg = `STOP/PAUSE SCROLLING AT STEP ${g_currStep};  POSITION ${rec.pageId}::${rec.tag}`;
+  console.log(msg);
+  alert(msg);
   scroll_abort();
 }
 
@@ -165,11 +169,24 @@ function get_scroll_height()
 function convert_y_img_to_window(imgHtmlPageId, imgY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageId);
   const pageScaleY = get_image_scale_y(g_scoreStations, imgHtmlPageId);
-  const targetPos = pageHtmlElem.offsetTop + imgY * pageScaleY;
-  return  targetPos;
+  const winY = pageHtmlElem.offsetTop + imgY * pageScaleY;
+  return  winY;
+}
+
+
+// Converts vertical position from image coordinates to rendered window
+function convert_y_window_to_img(imgHtmlPageId, winY) {
+  const pageHtmlElem = document.getElementById(imgHtmlPageId);
+  const pageScaleY = get_image_scale_y(g_scoreStations, imgHtmlPageId);
+  const imgY = (winY - pageHtmlElem.offsetTop) / pageScaleY;
+  return  imgY;
 }
 ////////////////////////////////////////////////////////////////////////////////
 
+
+/*******************************************************************************
+ ** BEGIN: access to scoreStationsArray                                       **
+*******************************************************************************/
 
 // Returns newarray with only position-related lines from 'scoreStationsArray'
 function filter_positions(scoreStationsArray)
@@ -180,6 +197,29 @@ function filter_positions(scoreStationsArray)
 }
 
 
+// Returns position record that encloses 'winY' in the latest step before 'lastStep'
+//// function TODO()
+
+
+// Returns position records that enclose 'winY'
+//~ function find_matching_positions(scoreStationsArray, winY, lastStep)
+//~ {
+  //~ let results = [];
+  //~ let prevLineRec = undefined;
+  //~ const scorePositions = filter_positions(g_scoreStations);
+  //~ let currPage = null;
+  //~ for ( let i = 0;  i < scorePositions.length;  i += 1; ) {
+    //~ rec = scorePositions[i];
+    //~ let isLast = TODO;
+    //~ const currPage = document.getElementById(rec.pageId);
+    //~ const topPos = currPage.offsetTop;
+    //~ let lineWinY = convert_y_img_to_window(rec.pageId, rec.y);
+    //~ let prevIsAbove = (prevLineRec === undefined) || (prevLineRec.y <= winY);
+    //~ TODO;
+  //~ }
+//~ }
+
+
 function read_image_size_record(scoreStationsArray, pageId)
 {
   const rec = scoreStationsArray.find((value, index, array) => {
@@ -187,6 +227,7 @@ function read_image_size_record(scoreStationsArray, pageId)
   });
   return  rec.y;
 }
+/** END: access to scoreStationsArray *****************************************/
 
 
 /*******************************************************************************
