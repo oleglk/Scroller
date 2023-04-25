@@ -10,9 +10,9 @@ var g_nextTimerIntervalId = 0;
 
   
 // To facilitate passing parameters to event handlers, use an anonymous function
-window.addEventListener("onclick", (event) => {
+window.addEventListener("click",        (event) => {
                                                 scroll_stop_handler(event)});
-window.addEventListener("contextmenu", (event) => {
+window.addEventListener("contextmenu",  (event) => {
                                                 scroll_start_handler(event)});
 
 
@@ -56,6 +56,8 @@ function scroll_start_handler(event)
     console.log(`RESTART SCROLLING FROM THE TOP`);
   } else  {  // g_scrollIsOn == falsa
     console.log(`RESUME SCROLLING FROM STEP ${g_currStep}`);
+    // it immediately scrolls, since the step is already advanced
+    // TODO: is the above OK?
   }
   g_scrollIsOn = true;
   rec = filter_positions(g_scoreStations)[g_currStep];
@@ -65,6 +67,7 @@ function scroll_start_handler(event)
 
 function scroll_stop_handler(event)
 {
+  console.log(`STOP/PAUSE SCROLLING AT STEP ${g_currStep}`);
   alert(`onLeftClick event on ${event.target.id};\tSTOP SCROLLING`);
   scroll_abort();
 }
