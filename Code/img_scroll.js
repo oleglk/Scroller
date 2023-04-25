@@ -124,13 +124,11 @@ function scroll_one_step(stepNum)
   }
   //  {tag:"line-001-Begin", pageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec}
   const rec = filter_positions(g_scoreStations)[stepNum];
-  const currPage = document.getElementById(rec.pageId);
-  const currPageScaleY = get_image_scale_y(g_scoreStations, rec.pageId)
-  const currPos = currPage.offsetTop + rec.y * currPageScaleY;
+  const targetPos = convert_y_img_to_window(rec.pageId, rec.y);
 
-  console.log(`-I- Scroll to ${rec.pageId}:${currPos}) for step ${stepNum}`);
-  // (scrolls absolute pixels) window.scrollTo({ top: currPos, behavior: 'smooth'});
-  window.scrollTo(rec.x/*TODO:calc*/, currPos);
+  console.log(`-I- Scroll to ${rec.pageId}:${targetPos}) for step ${stepNum}`);
+  // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
+  window.scrollTo(rec.x/*TODO:calc*/, targetPos);
   g_currStep = stepNum + 1;
   
 ////scroll_abort(); // OK_TMP
@@ -161,6 +159,16 @@ function get_scroll_height()
   alert('Full document height, with scrolled out part: ' + scrollHeight);
   return  scrollHeight;
 }
+
+
+// Converts vertical position from image coordinates to rendered window
+function convert_y_img_to_window(imgHtmlPageId, imgY) {
+  const pageHtmlElem = document.getElementById(imgHtmlPageId);
+  const pageScaleY = get_image_scale_y(g_scoreStations, imgHtmlPageId);
+  const targetPos = pageHtmlElem.offsetTop + imgY * pageScaleY;
+  return  targetPos;
+}
+////////////////////////////////////////////////////////////////////////////////
 
 
 // Returns newarray with only position-related lines from 'scoreStationsArray'
