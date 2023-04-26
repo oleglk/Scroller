@@ -202,22 +202,27 @@ function filter_positions(scoreStationsArray)
 
 
 // Returns position records that enclose 'winY'
-//~ function find_matching_positions(scoreStationsArray, winY, lastStep)
-//~ {
-  //~ let results = [];
-  //~ let prevLineRec = undefined;
-  //~ const scorePositions = filter_positions(g_scoreStations);
-  //~ let currPage = null;
-  //~ for ( let i = 0;  i < scorePositions.length;  i += 1; ) {
-    //~ rec = scorePositions[i];
-    //~ let isLast = TODO;
-    //~ const currPage = document.getElementById(rec.pageId);
-    //~ const topPos = currPage.offsetTop;
-    //~ let lineWinY = convert_y_img_to_window(rec.pageId, rec.y);
-    //~ let prevIsAbove = (prevLineRec === undefined) || (prevLineRec.y <= winY);
-    //~ TODO;
-  //~ }
-//~ }
+function find_matching_positions(scoreStationsArray, winY)
+{
+  let results = [];
+  const scorePositions = filter_positions(g_scoreStations);
+  let currPage = null;
+  for ( let i = 0;  i < scorePositions.length;  i += 1 ) {
+    let isFirst = (i == 0);
+    let isLast  = (i == (scorePositions.length - 1));
+    let prevRec = (isFirst)? undefined : scorePositions[i-1];
+    let rec     = scorePositions[i];
+    let prevWinY = (isFirst)? undefined
+                  : convert_y_img_to_window(prevRec.pageId, prevRec.y);
+    let currWinY = convert_y_img_to_window(rec.pageId, rec.y);
+    let prevIsAbove = isFirst || (prevWinY <= winY);
+    let currIsBelow = isLast  || (currWinY >  winY);
+    if ( prevIsAbove && currIsBelow )   {
+      results.push( (!isFirst)? prevRec : rec);
+    }
+  }
+  return  results;
+}
 
 
 function read_image_size_record(scoreStationsArray, pageId)
