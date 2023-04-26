@@ -201,24 +201,31 @@ function filter_positions(scoreStationsArray)
 //// function TODO()
 
 
-// Returns position records that enclose 'winY'
+/* Returns position records that enclose 'winY';
+ * each record extended with step number  */
 function find_matching_positions(scoreStationsArray, winY)
 {
+  const scorePositions = filter_positions(g_scoreStations);  // only data lines
+  // build an ascending list of position-Y-s - to detect the order
+  const winYArrayUnsorted = scorePositions.map( (rec) => {
+    return convert_y_img_to_window(rec.pageId, rec.y);
+                                                  } );
+  winYArray = uniq_sort(winYArrayUnsorted, (a, b) => a - b);
   let results = [];
-  const scorePositions = filter_positions(g_scoreStations);
   let currPage = null;
   for ( let i = 0;  i < scorePositions.length;  i += 1 ) {
-    let isFirst = (i == 0);
-    let isLast  = (i == (scorePositions.length - 1));
-    let prevRec = (isFirst)? undefined : scorePositions[i-1];
-    let rec     = scorePositions[i];
-    let prevWinY = (isFirst)? undefined
-                  : convert_y_img_to_window(prevRec.pageId, prevRec.y);
-    let currWinY = convert_y_img_to_window(rec.pageId, rec.y);
-    let prevIsAbove = isFirst || (prevWinY <= winY);
-    let currIsBelow = isLast  || (currWinY >  winY);
-    if ( prevIsAbove && currIsBelow )   {
-      results.push( (!isFirst)? prevRec : rec);
+    let rec       = scorePositions[i];
+    let currWinY  = convert_y_img_to_window(rec.pageId, rec.y);
+    let idxOfCurrWinY = winYArray.indexOf(currWinY);  // must exist
+    let isTop     = (idxOfCurrWinY == 0);
+    let isBottom  = (idxOfCurrWinY == (winYArray.length - 1));
+    let nextWinY  = (!isBottom)? winYArray[idxOfCurrWinY + 1]
+                            : Number.MAX_SAFE_INTEGER;
+    if ( (currWinY <= winY) && (winY < nextWinY) )   {
+      // 'winY' falls at the current record
+      recAndStep = {step: i};
+      Object.assign(recAndStep, rec)
+      results.push(recAndStep);
     }
   }
   return  results;
@@ -247,3 +254,21 @@ function timed_alert(msg, durationSec)
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
 }
+
+
+/*******************************************************************************
+ * Removes duplicates and sorts the array
+ * (from:  https://www.tutorialspoint.com/unique-sort-removing-duplicates-and-sorting-an-array-in-javascript)
+ ^ Example: const uniq_sort([1, 1, 1, 3, 2, 2, 8, 3, 4],  (a, b) => a - b);
+ ******************************************************************************/
+function uniq_sort(arr, cmpFunc) {
+   const map = {};
+   const res = [];
+   for (let i = 0; i < arr.length; i++) {
+      if (!map[arr[i]]) {
+         map[arr[i]] = true;
+         res.push(arr[i]);
+      };
+   };
+   return res.sort(cmpFunc);
+};
