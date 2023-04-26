@@ -197,15 +197,35 @@ function filter_positions(scoreStationsArray)
 }
 
 
-// Returns position record that encloses 'winY' in the latest step before 'lastStep'
-//// function TODO()
+/* Returns index (step) of position record that encloses 'winY'
+ * in the latest step before 'lastStep'.
+ * If not found, return 'lastStep' */
+function find_preceding_matching_position(scoreStationsArray, winY, lastStep)
+{
+  const scorePositions = filter_positions(scoreStationsArray); // only data lines
+  const candidates = find_matching_positions(scoreStationsArray, winY);
+  if ( candidates.length == 0 ) {
+    console.log(`-E- No positions before step ${lastStep} at y=${winY}`);
+    return  -1;
+  }
+  candidates.sort( (a,b) => a.step - b.step );
+  //console.log(`-D- Positions before step ${lastStep} at y=${winY} => ${candidates.toString()}`);
+  for ( let i = candidates.length-1;  i >= 0;  i -= 1 )  {
+    if ( candidates[i].step < lastStep )  {
+      console.log(`-I- Position before step ${lastStep} at y=${winY} is step ${candidates[i].step}`);
+      return  candidates[i].step;
+    }
+  }
+  console.log(`-I- No positions before step ${lastStep} at y=${winY}; choose step ${lastStep}`);
+  return  lastStep;
+}
 
 
 /* Returns position records that enclose 'winY';
  * each record extended with step number  */
 function find_matching_positions(scoreStationsArray, winY)
 {
-  const scorePositions = filter_positions(g_scoreStations);  // only data lines
+  const scorePositions = filter_positions(scoreStationsArray); // only data lines
   // build an ascending list of position-Y-s - to detect the order
   const winYArrayUnsorted = scorePositions.map( (rec) => {
     return convert_y_img_to_window(rec.pageId, rec.y);
