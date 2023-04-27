@@ -198,9 +198,46 @@ function filter_positions(scoreStationsArray)
 
 
 /* Returns index (step) of position record that encloses 'winY'
+ * in the closest step to 'lastStep'.
+ * If in doubt, prefers the step before 'lastStep'.
+ * If not found, return 'lastStep' */
+function find_closest_matching_position(scoreStationsArray, winY, lastStep)
+{
+  const scorePositions = filter_positions(scoreStationsArray); // only data lines
+  const candidates = find_matching_positions(scoreStationsArray, winY);
+  if ( candidates.length == 0 ) {
+    console.log(`-E- No positions enclose y=${winY}`);
+    return  lastStep;
+  }
+  // find the closest of the matching positions
+  candidates.sort( (a,b) =>
+                    Math.abs(a.step - lastStep) - Math.abs(b.step - lastStep) );
+  const candidatesDescr = candidates.reduce( (total, value, index, array) =>
+                                                         total + ", " + value );
+  console.log(`-D- Positions around step ${lastStep} at y=${winY} => ${candidatesDescr}`);
+  
+  const result = -1;  const resultDescr = "UNKNOWN";
+  if ( (candidates.length == 1) ||
+       (Math.abs(candidates[0].step - lastStep) < 
+        Math.abs(candidates[1].step - lastStep)) )  {
+    result = candidates[0].step; // found unambiguously closest position
+    resultDescr = "unambiguous";
+  } else  {
+    result = Math.min(candidates[0].step, candidates[1].step);  // the earlier
+    resultDescr = "earlier of two";
+  }
+  //const lastStepRec = scorePositions[lastStep];
+  const lastStepWinY = derive_position_y_window(scoreStationsArray, lastStep);
+  const resultWinY   = derive_position_y_window(scoreStationsArray, result);
+  console.log(`-D- Closest position to step ${lastStep} (winY=${lastStepWinY}) is step ${result} (winY=${resultWinY}) - ${resultDescr}`);
+  return  result;
+}
+
+
+/* Returns index (step) of position record that encloses 'winY'
  * in the latest step before 'lastStep'.
  * If not found, return 'lastStep' */
-function find_preceding_matching_position(scoreStationsArray, winY, lastStep)
+function UNUSED__find_preceding_matching_position(scoreStationsArray, winY, lastStep)
 {
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   const candidates = find_matching_positions(scoreStationsArray, winY);
@@ -249,6 +286,14 @@ function find_matching_positions(scoreStationsArray, winY)
     }
   }
   return  results;
+}
+
+
+function derive_position_y_window(scoreStationsArray, step)
+{
+  const scorePositions = filter_positions(scoreStationsArray); // only data lines
+  return  convert_y_img_to_window(
+                  scorePositions[step].pageId, scorePositions[step].y);
 }
 
 
