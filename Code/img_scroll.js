@@ -197,6 +197,8 @@ function filter_positions(scoreStationsArray)
 }
 
 
+var DBG_candidates = undefined;
+
 /* Returns index (step) of position record that encloses 'winY'
  * in the closest step to 'lastStep'.
  * If in doubt, prefers the step before 'lastStep'.
@@ -204,6 +206,10 @@ function filter_positions(scoreStationsArray)
 function find_closest_matching_position(scoreStationsArray, winY, lastStep)
 {
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
+  if ( lastStep >= scorePositions.length )  {
+    console.log(`-E- Invalid step ${lastStep}; should be 0..${scorePositions.length-1}`);
+    return  scorePositions.length - 1;  // the last possible
+  }
   const candidates = find_matching_positions(scoreStationsArray, winY);
   if ( candidates.length == 0 ) {
     console.log(`-E- No positions enclose y=${winY}`);
@@ -212,11 +218,12 @@ function find_closest_matching_position(scoreStationsArray, winY, lastStep)
   // find the closest of the matching positions
   candidates.sort( (a,b) =>
                     Math.abs(a.step - lastStep) - Math.abs(b.step - lastStep) );
-  const candidatesDescr = candidates.reduce( (total, value, index, array) =>
-                                                         total + ", " + value );
+DBG_candidates = candidates;  // OK_TMP
+  let candidatesDescr = "";
+  candidates.forEach( (v) => candidatesDescr += `; step${v.step}=>${v.pageId}::${v.y}` );
   console.log(`-D- Positions around step ${lastStep} at y=${winY} => ${candidatesDescr}`);
   
-  const result = -1;  const resultDescr = "UNKNOWN";
+  let result = -1;  let resultDescr = "UNKNOWN";
   if ( (candidates.length == 1) ||
        (Math.abs(candidates[0].step - lastStep) < 
         Math.abs(candidates[1].step - lastStep)) )  {
@@ -234,28 +241,28 @@ function find_closest_matching_position(scoreStationsArray, winY, lastStep)
 }
 
 
-/* Returns index (step) of position record that encloses 'winY'
- * in the latest step before 'lastStep'.
- * If not found, return 'lastStep' */
-function UNUSED__find_preceding_matching_position(scoreStationsArray, winY, lastStep)
-{
-  const scorePositions = filter_positions(scoreStationsArray); // only data lines
-  const candidates = find_matching_positions(scoreStationsArray, winY);
-  if ( candidates.length == 0 ) {
-    console.log(`-E- No positions before step ${lastStep} at y=${winY}`);
-    return  -1;
-  }
-  candidates.sort( (a,b) => a.step - b.step );
-  //console.log(`-D- Positions before step ${lastStep} at y=${winY} => ${candidates.toString()}`);
-  for ( let i = candidates.length-1;  i >= 0;  i -= 1 )  {
-    if ( candidates[i].step < lastStep )  {
-      console.log(`-I- Position before step ${lastStep} at y=${winY} is step ${candidates[i].step}`);
-      return  candidates[i].step;
-    }
-  }
-  console.log(`-I- No positions before step ${lastStep} at y=${winY}; choose step ${lastStep}`);
-  return  lastStep;
-}
+//~ /* Returns index (step) of position record that encloses 'winY'
+ //~ * in the latest step before 'lastStep'.
+ //~ * If not found, return 'lastStep' */
+//~ function UNUSED__find_preceding_matching_position(scoreStationsArray, winY, lastStep)
+//~ {
+  //~ const scorePositions = filter_positions(scoreStationsArray); // only data lines
+  //~ const candidates = find_matching_positions(scoreStationsArray, winY);
+  //~ if ( candidates.length == 0 ) {
+    //~ console.log(`-E- No positions before step ${lastStep} at y=${winY}`);
+    //~ return  -1;
+  //~ }
+  //~ candidates.sort( (a,b) => a.step - b.step );
+  //~ //console.log(`-D- Positions before step ${lastStep} at y=${winY} => ${candidates.toString()}`);
+  //~ for ( let i = candidates.length-1;  i >= 0;  i -= 1 )  {
+    //~ if ( candidates[i].step < lastStep )  {
+      //~ console.log(`-I- Position before step ${lastStep} at y=${winY} is step ${candidates[i].step}`);
+      //~ return  candidates[i].step;
+    //~ }
+  //~ }
+  //~ console.log(`-I- No positions before step ${lastStep} at y=${winY}; choose step ${lastStep}`);
+  //~ return  lastStep;
+//~ }
 
 
 /* Returns position records that enclose 'winY';
