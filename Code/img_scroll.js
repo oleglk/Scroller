@@ -22,6 +22,9 @@ function scroll__onload(x, y)
 {
   //~ alert(`Page onload event; will scroll to ${x}, ${y}`);
   //~ window.scrollTo(x, y);
+
+  const posDescrStr = positions_toString(g_scoreStations, "\n");
+  console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
   
   g_totalHeight = get_scroll_height();
   
@@ -165,12 +168,19 @@ function get_scroll_height()
 }
 
 
+function get_scroll_current_y()
+{
+  // adopted from: https://stackoverflow.com/questions/4096863/how-to-get-and-set-the-current-web-page-scroll-position
+  return  document.documentElement.scrollTop || document.body.scrollTop;
+}
+
+
 // Converts vertical position from image coordinates to rendered window
 function convert_y_img_to_window(imgHtmlPageId, imgY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageId);
   const pageScaleY = get_image_scale_y(g_scoreStations, imgHtmlPageId);
   const winY = pageHtmlElem.offsetTop + imgY * pageScaleY;
-  return  winY;
+  return  Math.floor(winY);
 }
 
 
@@ -188,7 +198,7 @@ function convert_y_window_to_img(imgHtmlPageId, winY) {
  ** BEGIN: access to scoreStationsArray                                       **
 *******************************************************************************/
 
-// Returns newarray with only position-related lines from 'scoreStationsArray'
+// Returns new array with only position-related lines from 'scoreStationsArray'
 function filter_positions(scoreStationsArray)
 {
   return  scoreStationsArray.filter((rec) =>  {
@@ -197,7 +207,20 @@ function filter_positions(scoreStationsArray)
 }
 
 
-var DBG_candidates = undefined;
+function positions_toString(scoreStationsArray, separatorStr)
+{
+  let descr = "";
+  const scorePositions = filter_positions(scoreStationsArray); // only data lines
+  for ( let i = 0;  i < scorePositions.length;  i += 1 )  {
+    v = scorePositions[i];
+    descr += ((i > 0)? separatorStr : "") +
+      `step${i}=>${v.pageId}::${v.y}=${convert_y_img_to_window(v.pageId, v.y)}`;
+  }
+  return  descr
+}
+
+
+var DBG_candidates = undefined; //OK_TMP
 
 /* Returns index (step) of position record that encloses 'winY'
  * in the closest step to 'lastStep'.
@@ -218,7 +241,7 @@ function find_closest_matching_position(scoreStationsArray, winY, lastStep)
   // find the closest of the matching positions
   candidates.sort( (a,b) =>
                     Math.abs(a.step - lastStep) - Math.abs(b.step - lastStep) );
-DBG_candidates = candidates;  // OK_TMP
+  DBG_candidates = candidates;  // OK_TMP
   let candidatesDescr = "";
   candidates.forEach( (v) => candidatesDescr += `; step${v.step}=>${v.pageId}::${v.y}` );
   console.log(`-D- Positions around step ${lastStep} at y=${winY} => ${candidatesDescr}`);
