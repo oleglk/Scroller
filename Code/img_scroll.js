@@ -68,7 +68,8 @@ function scroll_start_handler(event)
     const currWinY = get_scroll_current_y();
     const newStep = find_nearest_matching_position(g_scoreStations,
                                                   currWinY, g_currStep);
-    msg = `RESUME SCROLLING FROM STEP ${newStep} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
+    rec = filter_positions(g_scoreStations)[newStep];
+    msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
     console.log(msg);
     g_currStep = newStep;
     timed_alert(msg, 2/*sec*/);
@@ -86,7 +87,8 @@ function scroll_stop_handler(event)
   if ( !g_scrollIsOn )  { return }  // double-stop - silently ignore
   if ( g_currStep > 0 ) { g_currStep -= 1 }   // it was already advanced
   rec = filter_positions(g_scoreStations)[g_currStep];
-  msg = `STOP/PAUSE SCROLLING AT STEP ${g_currStep};  POSITION ${rec.tag}::${one_position_toString(g_currStep, rec)}`;
+  winY = get_scroll_current_y();
+  msg = `STOP/PAUSE SCROLLING AT STEP ${rec.tag}::${one_position_toString(g_currStep, rec)};  POSITION ${winY}`;
   console.log(msg);
   alert(msg);
   scroll_abort();
@@ -173,6 +175,7 @@ function get_scroll_height()
 }
 
 
+// Returns the rendered vertical position (winY) of the current scroll status
 function get_scroll_current_y()
 {
   // adopted from: https://stackoverflow.com/questions/4096863/how-to-get-and-set-the-current-web-page-scroll-position
