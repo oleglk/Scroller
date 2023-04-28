@@ -66,7 +66,7 @@ function scroll_start_handler(event)
   } else  {  // g_scrollIsOn == false
     // check if manually scrolled while being paused
     const currWinY = get_scroll_current_y();
-    const newStep = find_closest_matching_position(g_scoreStations,
+    const newStep = find_nearest_matching_position(g_scoreStations,
                                                   currWinY, g_currStep);
     msg = `RESUME SCROLLING FROM STEP ${newStep} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
     console.log(msg);
@@ -238,7 +238,7 @@ var DBG_candidates = undefined; //OK_TMP
  * in the closest step to 'lastStep'.
  * If in doubt, prefers the step before 'lastStep'.
  * If not found, return 'lastStep' */
-function find_closest_matching_position(scoreStationsArray, winY, lastStep)
+function find_nearest_matching_position(scoreStationsArray, winY, lastStep)
 {
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   if ( lastStep >= scorePositions.length )  {
