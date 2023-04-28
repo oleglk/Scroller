@@ -1,19 +1,32 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
+var g_stepManual = true;  // false = auto-scroll, true = manual-stepping
+
 var g_totalHeight = -1; // for document scroll height
 var g_currStep = -1;  // not started
 var g_scrollIsOn = false;
+
+var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 
 var g_nextTimerIntervalId = 0;
 
 
   
 // To facilitate passing parameters to event handlers, use an anonymous function
-window.addEventListener("click",        (event) => {
-                                                scroll_stop_handler(event)});
-window.addEventListener("contextmenu",  (event) => {
-                                                scroll_start_handler(event)});
+if ( !g_stepManual )  {
+  console.log("-I- AUTO-SCROLL OPERATION MODE");
+  window.addEventListener("click",        (event) => {
+                                                  scroll_stop_handler(event)});
+  window.addEventListener("contextmenu",  (event) => {
+                                                  scroll_start_handler(event)});
+} else  {
+  console.log("-I- MANUAL-STEP OPERATION MODE");
+  window.addEventListener("click",        (event) => {
+                                            manual_step_back_handler(event)});
+  window.addEventListener("contextmenu",  (event) => {
+                                            manual_step_forth_handler(event)});
+}
 
 
 
@@ -35,8 +48,9 @@ function scroll__onload(x, y)
   console.log(`Scroll to the first page (${firstPageId}) at y=${topPos}`);
   // window.scrollTo({ top: topPos, behavior: 'smooth'});
   window.scrollTo(0, topPos);
+  g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'topPos' ?
   g_scrollIsOn = false;
-  g_currStep = -1;
+  g_currStep = (g_stepManual)? 0 : -1;
 }
 
 //~ function message__onMouseOver(event)
@@ -45,6 +59,7 @@ function scroll__onload(x, y)
 //~ }
 
 
+// Automatic-scroll-mode handler of scroll-start
 function scroll_start_handler(event)
 {
   event.preventDefault();
@@ -78,7 +93,7 @@ function scroll_start_handler(event)
   }
   g_scrollIsOn = true;
   rec = filter_positions(g_scoreStations)[g_currStep];
-  scroll_step_handler();
+  scroll_perform_one_step(g_currStep);
 }
 
 
@@ -95,11 +110,84 @@ function scroll_stop_handler(event)
 }
 
 
+// Manual-step-mode handler of step-forth
+function manual_step_forth_handler(event)
+{
+  event.preventDefault();
+  const nSteps = filter_positions(g_scoreStations).length;
+  if ( g_currStep >= (nSteps - 1) )  {
+    msg = `ALREADY AT THE END`;
+    console.log(msg);
+    timed_alert(msg, 2/*sec*/);
+    return;
+  }
+  return  _manual_one_step(+1);
+}
+
+
+// Manual-step-mode handler of step-back
+function manual_step_back_handler(event)
+{
+  event.preventDefault();
+  if ( g_currStep == 0 )  {
+    msg = `ALREADY AT THE BEGINNING`;
+    console.log(msg);
+    timed_alert(msg, 2/*sec*/);
+    return;
+  }
+  return  _manual_one_step(-1);
+}
+
+
+// Performs common for both forth and back actions of one manual step
+function _manual_one_step(stepIncrement)
+{
+  if ( (stepIncrement != -1) && (stepIncrement != 1) )  {
+    msg = `-E- Invalid stepIncrement=${stepIncrement}; should be -1 or 1`;
+    console.log(msg);
+    alert(msg);
+    return
+  }
+  const nSteps = filter_positions(g_scoreStations).length;
+  if ( (g_currStep < 0) || (g_currStep >= nSteps) ) {
+    alert(`Invalid step ${g_currStep}; should be 0..${nSteps-1}; jump to the begining`);
+    g_currStep = 0;
+    return;
+  }
+
+  /*  */
+  const currWinY = get_scroll_current_y();
+  let newStep = -1; 
+  if ( currWinY != g_lastJumpedToWinY )   {
+    newStep = find_nearest_matching_position(g_scoreStations,
+                                                currWinY, g_currStep);
+    console.log(`-I- Manual scroll to winY=${currWinY} detected`);
+  } else {
+    // not scrolled manually or scrolled not enough, so go one 'stepIncrement'
+    newStep = g_currStep + stepIncrement; 
+  }
+  rec = filter_positions(g_scoreStations)[newStep];
+  const actionStr = (newStep == (g_currStep + stepIncrement))?
+                                ((stepIncrement < 0)? "BACK":"FORTH") : "JUMP"; 
+  msg = `${actionStr} TO STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (previous step was ${g_currStep})`;
+  console.log(msg);
+  g_currStep = newStep;
+  timed_alert(msg, 1/*sec*/);
+  // in manual-step mode it should scroll immediately
+  scroll_perform_one_step(g_currStep);
+}
+
+
 function scroll_schedule(currDelaySec, descr)
 {
+  if ( g_stepManual )  {
+    console.log("-W- scroll_schedule() ignored in manual-step mode");
+    return;
+  }
+
   console.log(`-I- Scheduling wait for ${currDelaySec} second(s) at ${descr}`);
-  g_nextTimerIntervalId = setTimeout(scroll_step_handler,
-                                      currDelaySec * 1000/*msec*/);
+  g_nextTimerIntervalId = setTimeout(scroll_perform_one_step,
+                                      currDelaySec * 1000/*msec*/, g_currStep);
 }
 
 
@@ -111,14 +199,6 @@ function scroll_abort()
 }
 
 
-// Determines the current step number and executes the step
-function scroll_step_handler()
-{
-  stepNum = g_currStep; // TODO: track actual window scroll position
-  return  scroll_one_step(stepNum);
-}
-
-
 function messge_onKeyPress(event)
 {
   alert("onkeypress event - pressed " + event.code);
@@ -126,11 +206,11 @@ function messge_onKeyPress(event)
 
 
 //////////////////////////////////////////////////
-/* Scrolls to the current-step position and starts timer to requested interval
- */
-function scroll_one_step(stepNum)
+/* Immediately scrolls to the current-step position;
+ * afterwards - if in auto-scroll mode - starts timer to requested interval. */
+function scroll_perform_one_step(stepNum)
 {
-  if ( g_scrollIsOn == false )  { return }
+  if ( !g_stepManual && !g_scrollIsOn )  { return }
   if ( (stepNum < 0) || (stepNum >= filter_positions(g_scoreStations).length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
     scroll_abort();
@@ -143,11 +223,14 @@ function scroll_one_step(stepNum)
   console.log(`-I- Scroll to ${rec.pageId}:${targetPos}) for step ${stepNum}`);
   // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
+  g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
   g_currStep = stepNum + 1;
   
+  if ( !g_stepManual )  {
 ////scroll_abort(); // OK_TMP
-  // the next line causes async wait
-  scroll_schedule(rec.timeSec, rec.tag);
+    // the next line causes async wait
+    scroll_schedule(rec.timeSec, rec.tag);
+  }
   return  1;
 }
 
