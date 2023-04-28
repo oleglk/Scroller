@@ -318,6 +318,7 @@ function find_matching_positions(scoreStationsArray, winY)
     let idxOfCurrWinY = winYArray.indexOf(currWinY);  // must exist
     let isTop     = (idxOfCurrWinY == 0);
     let isBottom  = (idxOfCurrWinY == (winYArray.length - 1));
+    if ( isTop )  { currWinY = 0; }   // treat "above-image" as "image-top"
     let nextWinY  = (!isBottom)? winYArray[idxOfCurrWinY + 1]
                             : Number.MAX_SAFE_INTEGER;
     if ( (currWinY <= winY) && (winY < nextWinY) )   {
@@ -378,4 +379,4 @@ function uniq_sort(arr, cmpFunc) {
       };
    };
    return res.sort(cmpFunc);
-};
+}
