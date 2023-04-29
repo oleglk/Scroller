@@ -97,6 +97,7 @@ function scroll_start_handler(event)
 }
 
 
+// Automatic-scroll-mode handler of scroll-stop
 function scroll_stop_handler(event)
 {
   if ( !g_scrollIsOn )  { return }  // double-stop - silently ignore
@@ -158,6 +159,7 @@ function _manual_one_step(stepIncrement)
   /*  */
   const currWinY = get_scroll_current_y();
   let newStep = -1; 
+////debugger;   // OK_TMP
   if ( currWinY != g_lastJumpedToWinY )   {
     newStep = find_nearest_matching_position(g_scoreStations,
                                                 currWinY, g_currStep);
@@ -220,14 +222,14 @@ function scroll_perform_one_step(stepNum)
   const rec = filter_positions(g_scoreStations)[stepNum];
   const targetPos = convert_y_img_to_window(rec.pageId, rec.y);
 
-  console.log(`-I- Scroll to ${rec.pageId}:${targetPos}) for step ${stepNum}`);
+  console.log(`-I- Scroll to ${rec.pageId}:${targetPos} for step ${stepNum}`);
   // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
   g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
-  g_currStep = stepNum + 1;
   
   if ( !g_stepManual )  {
 ////scroll_abort(); // OK_TMP
+    g_currStep = stepNum + 1;
     // the next line causes async wait
     scroll_schedule(rec.timeSec, rec.tag);
   }

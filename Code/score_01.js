@@ -21,7 +21,6 @@ var g_scoreStations = [
   {tag:"line-004-Begin", pageId:"pg01", x:0, y:1265, timeSec:g_fullLineInSec},
   {tag:"line-005-Begin", pageId:"pg01", x:0, y:1646, timeSec:g_fullLineInSec},
   {tag:"line-006-Begin", pageId:"pg01", x:0, y:2028, timeSec:2/3*g_fullLineInSec},
-  {tag:"line-003-Repeat", pageId:"pg01", x:0, y:874, timeSec:g_fullLineInSec},
   {tag:"line-004-Begin", pageId:"pg01", x:0, y:1265, timeSec:g_fullLineInSec},
   {tag:"line-005-Begin", pageId:"pg01", x:0, y:1646, timeSec:g_fullLineInSec},
   {tag:"line-006-Begin", pageId:"pg01", x:0, y:2028, timeSec:2/3*g_fullLineInSec},  
