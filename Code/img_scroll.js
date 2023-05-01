@@ -1,7 +1,7 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
-var g_stepManual = true;  // false = auto-scroll, true = manual-stepping
+var g_stepManual = false;  // false = auto-scroll, true = manual-stepping
 
 var g_totalHeight = -1; // for document scroll height
 var g_currStep = -1;  // not started
@@ -29,6 +29,26 @@ if ( !g_stepManual )  {
 }
 
 
+function build_help_string()
+{
+  ret =  `
+======== Musical score scroller ========\n
+Mode: ${(g_stepManual)? "MANUAL" : "AUTO"}\n`;
+  ret += "========================================";
+  if ( g_stepManual ) {
+    ret += `
+=> Left-mouse-button-Click \t= Go Back
+=> Right-mouse-button-Click\t= Go Forth\n`;
+  } else {
+    ret += `
+=> Right-mouse-button-Click\t= Stop/Pause Auto-Scroll
+=> Left-mouse-button-Click \t= Start/Resume Auto-Scroll
+=> When paused, you can manually adjust the scroll position\n`;
+  }
+  ret += "========================================";
+  return  ret;
+}
+
 
 // Scrolls to line-01
 function scroll__onload(x, y)
@@ -43,6 +63,8 @@ function scroll__onload(x, y)
   
   const posDescrStr = positions_toString(g_scoreStations, "\n");
   console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
+  
+  alert( build_help_string() );
   
   g_totalHeight = get_scroll_height();
   
@@ -260,7 +282,7 @@ function get_scroll_height()
     document.body.offsetHeight, document.documentElement.offsetHeight,
     document.body.clientHeight, document.documentElement.clientHeight);
 
-  alert('Full document height, with scrolled out part: ' + scrollHeight);
+  // alert('Full document height, with scrolled out part: ' + scrollHeight);
   return  scrollHeight;
 }
 
