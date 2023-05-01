@@ -36,6 +36,11 @@ function scroll__onload(x, y)
   //~ alert(`Page onload event; will scroll to ${x}, ${y}`);
   //~ window.scrollTo(x, y);
 
+  // set tab title to score-file name
+  let fileName = window.location.pathname.split("/").pop();
+  let pageName = `Scroll: ${remove_filename_extension(fileName)}`;
+  document.title = pageName;
+  
   const posDescrStr = positions_toString(g_scoreStations, "\n");
   console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
   
@@ -467,4 +472,12 @@ function uniq_sort(arr, cmpFunc) {
       };
    };
    return res.sort(cmpFunc);
+}
+
+
+function remove_filename_extension(filename)
+{
+  var lastDotPosition = filename.lastIndexOf(".");
+  if (lastDotPosition === -1) return filename;
+  else return filename.substr(0, lastDotPosition);
 }
