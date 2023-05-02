@@ -1,7 +1,7 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
-var g_stepManual = false;  // false = auto-scroll, true = manual-stepping
+var g_stepManual = true;  // false = auto-scroll, true = manual-stepping
 
 var g_totalHeight = -1; // for document scroll height
 var g_currStep = -1;  // not started
@@ -269,7 +269,7 @@ function get_image_scale_y(scoreStationsArray, pageId)
 {
   const imgHtmlElem   = document.getElementById(pageId);
   const renderHeight  = imgHtmlElem.offsetHeight;
-  const origHeight    = read_image_size_record(scoreStationsArray, pageId);
+  const origHeight    = read_image_size_record(scoreStationsArray, pageId, true);
   return  renderHeight / origHeight;
 }
 
@@ -455,11 +455,20 @@ function derive_position_y_window(scoreStationsArray, step)
 }
 
 
-function read_image_size_record(scoreStationsArray, pageId)
+// Returns image height or -1 on error
+function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 {
   const rec = scoreStationsArray.find((value, index, array) => {
     return  ( (value.tag == "Control-Height") && (value.pageId == pageId) )
   });
+  if ( rec === undefined )  {
+    err = `-E- Missing size record for page '${pageId}'`;
+    console.log(err);
+    if ( alertErr )  {
+      alert(err);
+      return  -1;
+    }
+  }
   return  rec.y;
 }
 /** END: access to scoreStationsArray *****************************************/
