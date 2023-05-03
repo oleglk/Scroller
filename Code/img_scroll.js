@@ -11,31 +11,18 @@ var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 
 var g_nextTimerIntervalId = 0;
 
-
-  
-// To facilitate passing parameters to event handlers, use an anonymous function
-if ( !g_stepManual )  {
-  console.log("-I- AUTO-SCROLL OPERATION MODE");
-  window.addEventListener("click",        (event) => {
-                                                  scroll_stop_handler(event)});
-  window.addEventListener("contextmenu",  (event) => {
-                                                  scroll_start_handler(event)});
-} else  {
-  console.log("-I- MANUAL-STEP OPERATION MODE");
-  window.addEventListener("click",        (event) => {
-                                            manual_step_back_handler(event)});
-  window.addEventListener("contextmenu",  (event) => {
-                                            manual_step_forth_handler(event)});
-}
+////////////////
+window.addEventListener("load", scroll__onload);
+////////////////
 
 
-function build_help_string()
+function build_help_string(modeManual=g_stepManual)
 {
   ret =  `
 ======== Musical score scroller ========\n
-Mode: ${(g_stepManual)? "MANUAL" : "AUTO"}\n`;
+Mode: ${(modeManual)? "MANUAL" : "AUTO"}\n`;
   ret += "========================================";
-  if ( g_stepManual ) {
+  if ( modeManual ) {
     ret += `
 => Left-mouse-button-Click \t= Go Back
 => Right-mouse-button-Click\t= Go Forth\n`;
@@ -64,7 +51,38 @@ function scroll__onload(x, y)
   const posDescrStr = positions_toString(g_scoreStations, "\n");
   console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
   
-  alert( build_help_string() );
+  // Use tempo prompt to print help and determine operation mode and the tempo
+  let defaultTempo = (g_stepManual)? 0 : g_tempo;
+  let helpStr = build_help_string(1) + "\n" + build_help_string(0) +
+                `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
+  const tempoStr = window.prompt( helpStr, defaultTempo);
+  let modeMsg = "UNDEF"
+  if ( (tempoStr == "") || (tempoStr == "0") )  {
+    g_stepManual = true;
+    modeMsg = "MANUAL-STEP MODE SELECTED";
+  } else  {
+    const tempo = Number(tempoStr);
+    // TODO: check validity of 'tempo'
+    g_stepManual = false;
+    g_tempo = tempo;
+    modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEATS/SEC`;
+  }
+  console.log("-I- " + modeMsg);
+  timed_alert(modeMsg, 1.5)
+
+  // Assign event handlers according to the operation mode
+  // To facilitate passing parameters to event handlers, use an anonymous function
+  if ( !g_stepManual )  {
+    window.addEventListener("click",        (event) => {
+                                            scroll_stop_handler(event)});
+    window.addEventListener("contextmenu",  (event) => {
+                                            scroll_start_handler(event)});
+  } else  {
+    window.addEventListener("click",        (event) => {
+                                            manual_step_back_handler(event)});
+    window.addEventListener("contextmenu",  (event) => {
+                                            manual_step_forth_handler(event)});
+  }
   
   g_totalHeight = get_scroll_height();
   
