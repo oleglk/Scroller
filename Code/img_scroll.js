@@ -16,12 +16,19 @@ window.addEventListener("load", scroll__onload);
 ////////////////
 
 
-function build_help_string(modeManual=g_stepManual)
+function build_help_string(showHeader, modeManual=g_stepManual)
 {
-  ret =  `
-======== Musical score scroller ========\n
-Mode: ${(modeManual)? "MANUAL" : "AUTO"}\n`;
-  ret += "========================================";
+  let ret = "";
+  if ( showHeader ) {
+    ret +=  `======== Musical score scroller ========
+   
+=> Left-mouse-button-Double-Click \t= Restart\n`
+  }
+  ret += `
+========================================   
+Mode: ${(modeManual)? "MANUAL" : "AUTO"};
+========================================`;
+
   if ( modeManual ) {
     ret += `
 => Left-mouse-button-Click \t= Go Back
@@ -38,11 +45,8 @@ Mode: ${(modeManual)? "MANUAL" : "AUTO"}\n`;
 
 
 // Scrolls to line-01
-function scroll__onload(x, y)
+function scroll__onload()
 {
-  //~ alert(`Page onload event; will scroll to ${x}, ${y}`);
-  //~ window.scrollTo(x, y);
-
   // set tab title to score-file name
   let fileName = window.location.pathname.split("/").pop();
   let pageName = `Scroll: ${remove_filename_extension(fileName)}`;
@@ -67,6 +71,8 @@ function scroll__onload(x, y)
     window.addEventListener("contextmenu",  (event) => {
                                             manual_step_forth_handler(event)});
   }
+  window.addEventListener("dblclick", (event) => {
+                                            restart_handler(event)});
   
   g_totalHeight = get_scroll_height();
   
@@ -93,7 +99,7 @@ function scroll__onload(x, y)
 function show_and_process_help_and_tempo_dialog()
 {
   let defaultTempo = (g_stepManual)? 0 : g_tempo;
-  let helpStr = build_help_string(1) + "\n" + build_help_string(0) +
+  let helpStr = build_help_string(1, 1) + "\n" + build_help_string(0, 0) +
                 `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
   const tempoStr = window.prompt( helpStr, defaultTempo);
   let modeMsg = "UNDEF"
@@ -239,6 +245,19 @@ function _manual_one_step(stepIncrement)
   // in manual-step mode it should scroll immediately
   scroll_perform_one_step(g_currStep);
 }
+
+function restart_handler(event)
+{
+  // TODO: pause scrolling id in auto mode
+  if ( confirm("Press <OK> to restart from the top, <Cancel> to continue...")) {
+    console.log("Restart-from-top is confirmed");
+    scroll__onload();
+  } else {
+    console.log("Restart-from-top is canceled; continuing");
+    timed_alert("... continuing ...", 3/*sec*/);
+  }
+}
+///////////// End of handler functions ////////////////////////////////////////
 
 
 function scroll_schedule(currDelaySec, descr)
