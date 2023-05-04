@@ -52,23 +52,7 @@ function scroll__onload(x, y)
   console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
   
   // Use tempo prompt to print help and determine operation mode and the tempo
-  let defaultTempo = (g_stepManual)? 0 : g_tempo;
-  let helpStr = build_help_string(1) + "\n" + build_help_string(0) +
-                `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
-  const tempoStr = window.prompt( helpStr, defaultTempo);
-  let modeMsg = "UNDEF"
-  if ( (tempoStr == "") || (tempoStr == "0") )  {
-    g_stepManual = true;
-    modeMsg = "MANUAL-STEP MODE SELECTED";
-  } else  {
-    const tempo = Number(tempoStr);
-    // TODO: check validity of 'tempo'
-    g_stepManual = false;
-    g_tempo = tempo;
-    modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEATS/SEC`;
-  }
-  console.log("-I- " + modeMsg);
-  timed_alert(modeMsg, 1.5)
+  while ( false == show_and_process_help_and_tempo_dialog() )   {}
 
   // Assign event handlers according to the operation mode
   // To facilitate passing parameters to event handlers, use an anonymous function
@@ -102,6 +86,38 @@ function scroll__onload(x, y)
 //~ {
   //~ alert("onMouseOver event on " + event.target.id);
 //~ }
+
+
+/* Uses tempo prompt to print help and determine operation mode and the tempo.
+ * Returns true on success, false on error */
+function show_and_process_help_and_tempo_dialog()
+{
+  let defaultTempo = (g_stepManual)? 0 : g_tempo;
+  let helpStr = build_help_string(1) + "\n" + build_help_string(0) +
+                `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
+  const tempoStr = window.prompt( helpStr, defaultTempo);
+  let modeMsg = "UNDEF"
+  if ( (tempoStr == "") || (tempoStr == "0") )  {
+    g_stepManual = true;
+    modeMsg = "MANUAL-STEP MODE SELECTED";
+  } else  {
+    const tempo = Number(tempoStr);
+    // heck validity of 'tempo
+    if ( isNaN(tempo) || (tempo < 0) )  {
+      err = `Invalid tempo "${tempoStr}"; should be a positive number (beats/sec) or zero`;
+      console.log("-E- " + err);      alert(err);
+      return  false;
+    }
+    g_stepManual = false;
+    g_tempo = tempo;
+    modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEAT(s)/SEC`;
+  }
+  console.log("-I- " + modeMsg);
+  timed_alert(modeMsg +
+            ((g_stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
+            (g_stepManual)? 1.5 : 5);
+  return  true;
+}
 
 
 // Automatic-scroll-mode handler of scroll-start
