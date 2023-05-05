@@ -211,7 +211,7 @@ function manual_step_back_handler(event)
 function _manual_one_step(stepIncrement)
 {
   if ( (stepIncrement != -1) && (stepIncrement != 1) )  {
-    msg = `-E- Invalid stepIncrement=${stepIncrement}; should be -1 or 1`;
+    msg = `-E- Invalid step-increment=${stepIncrement}; should be -1 or 1`;
     console.log(msg);
     alert(msg);
     return
@@ -248,7 +248,16 @@ function _manual_one_step(stepIncrement)
 
 function restart_handler(event)
 {
-  // TODO: pause scrolling id in auto mode
+  // restart with confirmation in auto mode would require pause scrolling
+  //    though (at least on Linux) double-click is hidden
+  //    by modal stop-scrolling confirmation dialog
+  if ( !g_stepManual && g_scrollIsOn )  {
+    msg = "-W- RESTART REQUESTS IGNORED UNTIL AUTO-SCROLL IS STOPPED";
+    console.log(msg);
+    timed_alert(msg, 1/*sec*/);
+    return;
+  }
+
   if ( confirm("Press <OK> to restart from the top, <Cancel> to continue...")) {
     console.log("Restart-from-top is confirmed");
     scroll__onload();
