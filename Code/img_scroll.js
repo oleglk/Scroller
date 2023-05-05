@@ -12,7 +12,10 @@ var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 var g_nextTimerIntervalId = 0;
 
 ////////////////
-window.addEventListener("load", scroll__onload);
+//window.addEventListener("load", scroll__onload);
+// To facilitate passing parameters to event handlers, use an anonymous function
+window.addEventListener("load", (event) => { scroll__onload(event) });
+
 ////////////////
 
 
@@ -45,8 +48,12 @@ Mode: ${(modeManual)? "MANUAL" : "AUTO"};
 
 
 // Scrolls to line-01
-function scroll__onload()
+function scroll__onload(event)
 {
+  /* Keep the rest of the handlers from being executed
+  *   (and it prevents the event from bubbling up the DOM tree) */
+  //event.stopImmediatePropagation(); // crucial because of prompt inside handler!
+  
   // set tab title to score-file name
   let fileName = window.location.pathname.split("/").pop();
   let pageName = `Scroll: ${remove_filename_extension(fileName)}`;
@@ -130,6 +137,11 @@ function show_and_process_help_and_tempo_dialog()
 function scroll_start_handler(event)
 {
   event.preventDefault();
+  // Unfortunately event prevention blocks timed alert
+  //~ /* Keep the rest of the handlers from being executed
+  //~ *   (and it prevents the event from bubbling up the DOM tree) */
+  //~ event.stopImmediatePropagation();
+
   if ( g_currStep == -1 ) {
     g_currStep = 0;
     msg = `START SCROLLING FROM THE TOP`;
@@ -167,6 +179,10 @@ function scroll_start_handler(event)
 // Automatic-scroll-mode handler of scroll-stop
 function scroll_stop_handler(event)
 {
+  /* Keep the rest of the handlers from being executed
+  *   (and it prevents the event from bubbling up the DOM tree) */
+  //event.stopImmediatePropagation();  // crucial because of alert inside handler!
+
   if ( !g_scrollIsOn )  { return }  // double-stop - silently ignore
   if ( g_currStep > 0 ) { g_currStep -= 1 }   // it was already advanced
   rec = filter_positions(g_scoreStations)[g_currStep];
@@ -182,6 +198,11 @@ function scroll_stop_handler(event)
 function manual_step_forth_handler(event)
 {
   event.preventDefault();
+  // Unfortunately event prevention blocks timed alert
+  //~ /* Keep the rest of the handlers from being executed
+  //~ *   (and it prevents the event from bubbling up the DOM tree) */
+  //~ event.stopImmediatePropagation();
+
   const nSteps = filter_positions(g_scoreStations).length;
   if ( g_currStep >= (nSteps - 1) )  {
     msg = `ALREADY AT THE END`;
@@ -197,6 +218,11 @@ function manual_step_forth_handler(event)
 function manual_step_back_handler(event)
 {
   event.preventDefault();
+  // Unfortunately event prevention blocks timed alert
+  //~ /* Keep the rest of the handlers from being executed
+  //~ *   (and it prevents the event from bubbling up the DOM tree) */
+  //~ event.stopImmediatePropagation();
+
   if ( g_currStep == 0 )  {
     msg = `ALREADY AT THE BEGINNING`;
     console.log(msg);
@@ -218,7 +244,10 @@ function _manual_one_step(stepIncrement)
   }
   const nSteps = filter_positions(g_scoreStations).length;
   if ( (g_currStep < 0) || (g_currStep >= nSteps) ) {
-    alert(`Invalid step ${g_currStep}; should be 0..${nSteps-1}; jump to the begining`);
+    msg = `-E- Invalid step ${g_currStep}; should be 0..${nSteps-1}; jump to the begining`;
+    console.trace();
+    console.log(msg);
+    alert(msg);
     g_currStep = 0;
     return;
   }
@@ -257,10 +286,15 @@ function restart_handler(event)
     timed_alert(msg, 1/*sec*/);
     return;
   }
+  // Unfortunately event prevention blocks timed alert (so placed aftger it)
+  /* Keep the rest of the handlers from being executed
+  *   (and it prevents the event from bubbling up the DOM tree) */
+  //event.stopImmediatePropagation();  // crucial because of alert inside handler!
+
 
   if ( confirm("Press <OK> to restart from the top, <Cancel> to continue...")) {
     console.log("Restart-from-top is confirmed");
-    scroll__onload();
+    scroll__onload(event/*TODO: maybe extract onload worked function*/);
   } else {
     console.log("Restart-from-top is canceled; continuing");
     timed_alert("... continuing ...", 3/*sec*/);
