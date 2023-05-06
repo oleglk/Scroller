@@ -52,7 +52,7 @@ function scroll__onload(event)
 {
   /* Keep the rest of the handlers from being executed
   *   (and it prevents the event from bubbling up the DOM tree) */
-  //event.stopImmediatePropagation(); // crucial because of prompt inside handler!
+  event.stopImmediatePropagation(); // crucial because of prompt inside handler!
   
   // set tab title to score-file name
   let fileName = window.location.pathname.split("/").pop();
@@ -199,9 +199,9 @@ function manual_step_forth_handler(event)
 {
   event.preventDefault();
   // Unfortunately event prevention blocks timed alert
-  //~ /* Keep the rest of the handlers from being executed
-  //~ *   (and it prevents the event from bubbling up the DOM tree) */
-  //~ event.stopImmediatePropagation();
+  /* Keep the rest of the handlers from being executed
+  *   (and it prevents the event from bubbling up the DOM tree) */
+  event.stopImmediatePropagation();
 
   const nSteps = filter_positions(g_scoreStations).length;
   if ( g_currStep >= (nSteps - 1) )  {
@@ -219,9 +219,9 @@ function manual_step_back_handler(event)
 {
   event.preventDefault();
   // Unfortunately event prevention blocks timed alert
-  //~ /* Keep the rest of the handlers from being executed
-  //~ *   (and it prevents the event from bubbling up the DOM tree) */
-  //~ event.stopImmediatePropagation();
+  /* Keep the rest of the handlers from being executed
+  *   (and it prevents the event from bubbling up the DOM tree) */
+  event.stopImmediatePropagation();
 
   if ( g_currStep == 0 )  {
     msg = `ALREADY AT THE BEGINNING`;
@@ -289,7 +289,7 @@ function restart_handler(event)
   // Unfortunately event prevention blocks timed alert (so placed aftger it)
   /* Keep the rest of the handlers from being executed
   *   (and it prevents the event from bubbling up the DOM tree) */
-  //event.stopImmediatePropagation();  // crucial because of alert inside handler!
+  event.stopImmediatePropagation();  // crucial because of alert inside handler!
 
 
   if ( confirm("Press <OK> to restart from the top, <Cancel> to continue...")) {
