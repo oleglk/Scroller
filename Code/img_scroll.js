@@ -11,10 +11,17 @@ var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 
 var g_nextTimerIntervalId = 0;
 
+var g_windowEventListenersRegistry = [];  // for {event-type :: handler}
+
+
 ////////////////
 //window.addEventListener("load", scroll__onload);
-// To facilitate passing parameters to event handlers, use an anonymous function
-window.addEventListener("load", (event) => { scroll__onload(event) });
+//window.addEventListener("load", (event) => { scroll__onload(event) });
+
+/* To facilitate passing parameters to event handlers, use an anonymous function
+ * Wrap it by named wrapper to allow storing the handler for future removal */
+const wrap__scroll__onload  = (event) => { scroll__onload(event) }
+register_window_event_listener("load", wrap__scroll__onload);
 
 ////////////////
 
@@ -68,18 +75,19 @@ function scroll__onload(event)
   // Assign event handlers according to the operation mode
   // To facilitate passing parameters to event handlers, use an anonymous function
   if ( !g_stepManual )  {
-    window.addEventListener("click",        (event) => {
-                                            scroll_stop_handler(event)});
-    window.addEventListener("contextmenu",  (event) => {
-                                            scroll_start_handler(event)});
+    register_window_event_listener( "click",
+                                    wrap__scroll_stop_handler);
+    register_window_event_listener( "contextmenu",
+                                    wrap__scroll_start_handler);
+
   } else  {
-    window.addEventListener("click",        (event) => {
-                                            manual_step_back_handler(event)});
-    window.addEventListener("contextmenu",  (event) => {
-                                            manual_step_forth_handler(event)});
+    register_window_event_listener( "click",
+                                    wrap__manual_step_back_handler);
+    register_window_event_listener( "contextmenu",
+                                    wrap__manual_step_forth_handler);
   }
-  window.addEventListener("dblclick", (event) => {
-                                            restart_handler(event)});
+  register_window_event_listener(   "dblclick",
+                                    wrap__restart_handler);
   
   g_totalHeight = get_scroll_height();
   
@@ -94,6 +102,8 @@ function scroll__onload(event)
   g_scrollIsOn = false;
   g_currStep = (g_stepManual)? 0 : -1;
 }
+// wrapper had to be moved to the top - before the 1st use
+
 
 //~ function message__onMouseOver(event)
 //~ {
@@ -174,6 +184,9 @@ function scroll_start_handler(event)
   rec = filter_positions(g_scoreStations)[g_currStep];
   scroll_perform_one_step(g_currStep);
 }
+/* To facilitate passing parameters to event handlers, use an anonymous function
+ * Wrap it by named wrapper to allow storing the handler for future removal */
+const wrap__scroll_start_handler  = (event) => { scroll_start_handler(event) }
 
 
 // Automatic-scroll-mode handler of scroll-stop
@@ -192,6 +205,9 @@ function scroll_stop_handler(event)
   alert(msg);
   scroll_abort();
 }
+/* To facilitate passing parameters to event handlers, use an anonymous function
+ * Wrap it by named wrapper to allow storing the handler for future removal */
+const wrap__scroll_stop_handler  = (event) => { scroll_stop_handler(event) }
 
 
 // Manual-step-mode handler of step-forth
@@ -212,6 +228,10 @@ function manual_step_forth_handler(event)
   }
   return  _manual_one_step(+1);
 }
+/* To facilitate passing parameters to event handlers, use an anonymous function
+ * Wrap it by named wrapper to allow storing the handler for future removal */
+const wrap__manual_step_forth_handler  = (event) => {
+                                              manual_step_forth_handler(event) }
 
 
 // Manual-step-mode handler of step-back
@@ -231,6 +251,10 @@ function manual_step_back_handler(event)
   }
   return  _manual_one_step(-1);
 }
+/* To facilitate passing parameters to event handlers, use an anonymous function
+ * Wrap it by named wrapper to allow storing the handler for future removal */
+const wrap__manual_step_back_handler  = (event) => {
+                                              manual_step_back_handler(event) }
 
 
 // Performs common for both forth and back actions of one manual step
@@ -275,6 +299,7 @@ function _manual_one_step(stepIncrement)
   scroll_perform_one_step(g_currStep);
 }
 
+
 function restart_handler(event)
 {
   // restart with confirmation in auto mode would require pause scrolling
@@ -300,6 +325,9 @@ function restart_handler(event)
     timed_alert("... continuing ...", 3/*sec*/);
   }
 }
+/* To facilitate passing parameters to event handlers, use an anonymous function
+ * Wrap it by named wrapper to allow storing the handler for future removal */
+const wrap__restart_handler  = (event) => { restart_handler(event) }
 ///////////// End of handler functions ////////////////////////////////////////
 
 
@@ -607,4 +635,15 @@ function remove_filename_extension(filename)
   var lastDotPosition = filename.lastIndexOf(".");
   if (lastDotPosition === -1) return filename;
   else return filename.substr(0, lastDotPosition);
+}
+
+
+function register_window_event_listener(eventType, handler)
+{
+  if ( g_windowEventListenersRegistry.hasOwnProperty(eventType) ) {
+    window.removeEventListener(eventType,
+                               g_windowEventListenersRegistry[eventType]);
+  }
+  window.addEventListener(eventType, handler);
+  g_windowEventListenersRegistry[eventType] = handler;
 }
