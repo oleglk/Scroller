@@ -605,7 +605,7 @@ function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 function timed_alert(msg, durationSec)
 {
   var el = document.createElement("div");
-  el.setAttribute("style","position:absolute;top:80%;left:20%;background-color:lightblue;");
+  el.setAttribute("style","position:fixed;top:85%;left:20%;background-color:lightblue;");
   el.innerHTML = msg;
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
