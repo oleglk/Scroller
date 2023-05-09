@@ -43,7 +43,7 @@ export class PlayOrder
   // note, arrays provided in constructor are referenced and not altered
   constructor(
     name,
-    scoreLinesArray, /*{pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}*/
+    scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
     imagePathsArray /*STR*/
   )
@@ -54,8 +54,26 @@ export class PlayOrder
     this.imagePaths = imagePathsArray;
     //
 
-    this.scoreDataLines = filter_positions(scoreLinesArray);
-    this.pageLineHeights = null;  // array of max-line-height per page
+    //scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
+    this.scoreDataLines = null;
+    this.pageLineHeights = null;  // map of {pageId :: max-line-height}
+    //imgPageOccurences = {pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    this.imgPageOccurences = null;
+    
+    _process_inputs();
+  }
+
+  
+  _process_inputs()
+  {
+    
+    this.scoreDataLines = filter_and_massage_positions(scoreLinesArray);
+    // <= /*{pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}*/
+    
+    this.pageLineHeights = TODO__compute_all_pages_line_heights();
+
+    this.imgPageOccurences = compute_image_layout();
+    //{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
   }
   
   
@@ -76,19 +94,28 @@ export class PlayOrder
         (this.linePlayOrder[i].pageId == this.linePlayOrder[i-1].pageId) )  {
         continue; // prev page continues
       }
-      // page-turn detected; collect data for PREV page
-      let onePageOccurence = collect_page_occurence_ending_at(i-1);
+      // page-turn detected; collect data for PREV page in 'ScorePageOccurence'
+      let onePageOccurence = _collect_page_occurence_ending_at(i-1);
       if ( onePageOccurence === null )  {
         return  null;   // error already printed
       }
-      //TODO
-      currPage = page;
+      // 'onePageOccurence' == {pageId, firstLine, lastLine, yTop, yBottom}
+      imgOccurences.push( onePageOccurence );
+
+      // new page starts being referenced at #i, unless it's the end (afterLast)
+    }
+    if ( imgOccurences.length > 0 )  {
+      console.log(`-I- Found ${imgOccurences.length} image/page occurence(s)`);
+      return  imgOccurences;
+    } else {
+      console.log(`-E- Found no image/page occurence(s)`);
+      return  null;
     }
   }
   
   
-  // Returns {pageFirstLine, pageLastLine}
-  collect_page_occurence_ending_at(idxInLinePlayOrder)
+  // Returns 'ScorePageOccurence' or null on error
+  _collect_page_occurence_ending_at(idxInLinePlayOrder)
   {
     if ( (idxInLinePlayOrder < 0) ||
          (idxInLinePlayOrder >= this.linePlayOrder.length) )  {
@@ -97,12 +124,13 @@ export class PlayOrder
       return  null;
     }
     {page:pageId, lastLineIdx:lineIdx} = this.linePlayOrder[idxInLinePlayOrder];
+
     // scan backward to find the first line played from this page this time
     let firstIdxPlayedOnPage = 0;
     if ( idxInLinePlayOrder > 0 )   {
       for ( let i = idxInLinePlayOrder-1;  i >= 0;  i -= 1 )  {
         if ( this.linePlayOrder[i].pageId != page ) {
-          firstIdxPlayedOnPage = i;
+          firstIdxPlayedOnPage = i + 1;
           break;
         }
       }
@@ -114,21 +142,25 @@ export class PlayOrder
     const lastLine  = this.scoreLines.find( (element, index, array) => {
       (element.pageId == pageId) && (element.lineIdx == lastLineLocalIdx)} );
     // TODO: check for errors
-      
+
+    // compute this page vertical crop parameters
     const lineHeight = TODO__get_page_line_height(pageId);
+    const yTop = firstLine.yOnPage;
     const yBottom = lastLine.yOnPage + lineHeight;
-    
-    return  new ScorePageOccurence(
+
+    const occ = new ScorePageOccurence(
         /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
         pageId,
         firstLineLocalIdx,
         lastLineLocalIdx,
-        firstLine.yTop = yOnPage,
+        yTop,
         yBottom,
-        );
+    );
+    console.log(`-I- Detected image/page occurence: ${occ}`);
+    return  occ;
   }
   
-  TODO__compute_all_pages_line_heights(pageId)  {}
+  TODO__compute_all_pages_line_heights()  {}
   TODO__get_page_line_height(pageId)  {}
 
 }
@@ -140,12 +172,17 @@ export class PlayOrder
  ** BEGIN: access to scoreStationsArray  (TMP: COPY-PASTED)                   **
 *******************************************************************************/
 
-// Returns new array with only position-related lines from 'scoreStationsArray'
-function filter_positions(scoreStationsArray)
+/* Returns new array with only position-related lines
+ *   from 'scoreLinesAndControlArray'
+ * scoreLinesAndControlArray == {tag:STR, pageId:STR, x:INT,y:INT, timeSec:FLOAT}
+ * result             <= {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT} */
+function filter_and_massage_positions(scoreLinesAndControlArray)
 {
-  return  scoreStationsArray.filter((rec) =>  {
+  let onlyDataLines = scoreLinesAndControlArray.filter((rec) =>  {
     return  !rec.tag.startsWith("Control-");
   })
+  TODO__insert_local_line_indices(onlyDataLines);
+  return  onlyDataLines;
 }
 
 
