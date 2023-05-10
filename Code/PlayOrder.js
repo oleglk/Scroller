@@ -45,7 +45,7 @@ export class PlayOrder
     name,
     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
-    imagePathsArray /*STR*/
+    imagePathsArray /*STR*/  //TODO: maybe a Map?
   )
   {
     this.name = name;
@@ -58,6 +58,7 @@ export class PlayOrder
     this.scoreDataLines = null;
     this.pageLineHeights = null;  // map of {pageId :: max-line-height}
     //imgPageOccurences = {pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    this.pageHeights = null;  // map of {pageId :: image-height}
     this.imgPageOccurences = null;
     
     _process_inputs();
@@ -67,13 +68,21 @@ export class PlayOrder
   _process_inputs()
   {
     
-    this.scoreDataLines = filter_and_massage_positions(scoreLinesArray);
+    this.scoreDataLines = filter_and_massage_positions(this.scoreLines);
     // <= /*{pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}*/
+
+    this.pageHeights = _find_all_pages_heights();
+    if ( this.pageHeights == null )  {
+      // TODO: abort
+      return  false;  // error already printed
+    }
     
     this.pageLineHeights = TODO__compute_all_pages_line_heights();
 
     this.imgPageOccurences = compute_image_layout();
     //{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+
+    return  true;
   }
   
   
@@ -119,7 +128,7 @@ export class PlayOrder
   {
     if ( (idxInLinePlayOrder < 0) ||
          (idxInLinePlayOrder >= this.linePlayOrder.length) )  {
-      err = `-E- Invalid play-oreder index ${idxInLinePlayOrder}; should be 0...${this.linePlayOrder.length}`
+      err = `-E- Invalid play-order index ${idxInLinePlayOrder}; should be 0...${this.linePlayOrder.length}`
       console.log(err);   alert(err);
       return  null;
     }
@@ -127,26 +136,25 @@ export class PlayOrder
 
     // scan backward to find the first line played from this page this time
     let firstIdxPlayedOnPage = 0;
-    if ( idxInLinePlayOrder > 0 )   {
-      for ( let i = idxInLinePlayOrder-1;  i >= 0;  i -= 1 )  {
-        if ( this.linePlayOrder[i].pageId != page ) {
-          firstIdxPlayedOnPage = i + 1;
-          break;
-        }
+    // (the scan below occurs only if idxInLinePlayOrder > 0)
+    for ( let i = idxInLinePlayOrder-1;  i >= 0;  i -= 1 )  {
+      if ( this.linePlayOrder[i].pageId != page ) {
+        firstIdxPlayedOnPage = i + 1;
+        break;
       }
     }
     const firstLineLocalIdx = this.linePlayOrder[firstIdxPlayedOnPage].lineIdx;
     const lastLineLocalIdx  = this.linePlayOrder[idxInLinePlayOrder].lineIdx;
-    const firstLine = this.scoreLines.find( (element, index, array) => {
+    const firstLineRec = this.scoreLines.find( (element, index, array) => {
       (element.pageId == pageId) && (element.lineIdx == firstLineLocalIdx)} );
-    const lastLine  = this.scoreLines.find( (element, index, array) => {
+    const lastLineRec  = this.scoreLines.find( (element, index, array) => {
       (element.pageId == pageId) && (element.lineIdx == lastLineLocalIdx)} );
     // TODO: check for errors
 
     // compute this page vertical crop parameters
     const lineHeight = TODO__get_page_line_height(pageId);
-    const yTop = firstLine.yOnPage;
-    const yBottom = lastLine.yOnPage + lineHeight;
+    const yTop       = firstLineRec.yOnPage;         // uppermost on current page
+    const yBottom = lastLineRec.yOnPage + lineHeight;// lowermost on current page
 
     const occ = new ScorePageOccurence(
         /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
@@ -154,16 +162,79 @@ export class PlayOrder
         firstLineLocalIdx,
         lastLineLocalIdx,
         yTop,
-        yBottom,
+        yBottom
     );
     console.log(`-I- Detected image/page occurence: ${occ}`);
     return  occ;
   }
-  
-  TODO__compute_all_pages_line_heights()  {}
+
+
+  /* Builds and returns array of per-image/page line heights
+   * based on 'this.scoreLines' */
+  _compute_all_pages_line_heights()
+  {
+    // sort score lines by pageId__lineIdx
+    let scoreLinesSorted = this.scoreLines.toSorted( (a, b) => {
+      const pageCmp = a.pageId.localeCompare(b.pageId);
+      if ( pageCmp != 0 )  { return pageCmp; }
+      return  (a.lineIdx - b.lineIdx);
+    } )
+    // compute average line height per a page
+    let pageIdToLineHeightSum = new Map();
+    let pageIdToLineCount  = new Map();
+    // we can derive heights of all lines except the last one on each page
+    for ( let i = 1;  i < scoreLinesSorted.length;  i +=1 )
+    {
+      const currLine = scoreLinesSorted[i-1];  // {tag, pageId, x, y, timeSec}
+      const nextLine = scoreLinesSorted[i];    // {tag, pageId, x, y, timeSec}
+      if ( currLine.pageId !== nextLine.pageId )  {   // last on page
+        // image(s)/page(s) with single score line need special treatment
+        const imgHeight = TODO;
+        // 
+        continue;
+      }
+      if ( !pageIdToLineCount.has(currLine.pageId) )  {
+        pageIdToLineCount.set(currLine.pageId, 0);
+        pageIdToLineHeightSum.set(currLine.pageId, 0);
+      }
+      pageIdToLineCount.set(currLine.pageId,
+         pageIdToLineCount.get(currLine.pageId) + 1);
+      pageIdToLineHeightSum.set(currLine.pageId,
+         pageIdToLineHeightSum.get(currLine.pageId) + (nextLine.y - currLine.y));
+
+    }
+    let pageIdToLineHeight = new Map();
+    pageIdToLineHeightSum.forEach( (totalHeight, pageId) => {
+      pageIdToLineHeight.set(pageId,
+                             totalHeight / pageIdToLineCount.get(pageId));
+    } )
+
+  }
+
+
   TODO__get_page_line_height(pageId)  {}
 
-}
+  
+
+  /* Builds and returns array of per-image/page total heights
+   * based on 'this.scoreLines' */
+  _find_all_pages_heights()
+  {
+    let pageIdToHeight = new Map();
+    this.scoreLines.forEach( scoreLine => {  // {tag, pageId, x, y, timeSec}
+      if ( !pageIdToHeight.has(scoreLine.pageId) )  {
+        const h = read_image_size_record(this.scoreLines, scoreLine.pageId,
+                                         true/*alertErr*/);
+        if ( h < 0 )  {
+          return  null;  // error already printed
+        }
+        pageIdToHeight.set(scoreLine.pageId, h);
+      }
+    } );
+    return  pageIdToHeight;
+  }
+  
+}//END_OF__class_PlayOrder
 
 
 
