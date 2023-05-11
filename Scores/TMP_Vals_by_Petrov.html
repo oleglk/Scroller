@@ -11,7 +11,7 @@ img {
 }
 </style>
 
-<!-- Scoe/notes for "Papirossen" -->
+<!-- Score/notes for "TMP_Vals_by_Petrov" -->
 <script type="text/javascript">
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -92,7 +92,7 @@ var g_scoreStations_Groupped_NoRepeat = [
   {...score_viewpoint(g_scoreLines[4],   (1+1)     * g_fullLineInSec)},
   {...score_viewpoint(g_scoreLines[6],   (1+1)     * g_fullLineInSec)},
   {...score_viewpoint(g_scoreLines[8],   (1+1)     * g_fullLineInSec)},
-  {...(g_scorscore_viewpointeLines[10],  (1+1)     * g_fullLineInSec)},
+  {...score_viewpoint(g_scoreLines[10],  (1+1)     * g_fullLineInSec)},
   {...score_viewpoint(g_scoreLines[11],  (1+1+1)   * g_fullLineInSec)},
   ...g_scoreLines.filter(x => (x.tag == "Control-Height")),
 ];
@@ -102,28 +102,70 @@ var g_scoreStations_Groupped_NoRepeat = [
 var g_scoreStations = g_scoreStations_Groupped_NoRepeat.map(a => {return {...a}});
 ////////////////////////////////////////////////////////////////////////////////
 
+  
 /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
-var g_linePlayorder = []; //TODO
+var g_linePlayOrder_NoRepeat = [
+  {pageId:"pg01", lineIdx:0, timeSec:g_fullLineInSec},
+  {pageId:"pg01", lineIdx:1, timeSec:g_fullLineInSec},
+  {pageId:"pg01", lineIdx:2, timeSec:g_fullLineInSec},
+  {pageId:"pg01", lineIdx:3, timeSec:g_fullLineInSec},
+  {pageId:"pg01", lineIdx:4, timeSec:g_fullLineInSec},
+  {pageId:"pg02", lineIdx:0, timeSec:g_fullLineInSec},
+  {pageId:"pg02", lineIdx:1, timeSec:g_fullLineInSec},
+  {pageId:"pg02", lineIdx:2, timeSec:g_fullLineInSec},
+  {pageId:"pg02", lineIdx:3, timeSec:g_fullLineInSec},
+  {pageId:"pg02", lineIdx:4, timeSec:g_fullLineInSec},
+  {pageId:"pg03", lineIdx:0, timeSec:g_fullLineInSec},
+  {pageId:"pg03", lineIdx:1, timeSec:g_fullLineInSec},
+  {pageId:"pg03", lineIdx:2, timeSec:g_fullLineInSec},
+  {pageId:"pg03", lineIdx:3, timeSec:g_fullLineInSec},  
+];
+
+////////////////////////////////////////////////////////////////////////////////
+// ... the copy will be 2-level deep - fine for the task
+var g_linePlayOrder = g_linePlayOrder_NoRepeat.map(a => {return {...a}});
+////////////////////////////////////////////////////////////////////////////////
 
 var g_imgPaths = [  "Vals_by_Petrov__01.jpg",
                     "Vals_by_Petrov__02.jpg",
                     "Vals_by_Petrov__03.jpg"  ];
 
+// // Load the layout code
+// import { ScorePageOccurence, PlayOrder } from "../Code/PlayOrder.js";
+
 </script>
 
 <!-- Load the layout code -->
-<script src="../Code/PlayOrder.js"></script> 
+<script src="../Code/PlayOrder.js"></script>
 <!-- Load the scrolling code -->
 <!-- script src="../Code/img_scroll.js"></script> --> 
+
+
+<!-- Create the play-order layout-->
+<script type="text/javascript">
+////////////////////////////////////////////////////////////////////////////////
+
+// arguments:
+//     name,
+//     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
+//     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+//     imagePathsArray /*STR*/  //TODO: maybe a Map?
+var plo = new PlayOrder("Vals_by_Petrov",
+                        g_scoreLines,
+                        g_linePlayOrder,
+                        g_imgPaths
+                       );
+////////////////////////////////////////////////////////////////////////////////
+</script>
 
 
 </head>
 <body
 >
 
-<img src="Vals_by_Petrov__01.jpg" alt="Vals_by_Petrov__p1" id="pg01"/>
-<img src="Vals_by_Petrov__02.jpg" alt="Vals_by_Petrov__p2" id="pg02"/>
-<img src="Vals_by_Petrov__03.jpg" alt="Vals_by_Petrov__p3" id="pg03"/>
+<!-- <img src="Vals_by_Petrov__01.jpg" alt="Vals_by_Petrov__p1" id="pg01"/> -->
+<!-- <img src="Vals_by_Petrov__02.jpg" alt="Vals_by_Petrov__p2" id="pg02"/> -->
+<!-- <img src="Vals_by_Petrov__03.jpg" alt="Vals_by_Petrov__p3" id="pg03"/> -->
 
 </body>
 </html>
