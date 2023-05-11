@@ -77,9 +77,9 @@ export class PlayOrder
       return  false;  // error already printed
     }
     
-    this.pageLineHeights = TODO__compute_all_pages_line_heights();
+    this.pageLineHeights = _compute_all_pages_line_heights();
 
-    this.imgPageOccurences = compute_image_layout();
+    this.imgPageOccurences = compute_image_pages_layout();
     //{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
 
     return  true;
@@ -89,7 +89,7 @@ export class PlayOrder
   /* Computes and returns array of page play order -
    * - array of crop parameters for score-image occurences:
    *    {pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}  */
-  compute_image_layout()
+  compute_image_pages_layout()
   {
     let imgOccurences = [];
     let currPage = null;
@@ -189,8 +189,9 @@ export class PlayOrder
       const nextLine = scoreLinesSorted[i];    // {tag, pageId, x, y, timeSec}
       if ( currLine.pageId !== nextLine.pageId )  {   // last on page
         // image(s)/page(s) with single score line need special treatment
-        const imgHeight = TODO;
-        // 
+        const imgHeight = _get_page_total_height(currLine.pageId);
+        pageIdToLineCount.set(currLine.pageId, imgHeight);  // tmp: not optimal
+        // TODO: provide per-image last line bottom instead of total height
         continue;
       }
       if ( !pageIdToLineCount.has(currLine.pageId) )  {
@@ -212,7 +213,15 @@ export class PlayOrder
   }
 
 
-  TODO__get_page_line_height(pageId)  {}
+  _get_page_line_height(pageId)
+  {
+    if ( !this.pageLineHeights.has(pageId) )  {
+      err = `-E- Missing line height for page/image ${pageId} (image-path "TODO")`;
+      console.log(err);  alert(err);
+      return  -1;
+    }
+    return  this.pageLineHeights.get(pageId);
+  }
 
   
 
@@ -233,6 +242,18 @@ export class PlayOrder
     } );
     return  pageIdToHeight;
   }
+  
+  
+  _get_page_total_height(pageId)
+  {
+    if ( !this.pageHeights.has(pageId) )  {
+      err = `-E- Missing height for page/image ${pageId} (image-path "TODO")`;
+      console.log(err);  alert(err);
+      return  -1;
+    }
+    return  this.pageHeights.get(pageId);
+  }
+
   
 }//END_OF__class_PlayOrder
 
