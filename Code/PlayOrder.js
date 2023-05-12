@@ -67,7 +67,9 @@ class PlayOrder
     this._process_inputs();
   }
 
-  
+
+  /* Postprocesses user inputs for further operation convenience.
+   * Returns true on success. false on error. */
   _process_inputs()
   {
     
@@ -157,7 +159,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     if ( (firstLineRec === undefined) || (lastLineRec === undefined) )  {
       const err = `-E- Failed finding first (${firstLineLocalIdx} => ${firstLineRec}) and/or last (${lastLineLocalIdx} => ${lastLineRec}) line on page ${page} (path="TODO")`;
       console.log(err);  alert(err);
-debugger;  // OK_TMP
+//debugger;  // OK_TMP
       return  null;
     }
 
@@ -189,36 +191,40 @@ debugger;  // OK_TMP
       if ( pageCmp != 0 )  { return pageCmp; }
       return  (a.lineIdx - b.lineIdx);
     } )
+debugger;  // OK_TMP
     // compute average line height per a page
     let pageIdToLineHeightSum = new Map();
     let pageIdToLineCount  = new Map();
     // we can derive heights of all lines except the last one on each page
-    for ( let i = 1;  i < scoreLinesSorted.length;  i +=1 )
+    for ( let i = 1;  i < scoreLinesSorted.length;  i += 1 )
     {
       const currLine = scoreLinesSorted[i-1];  // {tag, pageId, x, y, timeSec}
       const nextLine = scoreLinesSorted[i];    // {tag, pageId, x, y, timeSec}
       if ( currLine.pageId !== nextLine.pageId )  {   // last on page
         // image(s)/page(s) with single score line need special treatment
-        const imgHeight = this._get_page_total_height(currLine.pageId);
-        pageIdToLineCount.set(currLine.pageId, imgHeight);  // tmp: not optimal
-        // TODO: provide per-image last line bottom instead of total height
+        if ( !pageIdToLineCount.has(currLine.pageId) )  {
+          const imgHeight = this._get_page_total_height(currLine.pageId);
+          pageIdToLineCount.set( currLine.pageId, 1 );
+          pageIdToLineHeightSum.set( currLine.pageId, imgHeight ); // unoptimal!
+          // TODO: provide per-image last line bottom instead of total height
+        }
         continue;
       }
       if ( !pageIdToLineCount.has(currLine.pageId) )  {
-        pageIdToLineCount.set(currLine.pageId, 0);
-        pageIdToLineHeightSum.set(currLine.pageId, 0);
+        pageIdToLineCount.set( currLine.pageId, 0 );
+        pageIdToLineHeightSum.set( currLine.pageId, 0 );
       }
-      pageIdToLineCount.set(currLine.pageId,
-         pageIdToLineCount.get(currLine.pageId) + 1);
-      pageIdToLineHeightSum.set(currLine.pageId,
-         pageIdToLineHeightSum.get(currLine.pageId) + (nextLine.y - currLine.y));
-
+      pageIdToLineCount.set( currLine.pageId,
+                             pageIdToLineCount.get(currLine.pageId) + 1 );
+      pageIdToLineHeightSum.set( currLine.pageId,
+                                 (pageIdToLineHeightSum.get(currLine.pageId) +
+                                  (nextLine.yOnPage - currLine.yOnPage)) );
     }
     let pageIdToLineHeight = new Map();
     // note, 10% added to line height to warrant finger labels inclusion
     pageIdToLineHeightSum.forEach( (totalHeight, pageId) => {
-      pageIdToLineHeight.set(pageId,
-                             1.1 * totalHeight / pageIdToLineCount.get(pageId));
+      pageIdToLineHeight.set( pageId,
+                              1.1* totalHeight / pageIdToLineCount.get(pageId) );
     } )
     
     return  pageIdToLineHeight;
