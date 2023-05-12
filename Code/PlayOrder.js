@@ -165,8 +165,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     // compute this page vertical crop parameters
     const lineHeight = this._get_page_line_height(page);
+    const imgHeight  = this._get_page_total_height(page);
     const yTop       = firstLineRec.yOnPage;         // uppermost on current page
-    const yBottom = lastLineRec.yOnPage + lineHeight;// lowermost on current page
+    const yBottom    = Math.min((lastLineRec.yOnPage + lineHeight),
+                                imgHeight);          // lowermost on current page
 
     const occ = new ScorePageOccurence(
         /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
@@ -191,7 +193,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       if ( pageCmp != 0 )  { return pageCmp; }
       return  (a.lineIdx - b.lineIdx);
     } )
-debugger;  // OK_TMP
+//debugger;  // OK_TMP
     // compute average line height per a page
     let pageIdToLineHeightSum = new Map();
     let pageIdToLineCount  = new Map();
@@ -224,7 +226,7 @@ debugger;  // OK_TMP
     // note, 10% added to line height to warrant finger labels inclusion
     pageIdToLineHeightSum.forEach( (totalHeight, pageId) => {
       pageIdToLineHeight.set( pageId,
-                              1.1* totalHeight / pageIdToLineCount.get(pageId) );
+                              1.2* totalHeight / pageIdToLineCount.get(pageId) );
     } )
     
     return  pageIdToLineHeight;
