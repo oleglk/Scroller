@@ -19,6 +19,8 @@
 //~ }
 
 
+var _DBG__scoreDataLines = null;  // OK_TMP
+
 
 /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
 class ScorePageOccurence
@@ -71,6 +73,7 @@ class PlayOrder
     
     this.scoreDataLines = filter_and_massage_positions(this.scoreLines);
     // <= /*{pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}*/
+_DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     this.pageHeights = this._find_all_pages_heights();
     if ( this.pageHeights == null )  {
@@ -147,13 +150,14 @@ class PlayOrder
     }
     const firstLineLocalIdx = this.linePlayOrder[firstIdxPlayedOnPage].lineIdx;
     const lastLineLocalIdx  = this.linePlayOrder[idxInLinePlayOrder].lineIdx;
-    const firstLineRec = this.scoreDataLines.find( (element, index, array) => {
-      (element.pageId == page) && (element.lineIdx == firstLineLocalIdx)} );
-    const lastLineRec  = this.scoreDataLines.find( (element, index, array) => {
-      (element.pageId == page) && (element.lineIdx == lastLineLocalIdx)} );
+    const firstLineRec = this.scoreDataLines.find( (element, index, array) =>
+      (element.pageId == page) && (element.lineIdx == firstLineLocalIdx) );
+    const lastLineRec  = this.scoreDataLines.find( (element, index, array) =>
+      (element.pageId == page) && (element.lineIdx == lastLineLocalIdx) );
     if ( (firstLineRec === undefined) || (lastLineRec === undefined) )  {
       const err = `-E- Failed finding first (${firstLineLocalIdx} => ${firstLineRec}) and/or last (${lastLineLocalIdx} => ${lastLineRec}) line on page ${page} (path="TODO")`;
       console.log(err);  alert(err);
+debugger;  // OK_TMP
       return  null;
     }
 
@@ -284,12 +288,23 @@ function filter_and_massage_positions(scoreLinesAndControlArray)
     return  !rec.tag.startsWith("Control-");
   })
 
-  // insert local line indices
-  onlyDataLinesWithIdx = [];
-  for ( const [i, lineRec] of onlyDataLines.entries() )  {
-    let recWithIdx = { ...lineRec, ...{lineIdx:i} };
+  // insert local line indices and rename .y into .yOnPage
+  let onlyDataLinesWithIdx = [];
+  let prevPageId = null;
+  let localIdx   = -1;
+  onlyDataLines.forEach( line => {
+    localIdx = ((prevPageId === null) || (prevPageId !== line.pageId))? 0 :
+                                                                    localIdx + 1;
+    const {y, ...otherProps} = line;
+    let recWithIdx = {yOnPage: y,  lineIdx: localIdx,  ...otherProps};
     onlyDataLinesWithIdx.push( recWithIdx );
-  }
+    prevPageId = line.pageId;
+  } );
+  // (the code below appended global indices, which is wrong)
+  // for ( const [i, lineRec] of onlyDataLines.entries() )  {
+  //   let recWithIdx = { ...lineRec, ...{lineIdx:i} };
+  //   onlyDataLinesWithIdx.push( recWithIdx );
+  // }
   
   return  onlyDataLinesWithIdx;
 }
