@@ -126,9 +126,14 @@ var g_linePlayOrder_NoRepeat = [
 var g_linePlayOrder = g_linePlayOrder_NoRepeat.map(a => {return {...a}});
 ////////////////////////////////////////////////////////////////////////////////
 
-var g_imgPaths = [  "Vals_by_Petrov__01.jpg",
-                    "Vals_by_Petrov__02.jpg",
-                    "Vals_by_Petrov__03.jpg"  ];
+// var g_imgPaths = [  "Vals_by_Petrov__01.jpg",
+//                     "Vals_by_Petrov__02.jpg",
+//                     "Vals_by_Petrov__03.jpg"  ];
+  var g_pageImgPathsMap = new Map([
+    "pageId","pg01",  "imgPath","Vals_by_Petrov__01.jpg",
+    "pageId","pg02",  "imgPath","Vals_by_Petrov__02.jpg",
+    "pageId","pg03",  "imgPath","Vals_by_Petrov__03.jpg",
+  ]);
 
 // // Load the layout code
 // import { ScorePageOccurence, PlayOrder } from "../Code/PlayOrder.js";
@@ -137,6 +142,7 @@ var g_imgPaths = [  "Vals_by_Petrov__01.jpg",
 
 <!-- Load the layout code -->
 <script src="../Code/PlayOrder.js"></script>
+<script src="../Code/ScoreImgLayout.js"></script>
 <!-- Load the scrolling code -->
 <!-- script src="../Code/img_scroll.js"></script> --> 
 
@@ -153,8 +159,16 @@ var g_imgPaths = [  "Vals_by_Petrov__01.jpg",
 var plo = new PlayOrder("Vals_by_Petrov",
                         g_scoreLines,
                         g_linePlayOrder,
-                        g_imgPaths
+                        g_pageImgPathsMap
                        );
+
+// arguments:
+//    pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
+//    imgPageOccurences /*pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+var iml = new ScoreImgLayout(g_pageImgPathsMap,
+                             plo.imgPageOccurences
+                            );
+iml.render_images();
 ////////////////////////////////////////////////////////////////////////////////
 </script>
 

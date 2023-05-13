@@ -25,14 +25,14 @@ var _DBG__scoreDataLines = null;  // OK_TMP
 /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
 class ScorePageOccurence
 {
-  constructor(pageId/*STR*/,
+  constructor(occurenceId/*STR*/,
               firstLine/*INT*/, lastLine/*INT*/, yTop/*INT*/, yBottom/*INT*/)
   {
-    this.pageId     = pageId;     /*STR*/
-    this.firstLine  = firstLine;  /*INT*/
-    this.lastLine   = lastLine;   /*INT*/
-    this.yTop       = yTop;       /*INT*/
-    this.yBottom    = yBottom;    /*INT*/
+    this.occurenceId = occurenceId;/*STR*/
+    this.firstLine   = firstLine;  /*INT*/
+    this.lastLine    = lastLine;   /*INT*/
+    this.yTop        = yTop;       /*INT*/
+    this.yBottom     = yBottom;    /*INT*/
   }
   
   toString() {
@@ -48,19 +48,19 @@ class PlayOrder
     name,
     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
-    imagePathsArray /*STR*/  //TODO: maybe a Map?
+    pageImagePathsMap /*pageId:STR => imgPath:STR*/
   )
   {
     this.name = name;
     this.scoreLines = scoreLinesArray;
     this.linePlayOrder = linePlayOrderArray;
-    this.imagePaths = imagePathsArray;
+    this.pageImagePaths = pageImagePathsMap;
     //
 
     //scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
     this.scoreDataLines = null;
     this.pageLineHeights = null;  // map of {pageId :: max-line-height}
-    //imgPageOccurences = {pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    //imgPageOccurences = {occurenceId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     this.pageHeights = null;  // map of {pageId :: image-height}
     this.imgPageOccurences = null;
     
@@ -86,7 +86,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     this.pageLineHeights = this._compute_all_pages_line_heights();
 
     this.imgPageOccurences = this.compute_image_pages_layout();
-    //{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    //{occurenceId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
 
     return  true;
   }
@@ -114,6 +114,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       if ( onePageOccurence === null )  {
         return  null;   // error already printed
       }
+      // TODO: adjust value of 'occurenceId' property; currently stores pageId
       // 'onePageOccurence' == {pageId, firstLine, lastLine, yTop, yBottom}
       imgOccurences.push( onePageOccurence );
 
@@ -171,12 +172,12 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                                 imgHeight);          // lowermost on current page
 
     const occ = new ScorePageOccurence(
-        /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
-        page,
-        firstLineLocalIdx,
-        lastLineLocalIdx,
-        yTop,
-        yBottom
+      /*{occurenceId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+      page /*preliminary value to be transformed into occurence-id when known*/,
+      firstLineLocalIdx,
+      lastLineLocalIdx,
+      yTop,
+      yBottom
     );
     console.log(`-I- Detected image/page occurence: ${occ}`);
     return  occ;
