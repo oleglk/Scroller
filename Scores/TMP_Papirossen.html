@@ -92,6 +92,7 @@ var g_linePlayOrder = [
 
 <!-- Load the layout code -->
 <script src="../Code/PlayOrder.js"></script>
+<script src="../Code/ScoreImgLayout.js"></script>
 <!-- <\!-- Load the scrolling code -\-> -->
 <!-- <script src="../Code/img_scroll.js"></script>  -->
 
@@ -115,8 +116,16 @@ var g_linePlayOrder = [
 var plo = new PlayOrder("Papirossen",
                         g_scoreLines,
                         g_linePlayOrder,
-                        g_imgPaths
+                        g_pageImgPathsMap
                        );
+
+// arguments:
+//    pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
+//    imgPageOccurences /*pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+var iml = new ScoreImgLayout(g_pageImgPathsMap,
+                             plo.imgPageOccurences
+                            );
+iml.render_images();
 ////////////////////////////////////////////////////////////////////////////////
 </script>
 
