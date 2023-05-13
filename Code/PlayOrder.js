@@ -25,10 +25,10 @@ var _DBG__scoreDataLines = null;  // OK_TMP
 /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
 class ScorePageOccurence
 {
-  constructor(occurenceId/*STR*/,
+  constructor(pageId/*STR*/,
               firstLine/*INT*/, lastLine/*INT*/, yTop/*INT*/, yBottom/*INT*/)
   {
-    this.occurenceId = occurenceId;/*STR*/
+    this.pageId = pageId;/*STR*/
     this.firstLine   = firstLine;  /*INT*/
     this.lastLine    = lastLine;   /*INT*/
     this.yTop        = yTop;       /*INT*/
@@ -60,7 +60,7 @@ class PlayOrder
     //scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
     this.scoreDataLines = null;
     this.pageLineHeights = null;  // map of {pageId :: max-line-height}
-    //imgPageOccurences = {occurenceId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    //imgPageOccurences = {pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     this.pageHeights = null;  // map of {pageId :: image-height}
     this.imgPageOccurences = null;
     
@@ -86,7 +86,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     this.pageLineHeights = this._compute_all_pages_line_heights();
 
     this.imgPageOccurences = this.compute_image_pages_layout();
-    //{occurenceId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    //{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
 
     return  true;
   }
@@ -114,7 +114,6 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       if ( onePageOccurence === null )  {
         return  null;   // error already printed
       }
-      // TODO: adjust value of 'occurenceId' property; currently stores pageId
       // 'onePageOccurence' == {pageId, firstLine, lastLine, yTop, yBottom}
       imgOccurences.push( onePageOccurence );
 
@@ -172,7 +171,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                                 imgHeight);          // lowermost on current page
 
     const occ = new ScorePageOccurence(
-      /*{occurenceId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+      /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
       page /*preliminary value to be transformed into occurence-id when known*/,
       firstLineLocalIdx,
       lastLineLocalIdx,

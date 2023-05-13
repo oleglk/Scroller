@@ -4,14 +4,18 @@
 class ScoreImgLayout
 {
   constructor (
-    pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
-    imgPageOccurences /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+    pageImagePathsMap,     /*pageId:STR => imgPath:STR*/
+    imgPageOccurencesArray /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
   )  {
     this.pageImagePaths = pageImagePathsMap;  /*pageId:STR => imgPath:STR*/
     this.imgPageOccurences = imgPageOccurencesArray;
   }
 
 
+  /* Draws the images AND builds array of (occurence-based) score-stations.
+   * TODO: Score-stations must include 'occurenceId' field.
+   * TODO: what should be the 'y' value in a score-station - with crop?
+ */
   render_images()  {
     for ( const [i, occ] of this.imgPageOccurences.entries() )  {
       if ( !this.pageImagePaths.has(occ.pageId) )  {

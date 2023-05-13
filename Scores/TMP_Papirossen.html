@@ -84,7 +84,7 @@ var g_linePlayOrder = [
 
 //var g_imgPaths = [  "Papirossen.jpg"  ];
   var g_pageImgPathsMap = new Map([
-    "pageId","pg01",  "imgPath","Papirossen.jpg"
+    ["pg01", "Papirossen.jpg"]
   ]);
 
 </script>
@@ -96,7 +96,14 @@ var g_linePlayOrder = [
 <!-- <script src="../Code/img_scroll.js"></script>  -->
 
 
-<!-- Create the play-order layout-->
+</head>
+<body>
+
+<!-- <img src="Papirossen.jpg" alt="Papirossen" id="pg01"/> -->
+
+</body>
+
+<!-- Create the play-order layout (AFTER the body)-->
 <script type="text/javascript">
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -113,12 +120,5 @@ var plo = new PlayOrder("Papirossen",
 ////////////////////////////////////////////////////////////////////////////////
 </script>
 
-
-</head>
-<body>
-
-<!-- <img src="Papirossen.jpg" alt="Papirossen" id="pg01"/> -->
-
-</body>
 </html>
 
