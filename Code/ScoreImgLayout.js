@@ -19,7 +19,7 @@ class ScoreImgLayout
   render_images()  {
     for ( const [i, occ] of this.imgPageOccurences.entries() )  {
       if ( !this.pageImagePaths.has(occ.pageId) )  {
-        err = `-E- Missing image path for page "${occ.pageId}. Aborting`;
+        err = `-E- Missing image path for page "${occ.pageId}". Aborting`;
         console.log(err);  alert(err);
         return  false;
       }
