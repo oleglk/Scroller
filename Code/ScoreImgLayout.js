@@ -40,17 +40,15 @@ class ScoreImgLayout
     let imgPath = this.pageImagePaths.get(imagePageOcc.pageId);
     // TODO: check existence of 'imgPath' - in the map and on disk
 
-    let pageImgShowPromise = render_img_crop_height(
-             imgPath, imagePageOcc.yTop, imagePageOcc.yBottom).then(
-      croppedImageCanvas => {
-        console.log(`-I- Success reported for rendering image occurence "TODO" (page="${imagePageOcc.pageId}", path="${imgPath}"); size: ${croppedImageCanvas.width}x${croppedImageCanvas.height}`);
-      },
-      error => {
-        console.log(error);  alert(error);
-        return  false;
-      }
-    );
-
+    let croppedImageCanvas = render_img_crop_height(imgPath,
+                                       imagePageOcc.yTop, imagePageOcc.yBottom);
+    if ( croppedImageCanvas != null )  {
+      console.log(`-I- Success reported for rendering image occurence "TODO" (page="${imagePageOcc.pageId}", path="${imgPath}"); size: ${croppedImageCanvas.width}x${croppedImageCanvas.height}`);
+    } else {
+      let err = `Failed rendering image occurence "TODO" (page="${imagePageOcc.pageId}", path="${imgPath}")`;
+      console.log(err);  alert(err);
+      return  false;
+    }
     return  true;
   }
 }
@@ -60,54 +58,47 @@ class ScoreImgLayout
 /**
  * @param {string} url - The source image
  * @param {number} aspectRatio - The aspect ratio
- * @return {Promise<HTMLCanvasElement>} A Promise that resolves with the resulting image as a canvas element
+ * @return {<HTMLCanvasElement>} - the resulting image as a canvas element
  * (Adopted from:
  *    https://pqina.nl/blog/cropping-images-to-an-aspect-ratio-with-javascript/)
  */
-function render_img_crop_height(url, yTop, yBottom) {
-  // we return a Promise that gets resolved with our canvas element
-  return new Promise((resolve, reject) => {
-    // this image will hold our source image data
-    const inputImage = new Image();
+function render_img_crop_height(imgPath, yTop, yBottom) {
+  // this image will hold our source image data
+  const inputImage = new Image();
 
-    // we want to wait for our image to load
-    inputImage.onload = () => {
-      // let's store the width and height of our image
-      const inputWidth = inputImage.naturalWidth;
-      const inputHeight = inputImage.naturalHeight;
+  // let's store the width and height of our image
+  const inputWidth = inputImage.naturalWidth;
+  const inputHeight = inputImage.naturalHeight;
 
-      let outputWidth = inputWidth;  // we crop only vertically
-      let outputHeight = yBottom - yTop + 1;
-      if ( outputHeight > inputHeight )  {
-        const wrn = `-W- Cannot crop image "${url}" from height ${inputHeight} to target height ${outputHeight}`; 
-        console.log(wrn);  //alert(wrn);  // TODO: remove alert
-        outputHeight = inputHeight; // an alternative to rejcection?
-        reject(new Error(wrn));
-      }
+  let outputWidth = inputWidth;  // we crop only vertically
+  let outputHeight = yBottom - yTop + 1;
+  if ( outputHeight > inputHeight )  {
+    const err = `-E- Cannot crop image "${imgPath}" from height ${inputHeight} to target height ${outputHeight}`; 
+    console.log(err);  //alert(err);  // TODO: remove alert
+    outputHeight = inputHeight; // an alternative to rejcection?
+    return  null;
+  }
 
-      // calculate the position to draw the image at
-      const outputX = 0;
-      const outputY = yTop;
+  // calculate the position to draw the image at
+  const outputX = 0;
+  const outputY = yTop;
 
-      // create a canvas that will present the output image
-      const outputImage = document.createElement('canvas');
+  // create a canvas that will present the output image
+  const outputImage = document.createElement('canvas');
 
-      // set it to the same size as the image
-      outputImage.width = outputWidth;
-      outputImage.height = outputHeight;
+  // set it to the same size as the image
+  outputImage.width = outputWidth;
+  outputImage.height = outputHeight;
 
-      // draw our image at position 0, 0 on the canvas
-      const ctx = outputImage.getContext('2d');
-      ctx.drawImage(inputImage, outputX, outputY);
+  // draw our image at position 0, 0 on the canvas
+  const ctx = outputImage.getContext('2d');
+  ctx.drawImage(inputImage, outputX, outputY);
 
-      // show both the image and the canvas
-      document.body.appendChild(inputImage);
-      document.body.appendChild(outputImage);
+  // show both the image and the canvas
+  document.body.appendChild(inputImage);
+  document.body.appendChild(outputImage);
 
-      resolve(outputImage);
-    };
-
-    // start loading our image
-    inputImage.src = url;
-  });
+  // start loading our image
+  inputImage.src = imgPath;
+  return  outputImage;
 }
