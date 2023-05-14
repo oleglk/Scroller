@@ -21,7 +21,7 @@
 
 var _DBG__scoreDataLines = null;  // OK_TMP
 
-
+////////////////////////////////////////////////////////////////////////////////
 /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
 class ScorePageOccurence
 {
@@ -105,11 +105,16 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       //const currLine = (!afterLast)? this.scoreDataLines[i] : {"", -1, -1}
       // look for changes in file/page references
       if ( first )  { continue; } // nothing to do yet
-      if ( !first && !afterLast &&
-        (this.linePlayOrder[i].pageId == this.linePlayOrder[i-1].pageId) )  {
-        continue; // prev page continues
+      let noJump = !first && !afterLast
+        &&
+        (this.linePlayOrder[i].pageId == this.linePlayOrder[i-1].pageId)
+        &&
+        (this.linePlayOrder[i].lineIdx == (1+ this.linePlayOrder[i-1].lineIdx));
+      if ( noJump )  {
+        continue; // continues to the next line on the prev page
       }
-      // page-turn detected; collect data for PREV page in 'ScorePageOccurence'
+      /* page-turn or jump within page is detected;
+       * collect data for PREV page in 'ScorePageOccurence' */
       let onePageOccurence = this._collect_page_occurence_ending_at(i-1);
       if ( onePageOccurence === null )  {
         return  null;   // error already printed
@@ -141,11 +146,15 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     const {pageId: page,  lineIdx: lastLineIdx} =
                                          this.linePlayOrder[idxInLinePlayOrder];
 
-    // scan backward to find the first line played from this page this time
-    let firstIdxPlayedOnPage = 0;
+    /* scan backward to find the first line played this time
+     *   (a) from this page AND (b) in order */
+    let firstIdxPlayedOnPage = 0;  // actually on page-occurence
     // (the scan below occurs only if idxInLinePlayOrder > 0)
     for ( let i = idxInLinePlayOrder-1;  i >= 0;  i -= 1 )  {
-      if ( this.linePlayOrder[i].pageId != page ) {
+      let lineOnPageIdx_1 = this.linePlayOrder[i  ].lineIdx;
+      let lineOnPageIdx_2 = this.linePlayOrder[i+1].lineIdx - 1;
+      if ( (this.linePlayOrder[i].pageId != page) ||
+           (lineOnPageIdx_1 != lineOnPageIdx_2) ) {
         firstIdxPlayedOnPage = i + 1;
         break;
       }
