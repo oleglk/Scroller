@@ -302,7 +302,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
         pageIdToCount.set(occ.pageId, (pageIdToCount.get(occ.pageId) + 1));
       }
       let pageOccCntSoFar = pageIdToCount.get(occ.pageId);
-      occ.occId = occ.pageId + ":" + zero_pad( pageIdToCount.get(occ.pageId) );
+      occ.occId = occ.pageId + ":" + zero_pad(pageIdToCount.get(occ.pageId), 2);
     }
   }
   
