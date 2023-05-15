@@ -25,7 +25,7 @@ var _DBG__scoreDataLines = null;  // OK_TMP
 /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
 class ScorePageOccurence
 {
-  constructor(pageId/*STR*/,
+  constructor(occId/*STR*/, pageId/*STR*/,
               firstLine/*INT*/, lastLine/*INT*/, yTop/*INT*/, yBottom/*INT*/)
   {
     this.pageId = pageId;/*STR*/
@@ -60,8 +60,9 @@ class PlayOrder
     //scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
     this.scoreDataLines = null;
     this.pageLineHeights = null;  // map of {pageId :: max-line-height}
-    //imgPageOccurences = {pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     this.pageHeights = null;  // map of {pageId :: image-height}
+
+    //imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     this.imgPageOccurences = null;
     
     this._process_inputs();
@@ -86,8 +87,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     this.pageLineHeights = this._compute_all_pages_line_heights();
 
     this.imgPageOccurences = this.compute_image_pages_layout();
-    //{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    //{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
 
+    this._name_image_page_occurences();
+    
     return  true;
   }
   
@@ -180,7 +183,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                                 imgHeight);          // lowermost on current page
 
     const occ = new ScorePageOccurence(
-      /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+      //{occId:STR, pageId:STR, firstLine:INT,lastLine:INT, yTop:INT,yBottom:INT}
+      "UNDEF",
       page /*preliminary value to be transformed into occurence-id when known*/,
       firstLineLocalIdx,
       lastLineLocalIdx,
@@ -285,8 +289,39 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     return  this.pageHeights.get(pageId);
   }
 
+
+  // Sets occurence "occId" fields to <pageId><num-of-this-page-current-ocuurence>
+  _name_image_page_occurences()
+  {
+    //imgPageOccurences = {pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    let pageIdToCount = new Map();
+    for ( const [i, occ] of this.imgPageOccurences.entries() )  {
+      if ( !pageIdToCount.has(occ.pageId) )  {
+        pageIdToCount.set(occ.pageId, 1);
+      } else {
+        pageIdToCount.set(occ.pageId, (pageIdToCount.get(occ.pageId) + 1));
+      }
+      let pageOccCntSoFar = pageIdToCount.get(occ.pageId);
+      occ.occId = occ.pageId + ":" + zero_pad( pageIdToCount.get(occ.pageId) );
+    }
+  }
   
 }//END_OF__class_PlayOrder
+
+
+/*******************************************************************************
+ ** BEGIN: common utilities                                                   **
+*******************************************************************************/
+
+// Copied from https://stackoverflow.com/questions/2998784/how-to-output-numbers-with-leading-zeros-in-javascript
+// Prepends number with zeroes
+function zero_pad(num, places)
+{
+  return String(num).padStart(places, '0');
+}
+/*******************************************************************************
+ ** END: common utilities                                                   **
+*******************************************************************************/
 
 
 

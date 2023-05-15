@@ -5,7 +5,7 @@ class ScoreImgLayout
 {
   constructor (
     pageImagePathsMap,     /*pageId:STR => imgPath:STR*/
-    imgPageOccurencesArray /*{pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+    imgPageOccurencesArray /*{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
   )  {
     this.pageImagePaths = pageImagePathsMap;  /*pageId:STR => imgPath:STR*/
     this.imgPageOccurences = imgPageOccurencesArray;
@@ -36,14 +36,14 @@ class ScoreImgLayout
   /* Draws the specified occurence with crop applied */
   _render_one_page_occurence(imagePageOcc/*ScorePageOccurence*/)
   {
-    /*ScorePageOccurence == {pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+    /*ScorePageOccurence == {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
     let imgPath = this.pageImagePaths.get(imagePageOcc.pageId);
     // TODO: check existence of 'imgPath' - in the map and on disk
 
     let pageImgShowPromise = render_img_crop_height(
              imgPath, imagePageOcc.yTop, imagePageOcc.yBottom).then(
       croppedImageCanvas => {
-        console.log(`-I- Success reported for rendering image occurence "TODO" (page="${imagePageOcc.pageId}", path="${imgPath}"); size: ${croppedImageCanvas.width}x${croppedImageCanvas.height}`);
+        console.log(`-I- Success reported for rendering image occurence "${imagePageOcc.occId}" (page="${imagePageOcc.pageId}", path="${imgPath}"); size: ${croppedImageCanvas.width}x${croppedImageCanvas.height}`);
       },
       error => {
         console.log(error);  alert(error);
