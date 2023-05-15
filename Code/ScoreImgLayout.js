@@ -16,7 +16,7 @@ class ScoreImgLayout
    * TODO: Score-stations must include 'occurenceId' field.
    * TODO: what should be the 'y' value in a score-station - with crop?
  */
-  render_images()  {
+  async render_images()  {
     for ( const [i, occ] of this.imgPageOccurences.entries() )  {
       if ( !this.pageImagePaths.has(occ.pageId) )  {
         err = `-E- Missing image path for page "${occ.pageId}". Aborting`;
@@ -24,8 +24,14 @@ class ScoreImgLayout
         return  false;
       }
 
-      if ( false == this._render_one_page_occurence(occ) )  {
-        return  false;  // error already printed
+      let imgPath = this.pageImagePaths.get(occ.pageId);
+      try {
+        let croppedImageCanvas = await this._render_one_page_occurence(occ);
+        console.log(`-I- Success reported for rendering image occurence "${occ.occId}" (page="${occ.pageId}", path="${imgPath}"); size: ${croppedImageCanvas.width}x${croppedImageCanvas.height}`);
+      } catch (rejectErrorMsg) {
+        console.log(`Exception while trying to render '${occ}'`);
+        console.log(rejectErrorMsg);  alert(rejectErrorMsg);
+        return  false;
       }
     }
     console.log(`-I- Success rendering ${this.imgPageOccurences.length} image-page occurence(s)`);
@@ -34,24 +40,17 @@ class ScoreImgLayout
 
 
   /* Draws the specified occurence with crop applied */
-  _render_one_page_occurence(imagePageOcc/*ScorePageOccurence*/)
+  async _render_one_page_occurence(imagePageOcc/*ScorePageOccurence*/)
   {
     /*ScorePageOccurence == {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
     let imgPath = this.pageImagePaths.get(imagePageOcc.pageId);
     // TODO: check existence of 'imgPath' - in the map and on disk
 
     let pageImgShowPromise = render_img_crop_height(
-             imgPath, imagePageOcc.yTop, imagePageOcc.yBottom).then(
-      croppedImageCanvas => {
-        console.log(`-I- Success reported for rendering image occurence "${imagePageOcc.occId}" (page="${imagePageOcc.pageId}", path="${imgPath}"); size: ${croppedImageCanvas.width}x${croppedImageCanvas.height}`);
-      },
-      error => {
-        console.log(error);  alert(error);
-        return  false;
-      }
-    );
+      /*"QQQ"*/imgPath, imagePageOcc.yTop, imagePageOcc.yBottom);
+    console.log(`-D- Initiated rendering image occurence "${imagePageOcc.occId}" (page="${imagePageOcc.pageId}", path="${imgPath}")`);
 
-    return  true;
+    return  pageImgShowPromise;
   }
 }
 
@@ -64,7 +63,7 @@ class ScoreImgLayout
  * (Adopted from:
  *    https://pqina.nl/blog/cropping-images-to-an-aspect-ratio-with-javascript/)
  */
-function render_img_crop_height(url, yTop, yBottom) {
+async function render_img_crop_height(url, yTop, yBottom) {
   // we return a Promise that gets resolved with our canvas element
   return new Promise((resolve, reject) => {
     // this image will hold our source image data
@@ -82,7 +81,7 @@ function render_img_crop_height(url, yTop, yBottom) {
         const wrn = `-W- Cannot crop image "${url}" from height ${inputHeight} to target height ${outputHeight}`; 
         console.log(wrn);  //alert(wrn);  // TODO: remove alert
         outputHeight = inputHeight; // an alternative to rejcection?
-        reject(new Error(wrn));
+        reject(new Error(wrn));  // Error() provides call stack and std format
       }
 
       // calculate the position to draw the image at

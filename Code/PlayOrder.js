@@ -28,7 +28,8 @@ class ScorePageOccurence
   constructor(occId/*STR*/, pageId/*STR*/,
               firstLine/*INT*/, lastLine/*INT*/, yTop/*INT*/, yBottom/*INT*/)
   {
-    this.pageId = pageId;/*STR*/
+    this.occId       = occId;/*STR*/
+    this.pageId      = pageId;/*STR*/
     this.firstLine   = firstLine;  /*INT*/
     this.lastLine    = lastLine;   /*INT*/
     this.yTop        = yTop;       /*INT*/
@@ -36,7 +37,7 @@ class ScorePageOccurence
   }
   
   toString() {
-    return `{pageId:"${this.pageId}", firstLine:${this.firstLine}, lastLine:${this.lastLine}, yTop:${this.yTop}, yBottom:${this.yBottom}}`
+    return `{occId:"${this.occId}", pageId:"${this.pageId}", firstLine:${this.firstLine}, lastLine:${this.lastLine}, yTop:${this.yTop}, yBottom:${this.yBottom}}`
   }
 }//END_OF__class_ScorePageOccurence
 
