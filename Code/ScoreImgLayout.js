@@ -79,10 +79,12 @@ async function render_img_crop_height(url, yTop, yBottom) {
 
       let outputWidth = inputWidth;  // we crop only vertically
       let outputHeight = yBottom - yTop + 1;
+      if ( outputHeight == (inputHeight + 1) )  {
+        outputHeight = inputHeight; // let it go with yTop == 0 or 1 confusion
+      }
       if ( outputHeight > inputHeight )  {
         const wrn = `-W- Cannot crop image "${url}" from height ${inputHeight} to target height ${outputHeight}`; 
         console.log(wrn);  //alert(wrn);  // TODO: remove alert
-        outputHeight = inputHeight; // an alternative to rejcection?
         reject(new Error(wrn));  // Error() provides call stack and std format
       }
 
