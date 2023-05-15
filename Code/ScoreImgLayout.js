@@ -17,6 +17,8 @@ class ScoreImgLayout
    * TODO: what should be the 'y' value in a score-station - with crop?
  */
   async render_images()  {
+    // ??? document.body.innerHTML = "";  // pre-clean the page contents
+
     for ( const [i, occ] of this.imgPageOccurences.entries() )  {
       if ( !this.pageImagePaths.has(occ.pageId) )  {
         err = `-E- Missing image path for page "${occ.pageId}". Aborting`;
@@ -84,23 +86,22 @@ async function render_img_crop_height(url, yTop, yBottom) {
         reject(new Error(wrn));  // Error() provides call stack and std format
       }
 
-      // calculate the position to draw the image at
-      const outputX = 0;
-      const outputY = yTop;
+      /* the drawn portion of the image begins at x = 0,  y = yTop
+       * and is put at 0,0 on the canvas */
 
       // create a canvas that will present the output image
       const outputImage = document.createElement('canvas');
 
-      // set it to the same size as the image
+      // set it to the same size as the _cropped_ image
       outputImage.width = outputWidth;
       outputImage.height = outputHeight;
 
       // draw our image at position 0, 0 on the canvas
       const ctx = outputImage.getContext('2d');
-      ctx.drawImage(inputImage, outputX, outputY);
+      ctx.drawImage(inputImage, 0, yTop, outputWidth, outputHeight,
+                                0, 0,    outputWidth, outputHeight)
 
-      // show both the image and the canvas
-      document.body.appendChild(inputImage);
+      // show the canvas
       document.body.appendChild(outputImage);
 
       resolve(outputImage);
