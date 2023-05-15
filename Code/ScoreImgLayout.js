@@ -19,6 +19,8 @@ class ScoreImgLayout
   async render_images()  {
     // ??? document.body.innerHTML = "";  // pre-clean the page contents
 
+    let croppedCanvasArray = [];  // we need to reshape canvas after loading
+
     for ( const [i, occ] of this.imgPageOccurences.entries() )  {
       if ( !this.pageImagePaths.has(occ.pageId) )  {
         err = `-E- Missing image path for page "${occ.pageId}". Aborting`;
@@ -30,13 +32,22 @@ class ScoreImgLayout
       try {
         let croppedImageCanvas = await this._render_one_page_occurence(occ);
         console.log(`-I- Success reported for rendering image occurence "${occ.occId}" (page="${occ.pageId}", path="${imgPath}"); size: ${croppedImageCanvas.width}x${croppedImageCanvas.height}`);
+        croppedCanvasArray.push( croppedImageCanvas );
       } catch (rejectErrorMsg) {
         console.log(`Exception while trying to render '${occ}'`);
         console.log(rejectErrorMsg);  alert(rejectErrorMsg);
         return  false;
       }
     }
-    console.log(`-I- Success rendering ${this.imgPageOccurences.length} image-page occurence(s)`);
+
+    // ensure all canvas have same width (the max among them)
+    console.log("-D- Original canvas widths: [" +
+       croppedCanvasArray.forEach(imgCanvas => " " + imgCanvas.width) + "]");
+    const maxWidth = croppedCanvasArray.reduce(
+      (a,b) => (a.width > b.width)? a : b ).width;
+    croppedCanvasArray.forEach( imgCanvas => imgCanvas.width = maxWidth );
+    
+    console.log(`-I- Success rendering ${this.imgPageOccurences.length} image-page occurence(s) at width=${maxWidth}`);
     return  true;
   }
 
