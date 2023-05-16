@@ -6,9 +6,12 @@ class ScoreImgLayout
   constructor (
     pageImagePathsMap,     /*pageId:STR => imgPath:STR*/
     imgPageOccurencesArray /*{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
-  )  {
+  )
+  {
     this.pageImagePaths = pageImagePathsMap;  /*pageId:STR => imgPath:STR*/
     this.imgPageOccurences = imgPageOccurencesArray;
+    
+    this._croppedCanvasArray = [];  // facilitates reshape canvas after loading
   }
 
 
@@ -19,20 +22,36 @@ class ScoreImgLayout
   async render_images()  {
     // ??? document.body.innerHTML = "";  // pre-clean the page contents
 
-    let croppedCanvasArray = [];  // we need to reshape canvas after loading
-
+    // ensure all canvas have same width (the max among them)
+    let maxWidth = 0;
     for ( const [i, occ] of this.imgPageOccurences.entries() )  {
       if ( !this.pageImagePaths.has(occ.pageId) )  {
         err = `-E- Missing image path for page "${occ.pageId}". Aborting`;
         console.log(err);  alert(err);
         return  false;
       }
+      let imgPath = this.pageImagePaths.get(occ.pageId);
+      try {
+        let {width:w, height:h} = await detect_img_dimensions(imgPath);
+        console.log(`-D- Original image [${occ.pageId}=${imgPath}] width = ${w}`);
+        if ( w > maxWidth )  { maxWidth = w; }
+      } catch (rejectErrorMsg) {
+        console.log(`Exception reading dimensions of '${imgPath}'`);
+        console.log(rejectErrorMsg);  alert(rejectErrorMsg);
+        return  false;
+      }
+    }
+    console.log(`Maximal width = ${maxWidth}`);
 
+    this._croppedCanvasArray = [];
+
+    for ( const [i, occ] of this.imgPageOccurences.entries() )  {
+      // condition already checked: this.pageImagePaths.has(occ.pageId)
       let imgPath = this.pageImagePaths.get(occ.pageId);
       try {
         let croppedImageCanvas = await this._render_one_page_occurence(occ);
         console.log(`-I- Success reported for rendering image occurence "${occ.occId}" (page="${occ.pageId}", path="${imgPath}"); size: ${croppedImageCanvas.width}x${croppedImageCanvas.height}`);
-        croppedCanvasArray.push( croppedImageCanvas );
+        this._croppedCanvasArray.push( croppedImageCanvas );
       } catch (rejectErrorMsg) {
         console.log(`Exception while trying to render '${occ}'`);
         console.log(rejectErrorMsg);  alert(rejectErrorMsg);
@@ -40,13 +59,6 @@ class ScoreImgLayout
       }
     }
 
-    // ensure all canvas have same width (the max among them)
-    console.log("-D- Original canvas widths: [" +
-       croppedCanvasArray.forEach(imgCanvas => " " + imgCanvas.width) + "]");
-    const maxWidth = croppedCanvasArray.reduce(
-      (a,b) => (a.width > b.width)? a : b ).width;
-    croppedCanvasArray.forEach( imgCanvas => imgCanvas.width = maxWidth );
-    
     console.log(`-I- Success rendering ${this.imgPageOccurences.length} image-page occurence(s) at width=${maxWidth}`);
     return  true;
   }
@@ -79,6 +91,8 @@ class ScoreImgLayout
 async function render_img_crop_height(url, yTop, yBottom) {
   // we return a Promise that gets resolved with our canvas element
   return new Promise((resolve, reject) => {
+    // TODO: verify image-file existence; reject if none
+    
     // this image will hold our source image data
     const inputImage = new Image();
 
@@ -118,6 +132,28 @@ async function render_img_crop_height(url, yTop, yBottom) {
       document.body.appendChild(outputImage);
 
       resolve(outputImage);
+    };
+
+    // start loading our image
+    inputImage.src = url;
+  });
+}
+
+
+async function detect_img_dimensions(url) {
+  // we return a Promise that gets resolved with {width:W, height:H} object
+  return new Promise((resolve, reject) => {
+    // TODO: verify image-file existence; reject if none
+
+    // this image will hold our source image data
+    const inputImage = new Image();
+
+    // we want to wait for our image to load
+    inputImage.onload = () => {
+      // let's store the width and height of our image
+      const inputWidth = inputImage.naturalWidth;
+      const inputHeight = inputImage.naturalHeight;
+      resolve( {width:inputWidth, height:inputHeight} );
     };
 
     // start loading our image
