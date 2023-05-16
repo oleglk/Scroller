@@ -12,6 +12,7 @@ class ScoreImgLayout
     this.imgPageOccurences = imgPageOccurencesArray;
     
     this._croppedCanvasArray = [];  // facilitates reshape canvas after loading
+    this._maxWidth = -1;  // need to ensure equal width for all pages
   }
 
 
@@ -41,7 +42,8 @@ class ScoreImgLayout
         return  false;
       }
     }
-    console.log(`Maximal width = ${maxWidth}`);
+    this._maxWidth = maxWidth;
+    console.log(`Maximal width = ${this._maxWidth}`);
 
     this._croppedCanvasArray = [];
 
@@ -59,7 +61,7 @@ class ScoreImgLayout
       }
     }
 
-    console.log(`-I- Success rendering ${this.imgPageOccurences.length} image-page occurence(s) at width=${maxWidth}`);
+    console.log(`-I- Success rendering ${this.imgPageOccurences.length} image-page occurence(s) at width=${this._maxWidth}`);
     return  true;
   }
 
@@ -72,7 +74,7 @@ class ScoreImgLayout
     // TODO: check existence of 'imgPath' - in the map and on disk
 
     let pageImgShowPromise = render_img_crop_height(
-      /*"QQQ"*/imgPath, imagePageOcc.yTop, imagePageOcc.yBottom);
+      /*"QQQ"*/imgPath, imagePageOcc.yTop, imagePageOcc.yBottom, this._maxWidth);
     console.log(`-D- Initiated rendering image occurence "${imagePageOcc.occId}" (page="${imagePageOcc.pageId}", path="${imgPath}")`);
 
     return  pageImgShowPromise;
@@ -84,11 +86,12 @@ class ScoreImgLayout
 /**
  * @param {string} url - The source image
  * @param {number} aspectRatio - The aspect ratio
+ * @param {number} forcedWidth - Override for canvas width
  * @return {Promise<HTMLCanvasElement>} A Promise that resolves with the resulting image as a canvas element
  * (Adopted from:
  *    https://pqina.nl/blog/cropping-images-to-an-aspect-ratio-with-javascript/)
  */
-async function render_img_crop_height(url, yTop, yBottom) {
+async function render_img_crop_height(url, yTop, yBottom, forcedWidth=-1) {
   // we return a Promise that gets resolved with our canvas element
   return new Promise((resolve, reject) => {
     // TODO: verify image-file existence; reject if none
@@ -100,18 +103,21 @@ async function render_img_crop_height(url, yTop, yBottom) {
     inputImage.onload = () => {
       // let's store the width and height of our image
       const inputWidth = inputImage.naturalWidth;
-      const inputHeight = inputImage.naturalHeight;
+      const origHeight = inputImage.naturalHeight;
 
-      let outputWidth = inputWidth;  // we crop only vertically
-      let outputHeight = yBottom - yTop + 1;
-      if ( outputHeight == (inputHeight + 1) )  {
-        outputHeight = inputHeight; // let it go with yTop == 0 or 1 confusion
+      let  inputHeight = yBottom - yTop + 1;  // the vertical crop
+      if ( inputHeight == (origHeight + 1) )  {
+        inputHeight = origHeight; // let it go with yTop == 0 or 1 confusion
       }
-      if ( outputHeight > inputHeight )  {
-        const wrn = `-W- Cannot crop image "${url}" from height ${inputHeight} to target height ${outputHeight}`; 
+      if ( inputHeight > origHeight )  {
+        const wrn = `-W- Cannot crop image "${url}" from height ${origHeight} to target height ${inputHeight}`; 
         console.log(wrn);  //alert(wrn);  // TODO: remove alert
         reject(new Error(wrn));  // Error() provides call stack and std format
       }
+
+      const outputWidth = (forcedWidth > 0)? forcedWidth
+                                         : inputWidth; // we crop only vertically
+      const outputHeight = inputHeight;
 
       /* the drawn portion of the image begins at x = 0,  y = yTop
        * and is put at 0,0 on the canvas */
@@ -120,12 +126,12 @@ async function render_img_crop_height(url, yTop, yBottom) {
       const outputImage = document.createElement('canvas');
 
       // set it to the same size as the _cropped_ image
-      outputImage.width = outputWidth;
+      outputImage.width  = outputWidth;
       outputImage.height = outputHeight;
 
       // draw our image at position 0, 0 on the canvas
       const ctx = outputImage.getContext('2d');
-      ctx.drawImage(inputImage, 0, yTop, outputWidth, outputHeight,
+      ctx.drawImage(inputImage, 0, yTop, inputWidth,  inputHeight,
                                 0, 0,    outputWidth, outputHeight)
 
       // show the canvas
