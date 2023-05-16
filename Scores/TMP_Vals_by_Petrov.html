@@ -25,24 +25,27 @@ var g_beatsInTact = 4;
 const g_beatsForFullLine = g_tactsInLine * g_beatsInTact;
 const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
 
+/* Images are first resized to equal width, then measured:
+ * foreach f [glob {TMP/*.jpg}]  {convert $f -resize 800x -quality 92 [file tail $f]}
+ */  
 var g_scoreLines = [
-  {tag:"line-011-Begin", pageId:"pg01", x:0, y:0,    timeSec:g_fullLineInSec},
-  {tag:"line-012-Begin", pageId:"pg01", x:0, y:190,  timeSec:g_fullLineInSec},
-  {tag:"line-013-Begin", pageId:"pg01", x:0, y:414,  timeSec:g_fullLineInSec},
-  {tag:"line-014-Begin", pageId:"pg01", x:0, y:640,  timeSec:g_fullLineInSec},
-  {tag:"line-015-Begin", pageId:"pg01", x:0, y:850,  timeSec:g_fullLineInSec},
-  {tag:"line-021-Begin", pageId:"pg02", x:0, y:0,    timeSec:g_fullLineInSec},
-  {tag:"line-022-Begin", pageId:"pg02", x:0, y:217,  timeSec:g_fullLineInSec},
-  {tag:"line-023-Begin", pageId:"pg02", x:0, y:432,  timeSec:g_fullLineInSec},
-  {tag:"line-024-Begin", pageId:"pg02", x:0, y:656,  timeSec:g_fullLineInSec},
-  {tag:"line-025-Begin", pageId:"pg02", x:0, y:884,  timeSec:g_fullLineInSec},
-  {tag:"line-031-Begin", pageId:"pg03", x:0, y:0,    timeSec:g_fullLineInSec},
-  {tag:"line-032-Begin", pageId:"pg03", x:0, y:272,  timeSec:g_fullLineInSec},
-  {tag:"line-033-Begin", pageId:"pg03", x:0, y:538,  timeSec:g_fullLineInSec},
-  {tag:"line-034-Begin", pageId:"pg03", x:0, y:760,  timeSec:g_fullLineInSec},
-  {tag:"Control-Height", pageId:"pg01", x:0, y:1080, timeSec:0},  
-  {tag:"Control-Height", pageId:"pg02", x:0, y:1080, timeSec:0},  
-  {tag:"Control-Height", pageId:"pg03", x:0, y:1080, timeSec:0},  
+  {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,   timeSec:g_fullLineInSec},
+  {tag:"line-012-Begin", pageId:"pg01", x:0, y:205,  timeSec:g_fullLineInSec},
+  {tag:"line-013-Begin", pageId:"pg01", x:0, y:485,  timeSec:g_fullLineInSec},
+  {tag:"line-014-Begin", pageId:"pg01", x:0, y:692,  timeSec:g_fullLineInSec},
+  {tag:"line-015-Begin", pageId:"pg01", x:0, y:884,  timeSec:g_fullLineInSec},
+  {tag:"line-021-Begin", pageId:"pg02", x:0, y:33,   timeSec:g_fullLineInSec},
+  {tag:"line-022-Begin", pageId:"pg02", x:0, y:242,  timeSec:g_fullLineInSec},
+  {tag:"line-023-Begin", pageId:"pg02", x:0, y:449,  timeSec:g_fullLineInSec},
+  {tag:"line-024-Begin", pageId:"pg02", x:0, y:664,  timeSec:g_fullLineInSec},
+  {tag:"line-025-Begin", pageId:"pg02", x:0, y:873,  timeSec:g_fullLineInSec},
+  {tag:"line-031-Begin", pageId:"pg03", x:0, y:32,   timeSec:g_fullLineInSec},
+  {tag:"line-032-Begin", pageId:"pg03", x:0, y:273,  timeSec:g_fullLineInSec},
+  {tag:"line-033-Begin", pageId:"pg03", x:0, y:485,  timeSec:g_fullLineInSec},
+  {tag:"line-034-Begin", pageId:"pg03", x:0, y:661,  timeSec:g_fullLineInSec},
+  {tag:"Control-Height", pageId:"pg01", x:0, y:1130, timeSec:0},  
+  {tag:"Control-Height", pageId:"pg02", x:0, y:1130, timeSec:0},  
+  {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeSec:0},  
 ];
 
 ////////////////////////////////////////////////////////////////////////////////

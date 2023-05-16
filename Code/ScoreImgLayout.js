@@ -66,12 +66,13 @@ class ScoreImgLayout
   }
 
 
-  /* Draws the specified occurence with crop applied */
+  /* Draws the specified occurence with crop applied.
+   * Returns the rendering promise; rejects on error */
   async _render_one_page_occurence(imagePageOcc/*ScorePageOccurence*/)
   {
     /*ScorePageOccurence == {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
     let imgPath = this.pageImagePaths.get(imagePageOcc.pageId);
-    // TODO: check existence of 'imgPath' - in the map and on disk
+    // checking existence of 'imgPath' - in the map and on disk - in the callee
 
     let pageImgShowPromise = render_img_crop_height(
       /*"QQQ"*/imgPath, imagePageOcc.yTop, imagePageOcc.yBottom, this._maxWidth);
@@ -94,7 +95,13 @@ class ScoreImgLayout
 async function render_img_crop_height(url, yTop, yBottom, forcedWidth=-1) {
   // we return a Promise that gets resolved with our canvas element
   return new Promise((resolve, reject) => {
-    // TODO: verify image-file existence; reject if none
+    // TODO: verify existence of 'url' - in the map and on disk
+    // (blocked from execution)  verify existence of 'url' on disk
+    // if ( ! check_file_exists(url) )  {
+    //   err = `-E- Inexistent image-file '${url}'`;
+    //   console.log(err);  alert(err);
+    //   reject(new Error(err));
+    // }
     
     // this image will hold our source image data
     const inputImage = new Image();
@@ -166,3 +173,19 @@ async function detect_img_dimensions(url) {
     inputImage.src = url;
   });
 }
+
+
+/*******************************************************************************
+ ** BEGIN: common utilities                                                   **
+*******************************************************************************/
+
+// Copied from: https://www.quora.com/How-do-you-check-if-a-file-exists-in-JavaScript 
+function check_file_exists(url) { 
+  var xhr = new XMLHttpRequest(); 
+  xhr.open('HEAD', url, false); 
+  xhr.send(); 
+  return xhr.status !== 404; 
+}
+/*******************************************************************************
+ ** END: common utilities                                                   **
+*******************************************************************************/
