@@ -81,7 +81,6 @@ var g_scoreStations_Groupped = [
   g_scoreLines.find(x => (x.tag == "Control-Height")),
 ];
 
-
 // TODO, pass the whole array from the HTML ?table?
 // TODO: double-check times
 /* The grouped view-points are built assuming 3 lines are visible at each one.
@@ -100,6 +99,9 @@ var g_scoreStations_Groupped_NoRepeat = [
 ////////////////////////////////////////////////////////////////////////////////
 // ... the copy will be 2-level deep - fine for the task
 var g_scoreStations = g_scoreStations_Groupped_NoRepeat.map(a => {return {...a}});
+
+// deep-copy 'pageId' into 'occId'
+g_scoreStations.forEach(  l =>  { l.occId = `${l.pageId}` }  )
 ////////////////////////////////////////////////////////////////////////////////
 </script>
 

@@ -62,6 +62,9 @@ var g_scoreStations_Groupped = [
 ////////////////////////////////////////////////////////////////////////////////
 // ... the copy will be 2-level deep - fine for the task
 var g_scoreStations = g_scoreStations_Groupped.map(a => {return {...a}});
+
+// deep-copy 'pageId' into 'occId'
+g_scoreStations.forEach(  l =>  { l.occId = `${l.pageId}` }  )
 ////////////////////////////////////////////////////////////////////////////////
 </script>
 

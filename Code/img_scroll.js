@@ -14,6 +14,11 @@ var g_nextTimerIntervalId = 0;
 var g_windowEventListenersRegistry = [];  // for {event-type :: handler}
 
 
+//////////////////// Assume existence of the following global variables: ////////
+// g_imgPageOccurences : array of {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+////////////////////////////////////////////////////////////////////////////////
+
+
 ////////////////
 //window.addEventListener("load", scroll__onload);
 //window.addEventListener("load", (event) => { scroll__onload(event) });
@@ -90,12 +95,13 @@ function scroll__onload(event)
                                     wrap__restart_handler);
   
   g_totalHeight = get_scroll_height();
-  
-  const firstPageId = filter_positions(g_scoreStations)[0].pageId;
-  const firstPage = document.getElementById(firstPageId);
+
+  // scroll to the first ocuurence of any page
+  const firstPageOccId = filter_positions(g_scoreStations)[0].occId;
+  const firstPage = document.getElementById(firstPageOccId);
   const topPos = firstPage.offsetTop;
-  //alert(`Page onload event; scroll to the first page (${firstPageId}) at y=${topPos}`);
-  console.log(`Scroll to the first page (${firstPageId}) at y=${topPos}`);
+  //alert(`Page onload event; scroll to the first page (${firstPageOccId}) at y=${topPos}`);
+  console.log(`Scroll to the first page (${firstPageOccId}) at y=${topPos}`);
   // window.scrollTo({ top: topPos, behavior: 'smooth'});
   window.scrollTo(0, topPos);
   g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'topPos' ?
@@ -369,11 +375,11 @@ function scroll_perform_one_step(stepNum)
     scroll_abort();
     return  0;
   }
-  //  {tag:"line-001-Begin", pageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec}
+  //  {tag:"line-001-Begin", pageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec, occId: "pg01:01"}
   const rec = filter_positions(g_scoreStations)[stepNum];
-  const targetPos = convert_y_img_to_window(rec.pageId, rec.y);
+  const targetPos = convert_y_img_to_window(rec.occId, rec.y);
 
-  console.log(`-I- Scroll to ${rec.pageId}:${targetPos} for step ${stepNum}`);
+  console.log(`-I- Scroll to ${rec.occId}:${targetPos} for step ${stepNum}`);
   // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
   g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
@@ -389,6 +395,25 @@ function scroll_perform_one_step(stepNum)
 
 
 ////////////////////////////////////////////////////////////////////////////////
+/* Returns scale of the image/page occurence
+ * (page occurences preserve scales of the original images) */
+function get_image_occurence_scale_y(scoreStationsArray, occId, alertErr=false)
+{
+  // we need any line on our image/page occurence (occId) - to obtain 'pageId'
+  const rec = scoreStationsArray.find((value, index, array) => {
+    return  (value.occId == occId)
+  });
+  if ( rec === undefined )  {
+    err = `-E- Missing records for image/page occurence '${occId}'`;
+    console.log(err);
+    if ( alertErr )  { alert(err); }
+    return  -1;
+  }
+  return  get_image_scale_y(scoreStationsArray, rec.pageId);
+}
+
+
+// Returns scale of the original image (not possibly cropped occurence)
 function get_image_scale_y(scoreStationsArray, pageId)
 {
   const imgHtmlElem   = document.getElementById(pageId);
@@ -420,19 +445,32 @@ function get_scroll_current_y()
 
 
 // Converts vertical position from image coordinates to rendered window
-function convert_y_img_to_window(imgHtmlPageId, imgY) {
-  const pageHtmlElem = document.getElementById(imgHtmlPageId);
-  const pageScaleY = get_image_scale_y(g_scoreStations, imgHtmlPageId);
-  const winY = pageHtmlElem.offsetTop + imgY * pageScaleY;
+// !!!! TODO: Recompute y-offset for possibly cropped page occurence !!!
+function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
+  const pageHtmlElem = document.getElementById(imgHtmlPageOccId);
+  // page occurences preserve scales of the original images
+  const pageScaleY = get_image_occurence_scale_y(g_scoreStations,
+                                                 imgHtmlPageOccId);
+  const yTop = read_image_occurence_yTop(g_imgPageOccurences,
+                                         imgHtmlPageOccId, /*alertErr=*/true);
+  if ( yTop < 0 )  {    /* TODO: raise exception */  }
+  
+  const winY = pageHtmlElem.offsetTop + (imgY - yTop) * pageScaleY;
   return  Math.floor(winY);
 }
 
 
 // Converts vertical position from image coordinates to rendered window
-function convert_y_window_to_img(imgHtmlPageId, winY) {
+function convert_y_window_to_img(imgHtmlPageOccId, winY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageId);
-  const pageScaleY = get_image_scale_y(g_scoreStations, imgHtmlPageId);
-  const imgY = (winY - pageHtmlElem.offsetTop) / pageScaleY;
+  // page occurences preserve scales of the original images
+  const pageScaleY = get_image_occurence_scale_y(g_scoreStations,
+                                                 imgHtmlPageOccId);
+  const yTop = read_image_occurence_yTop(g_imgPageOccurences,
+                                         imgHtmlPageOccId, /*alertErr=*/true);
+  if ( yTop < 0 )  {    /* TODO: raise exception */  }
+  
+  const imgY = (winY - pageHtmlElem.offsetTop) / pageScaleY + yTop;
   return  imgY;
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -466,7 +504,7 @@ function positions_toString(scoreStationsArray, separatorStr)
 function one_position_toString(stepIdx, scoreStationRecord)
 {
   v = scoreStationRecord; // to shorten the notation
-  let descr = `step${stepIdx}=>${v.pageId}::${v.y}=${convert_y_img_to_window(v.pageId, v.y)}`;
+  let descr = `step${stepIdx}=>${v.occId}::${v.y}=${convert_y_img_to_window(v.occId, v.y)}`;
   return  descr
 }
 
@@ -494,7 +532,7 @@ function find_nearest_matching_position(scoreStationsArray, winY, lastStep)
                     Math.abs(a.step - lastStep) - Math.abs(b.step - lastStep) );
   DBG_candidates = candidates;  // OK_TMP
   let candidatesDescr = "";
-  candidates.forEach( (v) => candidatesDescr += `; step${v.step}=>${v.pageId}::${v.y}` );
+  candidates.forEach( (v) => candidatesDescr += `; step${v.step}=>${v.occId}::${v.y}` );
   console.log(`-D- Positions around step ${lastStep} at y=${winY} => ${candidatesDescr}`);
   
   let result = -1;  let resultDescr = "UNKNOWN";
@@ -546,14 +584,14 @@ function find_matching_positions(scoreStationsArray, winY)
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   // build an ascending list of position-Y-s - to detect the order
   const winYArrayUnsorted = scorePositions.map( (rec) => {
-    return convert_y_img_to_window(rec.pageId, rec.y);
+    return convert_y_img_to_window(rec.occId, rec.y);
                                                   } );
   winYArray = uniq_sort(winYArrayUnsorted, (a, b) => a - b);
   let results = [];
   let currPage = null;
   for ( let i = 0;  i < scorePositions.length;  i += 1 ) {
     let rec       = scorePositions[i];
-    let currWinY  = convert_y_img_to_window(rec.pageId, rec.y);
+    let currWinY  = convert_y_img_to_window(rec.occId, rec.y);
     let idxOfCurrWinY = winYArray.indexOf(currWinY);  // must exist
     let isTop     = (idxOfCurrWinY == 0);
     let isBottom  = (idxOfCurrWinY == (winYArray.length - 1));
@@ -575,11 +613,12 @@ function derive_position_y_window(scoreStationsArray, step)
 {
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   return  convert_y_img_to_window(
-                  scorePositions[step].pageId, scorePositions[step].y);
+                  scorePositions[step].occId, scorePositions[step].y);
 }
 
 
-// Returns image height or -1 on error
+/* Returns image height or -1 on error
+ * Note, height is that of the original image (not possibly cropped occurence) */
 function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 {
   const rec = scoreStationsArray.find((value, index, array) => {
@@ -596,6 +635,24 @@ function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
   return  rec.y;
 }
 /** END: access to scoreStationsArray *****************************************/
+
+
+/** BEGIN: access to imgPageOccurencesArray ************************************/
+//imgPageOccurencesArray /*{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+function read_image_occurence_yTop(imgPageOccurencesArray, occId, alertErr=false)
+{
+  const rec = imgPageOccurencesArray.find((value, index, array) => {
+    return  (value.occId == occId)
+  });
+  if ( rec === undefined )  {
+    err = `-E- Unknown image/page occurence '${occId}'`;
+    console.log(err);
+    if ( alertErr )  { alert(err); }
+    return  -1;
+  }
+  return  rec.yTop;
+}
+/** END: access to imgPageOccurencesArray **************************************/
 
 
 /*******************************************************************************
