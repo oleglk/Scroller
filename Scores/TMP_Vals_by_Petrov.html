@@ -26,7 +26,9 @@ const g_beatsForFullLine = g_tactsInLine * g_beatsInTact;
 const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
 
 /* Images are first resized to equal width, then measured:
- * foreach f [glob {TMP/*.jpg}]  {convert $f -resize 800x -quality 92 [file tail $f]}
+ * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+ * #### exec $IMCONVERT --version
+ * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
  */  
 var g_scoreLines = [
   {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,   timeSec:g_fullLineInSec},
