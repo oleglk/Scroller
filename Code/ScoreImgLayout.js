@@ -74,7 +74,7 @@ class ScoreImgLayout
     let imgPath = this.pageImagePaths.get(imagePageOcc.pageId);
     // checking existence of 'imgPath' - in the map and on disk - in the callee
 
-    let pageImgShowPromise = render_img_crop_height(
+    let pageImgShowPromise = render_img_crop_height(imagePageOcc.occId,
       /*"QQQ"*/imgPath, imagePageOcc.yTop, imagePageOcc.yBottom, this._maxWidth);
     console.log(`-D- Initiated rendering image occurence "${imagePageOcc.occId}" (page="${imagePageOcc.pageId}", path="${imgPath}")`);
 
@@ -92,7 +92,8 @@ class ScoreImgLayout
  * (Adopted from:
  *    https://pqina.nl/blog/cropping-images-to-an-aspect-ratio-with-javascript/)
  */
-async function render_img_crop_height(url, yTop, yBottom, forcedWidth=-1) {
+async function render_img_crop_height(occId, url, yTop, yBottom, forcedWidth=-1)
+{
   // we return a Promise that gets resolved with our canvas element
   return new Promise((resolve, reject) => {
     // TODO: verify existence of 'url' - in the map and on disk
@@ -131,6 +132,7 @@ async function render_img_crop_height(url, yTop, yBottom, forcedWidth=-1) {
 
       // create a canvas that will present the output image
       const outputImage = document.createElement('canvas');
+      outputImage.id = occId;
 
       // set it to the same size as the _cropped_ image
       outputImage.width  = outputWidth;
