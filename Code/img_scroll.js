@@ -626,7 +626,7 @@ function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
   });
   if ( rec === undefined )  {
     err = `-E- Missing size record for page '${pageId}'`;
-    console.log(err);
+    console.log(err);  console.trace();
     if ( alertErr )  {
       alert(err);
       return  -1;
@@ -646,7 +646,7 @@ function read_image_occurence_yTop(imgPageOccurencesArray, occId, alertErr=false
   });
   if ( rec === undefined )  {
     err = `-E- Unknown image/page occurence '${occId}'`;
-    console.log(err);
+    console.log(err);  console.trace();
     if ( alertErr )  { alert(err); }
     return  -1;
   }

@@ -152,6 +152,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
    * 'numLinesInStep' - how many lines to jump in one step.
    * On error returns null */
   // TODO: pass num lines on screen and verify normal and last steps
+  // TODO: (example: if pre-last step view includes last line, drop last step)
   build_score_stations_array_for_page_occurences(numLinesInStep)
   {
     if ( this.imgPageOccurences == null ) {
@@ -173,7 +174,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     });
     if ( playedLinePageOccurences.length != this.linePlayOrder.length )  {
       err = `-E- Mismatch in number of lines between occurences (${playedLinePageOccurences.length}) and play-order (${this.linePlayOrder.length}).`
-      console.log(err);  alert(err);
+      console.log(err);  console.trace();  alert(err);
       return  null;
     }
     
@@ -187,7 +188,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                                     (element.lineIdx == playedLine.lineIdx)) );
       if ( scoreLine == undefined )  {
         err = `Missing score data line page:${playedLine.pageId}, local-index=${playedLine.lineIdx}`;
-        console.log(err);  alert(err);
+        console.log(err);  console.trace();  alert(err);
         return  null;
       }
       let stepTag = "step:" + zero_pad(scoreStationsArray.length, 2);
@@ -211,7 +212,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     if ( (idxInLinePlayOrder < 0) ||
          (idxInLinePlayOrder >= this.linePlayOrder.length) )  {
       const err = `-E- Invalid play-order index ${idxInLinePlayOrder}; should be 0...${this.linePlayOrder.length}`
-      console.log(err);   alert(err);
+      console.log(err);  console.trace();   alert(err);
       return  null;
     }
     const {pageId: page,  lineIdx: lastLineIdx} =
@@ -238,7 +239,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       (element.pageId == page) && (element.lineIdx == lastLineLocalIdx) );
     if ( (firstLineRec === undefined) || (lastLineRec === undefined) )  {
       const err = `-E- Failed finding first (${firstLineLocalIdx} => ${firstLineRec}) and/or last (${lastLineLocalIdx} => ${lastLineRec}) line on page ${page} (path="TODO")`;
-      console.log(err);  alert(err);
+      console.log(err);  console.trace();  alert(err);
 //debugger;  // OK_TMP
       return  null;
     }
@@ -319,7 +320,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   {
     if ( !this.pageLineHeights.has(pageId) )  {
       const err = `-E- Missing line height for page/image ${pageId} (image-path "TODO")`;
-      console.log(err);  alert(err);
+      console.log(err);  console.trace();  alert(err);
       return  -1;
     }
     return  this.pageLineHeights.get(pageId);
@@ -351,7 +352,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   {
     if ( !this.pageHeights.has(pageId) )  {
       const err = `-E- Missing height for page/image ${pageId} (image-path "TODO")`;
-      console.log(err);  alert(err);
+      console.log(err);  console.trace();  alert(err);
       return  -1;
     }
     return  this.pageHeights.get(pageId);
@@ -467,7 +468,7 @@ function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
   });
   if ( rec === undefined )  {
     const err = `-E- Missing size record for page '${pageId}'`;
-    console.log(err);
+    console.log(err);  console.trace();
     if ( alertErr )  {
       alert(err);
       return  -1;

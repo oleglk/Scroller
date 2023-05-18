@@ -28,7 +28,7 @@ class ScoreImgLayout
     for ( const [i, occ] of this.imgPageOccurences.entries() )  {
       if ( !this.pageImagePaths.has(occ.pageId) )  {
         err = `-E- Missing image path for page "${occ.pageId}". Aborting`;
-        console.log(err);  alert(err);
+        console.log(err);  console.trace();  alert(err);
         return  false;
       }
       let imgPath = this.pageImagePaths.get(occ.pageId);
@@ -100,7 +100,7 @@ async function render_img_crop_height(occId, url, yTop, yBottom, forcedWidth=-1)
     // (blocked from execution)  verify existence of 'url' on disk
     // if ( ! check_file_exists(url) )  {
     //   err = `-E- Inexistent image-file '${url}'`;
-    //   console.log(err);  alert(err);
+    //   console.log(err);  console.trace();  alert(err);
     //   reject(new Error(err));
     // }
     
