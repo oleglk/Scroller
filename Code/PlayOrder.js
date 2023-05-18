@@ -49,13 +49,15 @@ class PlayOrder
     name,
     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
-    pageImagePathsMap /*pageId:STR => imgPath:STR*/
+    pageImagePathsMap, /*pageId:STR => imgPath:STR*/
+    numLinesInStep /*how many lines to jump btw score stations*/
   )
   {
     this.name = name;
     this.scoreLines = scoreLinesArray;
     this.linePlayOrder = linePlayOrderArray;
     this.pageImagePaths = pageImagePathsMap;
+    this.numLinesInStep = numLinesInStep;
     //
 
     //scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
@@ -65,6 +67,9 @@ class PlayOrder
 
     //imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     this.imgPageOccurences = null;
+
+    //scoreStations = {tag:STR, pageId:STR=occID, x:INT, y:INT, timeSec:FLOAT}
+    this.scoreStations = null;
     
     this._process_inputs();
   }
@@ -89,9 +94,13 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     this.imgPageOccurences = this.compute_image_pages_layout();
     //{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    if ( this.imgPageOccurences == null )  { return  false; }  // error printed
 
     this._name_image_page_occurences();
-    
+
+    this.scoreStations = this.build_score_stations_array_for_page_occurences(
+                                                            this.numLinesInStep);
+    if ( this.scoreStations == null )  { return  false; }  // error printed
     return  true;
   }
   
@@ -140,8 +149,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   
   /* Builds and returns array of score-stations
    * that refer to play-order page occurences instead of original page images.
+   * 'numLinesInStep' - how many lines to jump in one step.
    * On error returns null */
-  build_score_stations_array_for_page_occurences()
+  // TODO: pass num lines on screen and verify normal and last steps
+  build_score_stations_array_for_page_occurences(numLinesInStep)
   {
     if ( this.imgPageOccurences == null ) {
       throw new Error("Array of image-page occurences isn't built yet");
@@ -151,12 +162,47 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     // scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
     // linePlayOrder = {pageId:STR, lineIdx:INT, timeSec:FLOAT}
     // scoreStations = {tag:STR, pageId:STR=occID, x:INT, y:INT, timeSec:FLOAT}
+
+    let playedLinePageOccurences = [];  // (index in 'linePlayOrder') => occId
+    /* assume page-occurences array is correct => we traverse it sequentially
+     * => {... firstLine: 0, lastLine: 4, ...} means we played lines 0,1,2,3,4 */
+    this.imgPageOccurences.forEach( occ => {
+      for ( let j = occ.firstLine;  j <= occ.lastLine;  j += 1 )  {
+        playedLinePageOccurences.push(occ.occId);
+      }
+    });
+    if ( playedLinePageOccurences.length != this.linePlayOrder.length )  {
+      err = `-E- Mismatch in number of lines between occurences (${playedLinePageOccurences.length}) and play-order (${this.linePlayOrder.length}).`
+      console.log(err);  alert(err);
+      return  null;
+    }
     
     let scoreStationsArray = [];
-    for ( const [i, playedLine] of this.linePlayOrder.entries() )  {
-      // TODO
+    ////for ( const [i, playedLine] of this.linePlayOrder.entries() )  {}
+    // TODO: any precautions to ensure last line(s) are visible in the last step?
+    for ( let i = 0;  i < this.linePlayOrder.length;  i += numLinesInStep )  {
+      let playedLine = this.linePlayOrder[i];
+      let scoreLine  = this.scoreDataLines.find(
+        (element, index, array) => ((element.pageId  == playedLine.pageId) &&
+                                    (element.lineIdx == playedLine.lineIdx)) );
+      if ( scoreLine == undefined )  {
+        err = `Missing score data line page:${playedLine.pageId}, local-index=${playedLine.lineIdx}`;
+        console.log(err);  alert(err);
+        return  null;
+      }
+      let stepTag = "step:" + zero_pad(scoreStationsArray.length, 2);
+      
+      let station = { tag:     stepTag,
+                      pageId:  playedLinePageOccurences[i],
+                      x:       0,
+                      y:       scoreLine.yOnPage,
+                      timeSec: playedLine.timeSec };
+      scoreStationsArray.push( station );
     }
-}
+
+    console.log(`Assembled score-stations-array with ${scoreStationsArray.length} station(s) for ${this.linePlayOrder.length} played line(s) with station-step ${numLinesInStep}`);
+    return  scoreStationsArray;
+  }
   
   
   // Returns 'ScorePageOccurence' or null on error
