@@ -138,6 +138,27 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   }
   
   
+  /* Builds and returns array of score-stations
+   * that refer to play-order page occurences instead of original page images.
+   * On error returns null */
+  build_score_stations_array_for_page_occurences()
+  {
+    if ( this.imgPageOccurences == null ) {
+      throw new Error("Array of image-page occurences isn't built yet");
+    }
+    
+    // imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    // scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
+    // linePlayOrder = {pageId:STR, lineIdx:INT, timeSec:FLOAT}
+    // scoreStations = {tag:STR, pageId:STR=occID, x:INT, y:INT, timeSec:FLOAT}
+    
+    let scoreStationsArray = [];
+    for ( const [i, playedLine] of this.linePlayOrder.entries() )  {
+      // TODO
+    }
+}
+  
+  
   // Returns 'ScorePageOccurence' or null on error
   _collect_page_occurence_ending_at(idxInLinePlayOrder)
   {
@@ -407,6 +428,15 @@ function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
     }
   }
   return  rec.y;
+}
+
+
+// Copies one score position record while modifying the duration field
+function score_viewpoint(scoreLineObj, timeSec)
+{
+  let scoreStation = Object.assign(scoreLineObj);  // shallow copy is OK here
+  scoreStation.timeSec = timeSec;
+  return  scoreStation;
 }
 /** END: access to scoreStationsArray *****************************************/
 
