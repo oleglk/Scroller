@@ -245,11 +245,11 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     }
 
     // compute this page vertical crop parameters
-    const lineHeight = this._get_page_line_height(page);
-    const imgHeight  = this._get_page_total_height(page);
+    const lineHeight    = this._get_page_line_height(page);
+    const pageOccHeight = this._get_page_total_height(page); //possibly cropped!
     const yTop       = firstLineRec.yOnPage;         // uppermost on current page
     const yBottom    = Math.min((lastLineRec.yOnPage + lineHeight),
-                                imgHeight);          // lowermost on current page
+                                pageOccHeight);      // lowermost on current page
 
     const occ = new ScorePageOccurence(
       //{occId:STR, pageId:STR, firstLine:INT,lastLine:INT, yTop:INT,yBottom:INT}
@@ -287,9 +287,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       if ( currLine.pageId !== nextLine.pageId )  {   // last on page
         // image(s)/page(s) with single score line need special treatment
         if ( !pageIdToLineCount.has(currLine.pageId) )  {
-          const imgHeight = this._get_page_total_height(currLine.pageId);
+          // (e.g. next line is on other page AND no prior lines on this page)
+          const pageOccHeight = this._get_page_total_height(currLine.pageId);  // possibly cropped!
           pageIdToLineCount.set( currLine.pageId, 1 );
-          pageIdToLineHeightSum.set( currLine.pageId, imgHeight ); // unoptimal!
+          pageIdToLineHeightSum.set( currLine.pageId, pageOccHeight ); // unoptimal!
           // TODO: provide per-image last line bottom instead of total height
         }
         continue;
@@ -335,6 +336,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     let pageIdToHeight = new Map();
     this.scoreDataLines.forEach( scoreLine => {  // {tag, pageId, x, y, timeSec}
       if ( !pageIdToHeight.has(scoreLine.pageId) )  {
+        // TODO: this could need cropped occurence
         const h = read_image_size_record(this.scoreLines, scoreLine.pageId,
                                          true/*alertErr*/);
         if ( h < 0 )  {

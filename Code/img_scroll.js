@@ -419,8 +419,34 @@ function get_image_scale_y(scoreStationsArray, pageId)
 {
   const imgHtmlElem   = document.getElementById(pageId);
   const renderHeight  = imgHtmlElem.offsetHeight;
-  const origHeight    = read_image_size_record(scoreStationsArray, pageId, true);
+  const origHeight    = get_original_image_size(scoreStationsArray, pageId, true);
   return  renderHeight / origHeight;
+}
+
+
+function get_original_image_size(scoreStationsArray, pageId, alertErr=false)
+{
+  const rec = scoreStationsArray.find((value, index, array) => {
+    return  ( (value.tag == "Control-Height") && (value.pageId == pageId) )
+  });
+  let height = read_image_size_record(scoreStationsArray, pageId,
+                                      /*alertErr=*/false);
+  if ( height < 0 )  {  // record missing in the stations' array
+    // try to read from g_imageDimensions : Map(pageId : {width:w, height:h})
+    // TODO: check existence of the map
+    if ( !g_imageDimensions.has(pageId) )  {
+      err = `-E- Missing size of original image for page '${pageId}'`;
+      console.log(err);  console.trace();
+      if ( alertErr )  {
+        alert(err);
+        return  -1;
+      }
+    } else {
+      let {width:w, height:h} = g_imageDimensions.get(pageId);
+      height = h;
+    }
+  }
+  return  height;
 }
 
 
@@ -621,32 +647,22 @@ function derive_position_y_window(scoreStationsArray, step)
 /* Returns image height or -1 on error
  * Note, height is that of the original image (not possibly cropped occurence)
  * Takes the data from 'scoreStationsArray' or 'g_imageDimensions'  */
-// TODO: split into get_image_size() and read_image_size_record()
 function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 {
   const rec = scoreStationsArray.find((value, index, array) => {
     return  ( (value.tag == "Control-Height") && (value.pageId == pageId) )
   });
-  let height = -1;
   if ( rec === undefined )  {
-    // try to read from g_imageDimensions : Map(pageId : {width:w, height:h})
-    // TODO: check existence of the map
-    if ( !g_imageDimensions.has(pageId) )  {
-      err = `-E- Missing size record for page '${pageId}'`;
-      console.log(err);  console.trace();
-      if ( alertErr )  {
-        alert(err);
-        return  -1;
-      }
-    } else {
-      let {width:w, height:h} = g_imageDimensions.get(pageId);
-      height = h;
+    wrn = `-W- Missing size record for page '${pageId}'`;
+    console.log(wrn);
+    if ( alertErr )  {
+      console.trace();  alert(wrn);
+      return  -1;
     }
-  } else {  // record included in the stations' array
-    height = rec.y;
   }
-  return  height;
+  return  rec.y;
 }
+
 /** END: access to scoreStationsArray *****************************************/
 
 
