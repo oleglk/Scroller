@@ -10,13 +10,15 @@ class ScoreImgLayout
   {
     this.pageImagePaths = pageImagePathsMap;  /*pageId:STR => imgPath:STR*/
     this.imgPageOccurences = imgPageOccurencesArray;
-    
+
+    this._imageDimensions = null;  // Map(pageId : {width:w, height:h})
     this._croppedCanvasArray = [];  // facilitates reshape canvas after loading
     this._maxWidth = -1;  // need to ensure equal width for all pages
   }
 
 
   /* Draws the images AND builds array of (occurence-based) score-stations.
+   * Reads and stores image dimensions
    * TODO: Score-stations must include 'occurenceId' field.
    * TODO: what should be the 'y' value in a score-station - with crop?
  */
@@ -24,6 +26,9 @@ class ScoreImgLayout
     // ??? document.body.innerHTML = "";  // pre-clean the page contents
 
     // ensure all canvas have same width (the max among them)
+    // store image dimensions as the co-product
+    this._imageDimensions = new Map();  // Map(pageId : {width:w, height:h})
+
     let maxWidth = 0;
     for ( const [i, occ] of this.imgPageOccurences.entries() )  {
       if ( !this.pageImagePaths.has(occ.pageId) )  {
@@ -35,6 +40,7 @@ class ScoreImgLayout
       try {
         let {width:w, height:h} = await detect_img_dimensions(imgPath);
         console.log(`-D- Original image [${occ.pageId}=${imgPath}] width = ${w}`);
+        this._imageDimensions.set(occ.pageId, {width:w, height:h});
         if ( w > maxWidth )  { maxWidth = w; }
       } catch (rejectErrorMsg) {
         console.log(`Exception reading dimensions of '${imgPath}'`);
@@ -80,7 +86,16 @@ class ScoreImgLayout
 
     return  pageImgShowPromise;
   }
-}
+
+
+  get_image_dimensions_map()
+  {
+    // this._imageDimensions == Map(pageId : {width:w, height:h})
+    let result = new Map( JSON.parse(JSON.stringify(Array.from(
+                                                     this._imageDimensions))) );
+    return  result;
+  }
+}//END_OF__class_ScoreImgLayout
 
 
 ////////////////////////////////////////////////////////////////////////////////

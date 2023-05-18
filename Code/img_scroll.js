@@ -16,6 +16,7 @@ var g_windowEventListenersRegistry = [];  // for {event-type :: handler}
 
 //////////////////// Assume existence of the following global variables: ////////
 // g_imgPageOccurences : array of {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+// g_imageDimensions : Map(pageId : {width:w, height:h})
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -618,21 +619,33 @@ function derive_position_y_window(scoreStationsArray, step)
 
 
 /* Returns image height or -1 on error
- * Note, height is that of the original image (not possibly cropped occurence) */
+ * Note, height is that of the original image (not possibly cropped occurence)
+ * Takes the data from 'scoreStationsArray' or 'g_imageDimensions'  */
+// TODO: split into get_image_size() and read_image_size_record()
 function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 {
   const rec = scoreStationsArray.find((value, index, array) => {
     return  ( (value.tag == "Control-Height") && (value.pageId == pageId) )
   });
+  let height = -1;
   if ( rec === undefined )  {
-    err = `-E- Missing size record for page '${pageId}'`;
-    console.log(err);  console.trace();
-    if ( alertErr )  {
-      alert(err);
-      return  -1;
+    // try to read from g_imageDimensions : Map(pageId : {width:w, height:h})
+    // TODO: check existence of the map
+    if ( !g_imageDimensions.has(pageId) )  {
+      err = `-E- Missing size record for page '${pageId}'`;
+      console.log(err);  console.trace();
+      if ( alertErr )  {
+        alert(err);
+        return  -1;
+      }
+    } else {
+      let {width:w, height:h} = g_imageDimensions.get(pageId);
+      height = h;
     }
+  } else {  // record included in the stations' array
+    height = rec.y;
   }
-  return  rec.y;
+  return  height;
 }
 /** END: access to scoreStationsArray *****************************************/
 
