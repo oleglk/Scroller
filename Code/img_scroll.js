@@ -98,7 +98,7 @@ function scroll__onload(event)
   g_totalHeight = get_scroll_height();
 
   // scroll to the first ocuurence of any page
-  const firstPageOccId = filter_positions(g_scoreStations)[0].occId;
+  const firstPageOccId = filter_positions(g_scoreStations)[0].pageId;
   const firstPage = document.getElementById(firstPageOccId);
   const topPos = firstPage.offsetTop;
   //alert(`Page onload event; scroll to the first page (${firstPageOccId}) at y=${topPos}`);
@@ -376,11 +376,12 @@ function scroll_perform_one_step(stepNum)
     scroll_abort();
     return  0;
   }
-  //  {tag:"line-001-Begin", pageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec, occId: "pg01:01"}
+  //  {tag:"line-001-Begin", pageId: "pg01:01, origImgPageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec"}
+  // note, in 'g_scoreStations' pageId is occurence-id
   const rec = filter_positions(g_scoreStations)[stepNum];
-  const targetPos = convert_y_img_to_window(rec.occId, rec.y);
+  const targetPos = convert_y_img_to_window(rec.pageId, rec.y);
 
-  console.log(`-I- Scroll to ${rec.occId}:${targetPos} for step ${stepNum}`);
+  console.log(`-I- Scroll to ${rec.pageId}:${targetPos} for step ${stepNum}`);
   // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
   g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
