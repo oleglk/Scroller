@@ -161,8 +161,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     
     // imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     // scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
+    // scoreLines = control lines in the format of 'scoreDataLines'
     // linePlayOrder = {pageId:STR, lineIdx:INT, timeSec:FLOAT}
-    // scoreStations = {tag:STR, pageId:STR=occID, x:INT, y:INT, timeSec:FLOAT}
+    // scoreStations = {tag:STR, pageId:STR=occID, origImgPageId:STR, x:INT, y:INT, timeSec:FLOAT}
+    // (e.g, a record in 'scoreStations' extended with 'origImgPageId' field)
 
     let playedLinePageOccurences = [];  // (index in 'linePlayOrder') => occId
     /* assume page-occurences array is correct => we traverse it sequentially
@@ -193,13 +195,18 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       }
       let stepTag = "step:" + zero_pad(scoreStationsArray.length, 2);
       
-      let station = { tag:     stepTag,
-                      pageId:  playedLinePageOccurences[i],
-                      x:       0,
-                      y:       scoreLine.yOnPage,
-                      timeSec: playedLine.timeSec };
+      let station = { tag:           stepTag,
+                      pageId:        playedLinePageOccurences[i],
+                      origImgPageId: playedLine.pageId,
+                      x:             0,
+                      y:             scoreLine.yOnPage,
+                      timeSec:       playedLine.timeSec };
       scoreStationsArray.push( station );
     }
+
+    // copy control lines from 'scoreLines' array into 'scoreStationsArray'
+    scoreStationsArray =
+      scoreStationsArray.concat( filter_controls(this.scoreLines) );
 
     console.log(`Assembled score-stations-array with ${scoreStationsArray.length} station(s) for ${this.linePlayOrder.length} played line(s) with station-step ${numLinesInStep}`);
     return  scoreStationsArray;
@@ -246,10 +253,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     // compute this page vertical crop parameters
     const lineHeight    = this._get_page_line_height(page);
-    const pageOccHeight = this._get_page_total_height(page); //possibly cropped!
+    const pageImgHeight = this._get_page_total_height(page); // not! cropped
     const yTop       = firstLineRec.yOnPage;         // uppermost on current page
     const yBottom    = Math.min((lastLineRec.yOnPage + lineHeight),
-                                pageOccHeight);      // lowermost on current page
+                                pageImgHeight);      // lowermost on current page
 
     const occ = new ScorePageOccurence(
       //{occId:STR, pageId:STR, firstLine:INT,lastLine:INT, yTop:INT,yBottom:INT}
@@ -263,6 +270,18 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     console.log(`-I- Detected image/page occurence: ${occ}`);
     return  occ;
   }
+
+
+  // // 'pageIdToDimensionsMap' = Map('pageID' : { width:INT, height:INT }
+  // _fill_image_size_records_in_score_stations_array(pageIdToDimensionsMap)
+  // {
+  //   if ( pageIdToDimensionsMap === null )  {
+  //     err = "-E- Image-page dimensions map isn't ready yet"
+  //     console.log(err);  console.trace(err);  alert(err);
+  //     return  failse;
+  //   }
+  //   // TODO
+  // }
 
 
   /* Builds and returns array of per-image/page line heights
@@ -288,9 +307,9 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
         // image(s)/page(s) with single score line need special treatment
         if ( !pageIdToLineCount.has(currLine.pageId) )  {
           // (e.g. next line is on other page AND no prior lines on this page)
-          const pageOccHeight = this._get_page_total_height(currLine.pageId);  // possibly cropped!
+          const pageImgHeight = this._get_page_total_height(currLine.pageId);  // not! cropped
           pageIdToLineCount.set( currLine.pageId, 1 );
-          pageIdToLineHeightSum.set( currLine.pageId, pageOccHeight ); // unoptimal!
+          pageIdToLineHeightSum.set( currLine.pageId, pageImgHeight ); // unoptimal!
           // TODO: provide per-image last line bottom instead of total height
         }
         continue;
@@ -349,7 +368,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   }
   
   
-  // Returns pixel-height of page 'pageId' or -1 on error
+  // Returns pixel-height of page 'pageId' (original image)  or -1 on error
   _get_page_total_height(pageId)
   {
     if ( !this.pageHeights.has(pageId) )  {

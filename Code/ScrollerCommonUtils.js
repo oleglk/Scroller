@@ -15,16 +15,19 @@ function get_image_occurence_scale_y(scoreStationsArray, occId, alertErr=false)
     if ( alertErr )  { alert(err); }
     return  -1;
   }
-  return  get_image_scale_y(scoreStationsArray, rec.pageId);
+  const origPageId = (rec.hasOwnProperty('origImgPageId'))? rec.origImgPageId
+                                                          : "";
+  return  get_image_scale_y(scoreStationsArray, rec.pageId, origPageId);
 }
 
 
 // Returns scale of the original image (not possibly cropped occurence)
-function get_image_scale_y(scoreStationsArray, pageId)
+function get_image_scale_y(scoreStationsArray, occId, origImgPageId="")
 {
-  const imgHtmlElem   = document.getElementById(pageId);
+  const imgHtmlElem   = document.getElementById(occId);
   const renderHeight  = imgHtmlElem.offsetHeight;
-  const origHeight    = get_original_image_size(scoreStationsArray, pageId, true);
+  const origHeight    = get_original_image_size(
+    scoreStationsArray, (origImgPageId != "")? origImgPageId : pageId, true);
   return  renderHeight / origHeight;
 }
 
@@ -118,6 +121,15 @@ function filter_positions(scoreStationsArray)
 }
 
 
+// Returns new array with only control lines from 'scoreStationsArray'
+function filter_controls(scoreStationsArray)
+{
+  return  scoreStationsArray.filter((rec) =>  {
+    return  rec.tag.startsWith("Control-");
+  })
+}
+
+
 function positions_toString(scoreStationsArray, separatorStr)
 {
   let descr = "";
@@ -133,7 +145,7 @@ function positions_toString(scoreStationsArray, separatorStr)
 function one_position_toString(stepIdx, scoreStationRecord)
 {
   v = scoreStationRecord; // to shorten the notation
-  let descr = `step${stepIdx}=>${v.occId}::${v.y}=${convert_y_img_to_window(v.occId, v.y)}`;
+  let descr = `step${stepIdx}=>${v.pageId}::${v.y}=${convert_y_img_to_window(v.pageId, v.y)}`;
   return  descr
 }
 
