@@ -195,14 +195,6 @@ async function detect_img_dimensions(url) {
 /*******************************************************************************
  ** BEGIN: common utilities                                                   **
 *******************************************************************************/
-
-// Copied from: https://www.quora.com/How-do-you-check-if-a-file-exists-in-JavaScript 
-function check_file_exists(url) { 
-  var xhr = new XMLHttpRequest(); 
-  xhr.open('HEAD', url, false); 
-  xhr.send(); 
-  return xhr.status !== 404; 
-}
 /*******************************************************************************
  ** END: common utilities                                                   **
 *******************************************************************************/
