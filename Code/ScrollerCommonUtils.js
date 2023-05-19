@@ -5,19 +5,20 @@
  * (page occurences preserve scales of the original images) */
 function get_image_occurence_scale_y(scoreStationsArray, occId, alertErr=false)
 {
-  // we need any line on our image/page occurence (occId) - to obtain 'pageId'
+  // we need any line on our image/page occurence (occId)
+  // - to obtain page-id of the original image ('origImgPageId') 
   const rec = scoreStationsArray.find((value, index, array) => {
-    return  (value.occId == occId)
+    return  (value.pageId == occId)
   });
   if ( rec === undefined )  {
     err = `-E- Missing records for image/page occurence '${occId}'`;
-    console.log(err);
+    console.log(err);   console.trace();
     if ( alertErr )  { alert(err); }
     return  -1;
   }
   const origPageId = (rec.hasOwnProperty('origImgPageId'))? rec.origImgPageId
                                                           : "";
-  return  get_image_scale_y(scoreStationsArray, rec.pageId, origPageId);
+  return  get_image_scale_y(scoreStationsArray, occId, origPageId);
 }
 
 
@@ -27,7 +28,7 @@ function get_image_scale_y(scoreStationsArray, occId, origImgPageId="")
   const imgHtmlElem   = document.getElementById(occId);
   const renderHeight  = imgHtmlElem.offsetHeight;
   const origHeight    = get_original_image_size(
-    scoreStationsArray, (origImgPageId != "")? origImgPageId : pageId, true);
+    scoreStationsArray, (origImgPageId != "")? origImgPageId : occId, true);
   return  renderHeight / origHeight;
 }
 
@@ -173,7 +174,7 @@ function find_nearest_matching_position(scoreStationsArray, winY, lastStep)
                     Math.abs(a.step - lastStep) - Math.abs(b.step - lastStep) );
   DBG_candidates = candidates;  // OK_TMP
   let candidatesDescr = "";
-  candidates.forEach( (v) => candidatesDescr += `; step${v.step}=>${v.occId}::${v.y}` );
+  candidates.forEach( (v) => candidatesDescr += `; step${v.step}=>${v.pageId}::${v.y}` );
   console.log(`-D- Positions around step ${lastStep} at y=${winY} => ${candidatesDescr}`);
   
   let result = -1;  let resultDescr = "UNKNOWN";
@@ -286,7 +287,7 @@ function derive_position_y_window(scoreStationsArray, step)
 {
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   return  convert_y_img_to_window(
-                  scorePositions[step].occId, scorePositions[step].y);
+                  scorePositions[step].pageId, scorePositions[step].y);
 }
 
 

@@ -68,7 +68,7 @@ class PlayOrder
     //imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     this.imgPageOccurences = null;
 
-    //scoreStations = {tag:STR, pageId:STR=occID, x:INT, y:INT, timeSec:FLOAT}
+    //scoreStations = {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
     this.scoreStations = null;
     
     this._process_inputs();
