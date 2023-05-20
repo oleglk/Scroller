@@ -326,10 +326,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                                   (nextLine.yOnPage - currLine.yOnPage)) );
     }
     let pageIdToLineHeight = new Map();
-    // note, 10% added to line height to warrant finger labels inclusion
+    // note, 2% added to line height to warrant finger labels inclusion
     pageIdToLineHeightSum.forEach( (totalHeight, pageId) => {
-      pageIdToLineHeight.set( pageId,
-                              1.1* totalHeight / pageIdToLineCount.get(pageId) );
+      pageIdToLineHeight.set(pageId,
+                             1.02* totalHeight / pageIdToLineCount.get(pageId));
     } )
     
     return  pageIdToLineHeight;
