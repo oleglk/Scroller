@@ -29,7 +29,7 @@ const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
  * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
  * #### exec $IMCONVERT --version
  * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
- */  
+ * !Having page-width close to screen resolution makes fading alerts visible!*/  
 var g_scoreLines = [
   {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,   timeSec:g_fullLineInSec},
   {tag:"line-012-Begin", pageId:"pg01", x:0, y:205,  timeSec:g_fullLineInSec},

@@ -25,14 +25,19 @@ var g_beatsInTact = 4;
 const g_beatsForFullLine = g_tactsInLine * g_beatsInTact;
 const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
 
+/* Images are first resized to equal width, then measured:
+ * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+ * #### exec $IMCONVERT --version
+ * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
+ * !Having page-width close to screen resolution makes fading alerts visible!*/  
 var g_scoreLines = [
-  {tag:"line-001-Begin", pageId:"pg01", x:0, y:108,  timeSec:g_fullLineInSec},
-  {tag:"line-002-Begin", pageId:"pg01", x:0, y:492,  timeSec:g_fullLineInSec},
-  {tag:"line-003-Begin", pageId:"pg01", x:0, y:874,  timeSec:g_fullLineInSec},
-  {tag:"line-004-Begin", pageId:"pg01", x:0, y:1265, timeSec:g_fullLineInSec},
-  {tag:"line-005-Begin", pageId:"pg01", x:0, y:1646, timeSec:g_fullLineInSec},
-  {tag:"line-006-Begin", pageId:"pg01", x:0, y:2028, timeSec:g_fullLineInSec},
-  {tag:"Control-Height", pageId:"pg01", x:0, y:2492, timeSec:0},  
+  {tag:"line-001-Begin", pageId:"pg01", x:0, y:51,  timeSec:g_fullLineInSec},
+  {tag:"line-002-Begin", pageId:"pg01", x:0, y:228,  timeSec:g_fullLineInSec},
+  {tag:"line-003-Begin", pageId:"pg01", x:0, y:412,  timeSec:g_fullLineInSec},
+  {tag:"line-004-Begin", pageId:"pg01", x:0, y:599, timeSec:g_fullLineInSec},
+  {tag:"line-005-Begin", pageId:"pg01", x:0, y:766, timeSec:g_fullLineInSec},
+  {tag:"line-006-Begin", pageId:"pg01", x:0, y:956, timeSec:g_fullLineInSec},
+  {tag:"Control-Height", pageId:"pg01", x:0, y:1170, timeSec:0},  
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
