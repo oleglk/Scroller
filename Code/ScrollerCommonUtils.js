@@ -89,6 +89,7 @@ function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
   if ( yTop < 0 )  {    /* TODO: raise exception */  }
   
   const winY = pageHtmlElem.offsetTop + (imgY - yTop) * pageScaleY;
+  console.log(`-D- convert_y_img_to_window(${imgHtmlPageOccId}, imgY=${imgY}): pageScaleY=${pageScaleY}, yTop=${yTop}, currScrollY=${pageHtmlElem.offsetTop} => ${winY}`);
   return  Math.floor(winY);
 }
 
@@ -226,14 +227,14 @@ function find_matching_positions(scoreStationsArray, winY)
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   // build an ascending list of position-Y-s - to detect the order
   const winYArrayUnsorted = scorePositions.map( (rec) => {
-    return convert_y_img_to_window(rec.occId, rec.y);
+    return convert_y_img_to_window(rec.pageId, rec.y);
                                                   } );
   winYArray = uniq_sort(winYArrayUnsorted, (a, b) => a - b);
   let results = [];
   let currPage = null;
   for ( let i = 0;  i < scorePositions.length;  i += 1 ) {
     let rec       = scorePositions[i];
-    let currWinY  = convert_y_img_to_window(rec.occId, rec.y);
+    let currWinY  = convert_y_img_to_window(rec.pageId, rec.y);
     let idxOfCurrWinY = winYArray.indexOf(currWinY);  // must exist
     let isTop     = (idxOfCurrWinY == 0);
     let isBottom  = (idxOfCurrWinY == (winYArray.length - 1));
