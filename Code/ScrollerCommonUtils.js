@@ -2,23 +2,20 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /* Returns scale of the image/page occurence
- * (page occurences preserve scales of the original images) */
-function get_image_occurence_scale_y(scoreStationsArray, occId, alertErr=false)
+ * (page occurences preserve scales of the original images)
+ * (but page occurence could be a cropped portion of the original image) */
+function get_image_occurence_scale_y(imgPageOccurencesArray, occId,
+                                     alertErr=false)
 {
-  // we need any line on our image/page occurence (occId)
-  // - to obtain page-id of the original image ('origImgPageId') 
-  const rec = scoreStationsArray.find((value, index, array) => {
-    return  (value.pageId == occId)
-  });
-  if ( rec === undefined )  {
-    err = `-E- Missing records for image/page occurence '${occId}'`;
-    console.log(err);   console.trace();
-    if ( alertErr )  { alert(err); }
-    return  -1;
-  }
-  const origPageId = (rec.hasOwnProperty('origImgPageId'))? rec.origImgPageId
-                                                          : "";
-  return  get_image_scale_y(scoreStationsArray, occId, origPageId);
+  const topAndBottom = read_image_occurence_y_bounds(
+                                       imgPageOccurencesArray, occId, alertErr);
+  if ( topAndBottom === null )  { return  -1; } // error already printed
+  const origHeight = topAndBottom.yBottom - topAndBottom.yTop + 1;
+
+  const imgHtmlElem   = document.getElementById(occId);  // TODO: check for error
+  const renderHeight  = imgHtmlElem.offsetHeight;
+
+  return  renderHeight / origHeight;
 }
 
 
@@ -82,7 +79,7 @@ function get_scroll_current_y()
 function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageOccId);
   // page occurences preserve scales of the original images
-  const pageScaleY = get_image_occurence_scale_y(g_scoreStations,
+  const pageScaleY = get_image_occurence_scale_y(g_imgPageOccurences,
                                                  imgHtmlPageOccId);
   const yTop = read_image_occurence_yTop(g_imgPageOccurences,
                                          imgHtmlPageOccId, /*alertErr=*/true);
@@ -98,7 +95,7 @@ function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
 function convert_y_window_to_img(imgHtmlPageOccId, winY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageId);
   // page occurences preserve scales of the original images
-  const pageScaleY = get_image_occurence_scale_y(g_scoreStations,
+  const pageScaleY = get_image_occurence_scale_y(g_imgPageOccurences,
                                                  imgHtmlPageOccId);
   const yTop = read_image_occurence_yTop(g_imgPageOccurences,
                                          imgHtmlPageOccId, /*alertErr=*/true);
@@ -317,7 +314,28 @@ function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 
 /** BEGIN: access to imgPageOccurencesArray ************************************/
 //imgPageOccurencesArray /*{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+
 function read_image_occurence_yTop(imgPageOccurencesArray, occId, alertErr=false)
+{
+  const topAndBottom = read_image_occurence_y_bounds(
+                                       imgPageOccurencesArray, occId, alertErr);
+  if ( topAndBottom === null )  { return  -1; } // error already printed
+  return  topAndBottom.yTop;
+}
+
+function read_image_occurence_yBottom(imgPageOccurencesArray, occId,
+                                      alertErr=false)
+{
+  const topAndBottom = read_image_occurence_y_bounds(
+                                       imgPageOccurencesArray, occId, alertErr);
+  if ( topAndBottom === null )  { return  -1; } // error already printed
+  return  topAndBottom.yBottom;
+}
+
+
+// Returns {yTop=<OCC>.yTop, yBottom=<OCC>.yBottom} or null on error
+function read_image_occurence_y_bounds(imgPageOccurencesArray, occId,
+                                       alertErr=false)
 {
   const rec = imgPageOccurencesArray.find((value, index, array) => {
     return  (value.occId == occId)
@@ -326,9 +344,9 @@ function read_image_occurence_yTop(imgPageOccurencesArray, occId, alertErr=false
     err = `-E- Unknown image/page occurence '${occId}'`;
     console.log(err);  console.trace();
     if ( alertErr )  { alert(err); }
-    return  -1;
+    return  null;
   }
-  return  rec.yTop;
+  return  {yTop:rec.yTop, yBottom:rec.yBottom};
 }
 /** END: access to imgPageOccurencesArray **************************************/
 
