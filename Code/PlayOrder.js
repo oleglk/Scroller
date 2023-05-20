@@ -329,7 +329,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     // note, 10% added to line height to warrant finger labels inclusion
     pageIdToLineHeightSum.forEach( (totalHeight, pageId) => {
       pageIdToLineHeight.set( pageId,
-                              1.2* totalHeight / pageIdToLineCount.get(pageId) );
+                              1.1* totalHeight / pageIdToLineCount.get(pageId) );
     } )
     
     return  pageIdToLineHeight;
