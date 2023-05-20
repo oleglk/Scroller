@@ -147,7 +147,8 @@ function positions_toString(scoreStationsArray, separatorStr)
 function one_position_toString(stepIdx, scoreStationRecord)
 {
   v = scoreStationRecord; // to shorten the notation
-  let descr = `step${stepIdx}=>${v.pageId}::${v.y}=${convert_y_img_to_window(v.pageId, v.y)}`;
+  let lineStr = ('lineOnPageIdx' in v)? ` (line: ${v.lineOnPageIdx})}` : "";
+  let descr = `step${stepIdx}=>${v.pageId}::${v.y}=${convert_y_img_to_window(v.pageId, v.y)}${lineStr}`;
   return  descr
 }
 

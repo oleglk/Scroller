@@ -163,7 +163,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     // scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
     // scoreLines = control lines in the format of 'scoreDataLines'
     // linePlayOrder = {pageId:STR, lineIdx:INT, timeSec:FLOAT}
-    // scoreStations = {tag:STR, pageId:STR=occID, origImgPageId:STR, x:INT, y:INT, timeSec:FLOAT}
+    // scoreStations = {tag:STR, pageId:STR=occID, origImgPageId:STR, [lineOnPageIdx:INT], x:INT, y:INT, timeSec:FLOAT}
     // (e.g, a record in 'scoreStations' extended with 'origImgPageId' field)
 
     let playedLinePageOccurences = [];  // (index in 'linePlayOrder') => occId
@@ -198,9 +198,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       let station = { tag:           stepTag,
                       pageId:        playedLinePageOccurences[i],
                       origImgPageId: playedLine.pageId,
+                      lineOnPageIdx: playedLine.lineIdx,
                       x:             0,
                       y:             scoreLine.yOnPage,
-                      timeSec:       playedLine.timeSec };
+                      timeSec:       playedLine.timeSec};
       scoreStationsArray.push( station );
     }
 
