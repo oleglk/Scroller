@@ -35,19 +35,7 @@ function get_original_image_size(scoreStationsArray, pageId, alertErr=false)
   let height = read_image_size_record(scoreStationsArray, pageId,
                                       /*alertErr=*/false);
   if ( height < 0 )  {  // record missing in the stations' array
-    // try to read from g_imageDimensions : Map(pageId : {width:w, height:h})
-    // TODO: check existence of the map
-    if ( !g_imageDimensions.has(pageId) )  {
-      err = `-E- Missing size of original image for page '${pageId}'`;
-      console.log(err);  console.trace();
-      if ( alertErr )  {
-        alert(err);
-        return  -1;
-      }
-    } else {
-      let {width:w, height:h} = g_imageDimensions.get(pageId);
-      height = h;
-    }
+    throw new Error(`-OK_TMP- No dimension record for ${pageId}`);
   }
   return  height;
 }
@@ -292,7 +280,7 @@ function derive_position_y_window(scoreStationsArray, step)
 
 /* Returns image height or -1 on error
  * Note, height is that of the original image (not possibly cropped occurence)
- * Takes the data from 'scoreStationsArray' or 'g_imageDimensions'  */
+ * Takes the data from 'scoreStationsArray'  */
 function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 {
   const rec = scoreStationsArray.find((value, index, array) => {

@@ -88,6 +88,7 @@ class ScoreImgLayout
   }
 
 
+  // Returns Map(pageId : {width:w, height:h})
   get_image_dimensions_map()
   {
     // this._imageDimensions == Map(pageId : {width:w, height:h})

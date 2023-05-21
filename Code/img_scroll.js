@@ -16,7 +16,6 @@ var g_windowEventListenersRegistry = [];  // for {event-type :: handler}
 
 //////////////////// Assume existence of the following global variables: ////////
 // g_imgPageOccurences : array of {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
-// g_imageDimensions : Map(pageId : {width:w, height:h})
 ////////////////////////////////////////////////////////////////////////////////
 
 
