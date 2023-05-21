@@ -69,9 +69,9 @@ var g_scoreStations_Groupped = [
 var g_scoreStations = g_scoreStations_Groupped.map(a => {return {...a}});
 ////////////////////////////////////////////////////////////////////////////////
 
-  
+// Full line play order - with repetitions
 /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
-var g_linePlayOrder = [
+var g_linePlayOrder_full = [
   {pageId:"pg01", lineIdx:0, timeSec:g_fullLineInSec},
   {pageId:"pg01", lineIdx:1, timeSec:g_fullLineInSec},
   {pageId:"pg01", lineIdx:2, timeSec:2/3*g_fullLineInSec},
@@ -85,6 +85,22 @@ var g_linePlayOrder = [
   {pageId:"pg01", lineIdx:4, timeSec:g_fullLineInSec},
   {pageId:"pg01", lineIdx:5, timeSec:2/3*g_fullLineInSec},
 ];
+
+// Straight line play order - without repetitions
+/*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+var g_linePlayOrder_straight = [
+  {pageId:"pg01", lineIdx:0, timeSec:g_fullLineInSec},
+  {pageId:"pg01", lineIdx:1, timeSec:g_fullLineInSec},
+  {pageId:"pg01", lineIdx:2, timeSec:2/3*g_fullLineInSec},
+  {pageId:"pg01", lineIdx:3, timeSec:g_fullLineInSec},
+  {pageId:"pg01", lineIdx:4, timeSec:g_fullLineInSec},
+  {pageId:"pg01", lineIdx:5, timeSec:2/3*g_fullLineInSec},
+];
+
+////////////////////////////////////////////////////////////////////////////////
+// ... the copy will be 2-level deep - fine for the task
+var g_linePlayOrder = g_linePlayOrder_straight.map(a => {return {...a}});
+////////////////////////////////////////////////////////////////////////////////
 
 
 //var g_imgPaths = [  "Papirossen.jpg"  ];

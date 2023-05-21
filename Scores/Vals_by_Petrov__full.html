@@ -1,0 +1,238 @@
+<!-- TMP_Vals_by_Petrov -->
+
+<!DOCTYPE HTML>
+
+<html>
+<head>
+
+<style>
+img {
+  width: 75%;
+}
+</style>
+
+<!-- Score/notes for "TMP_Vals_by_Petrov" -->
+<script type="text/javascript">
+////////////////////////////////////////////////////////////////////////////////
+
+
+// TODO: pass 'g_tempo', 'g_tactsInLine', 'g_beatsInTact' from the HTML
+// TODO: provide a way for user to force alternative 'g_tempo'
+var g_tempo = 10*60;  //60; // beats-per-minute
+var g_beatsInTact = 3;
+var g_tactTimeSec = g_beatsInTact / g_tempo * 60;  // one tact duration (sec)
+
+
+/* Images are first resized to equal width, then measured:
+ * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+ * #### exec $IMCONVERT --version
+ * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
+ * !Having page-width close to screen resolution makes fading alerts visible!*/  
+var g_scoreLines = [
+  {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,  timeSec:6*g_tactTimeSec},
+  {tag:"line-012-Begin", pageId:"pg01", x:0, y:205,  timeSec:6*g_tactTimeSec},
+  {tag:"line-013-Begin", pageId:"pg01", x:0, y:485,  timeSec:6*g_tactTimeSec},
+  {tag:"line-014-Begin", pageId:"pg01", x:0, y:692,  timeSec:6*g_tactTimeSec},
+  {tag:"line-015-Begin", pageId:"pg01", x:0, y:884,  timeSec:6*g_tactTimeSec},
+  {tag:"line-021-Begin", pageId:"pg02", x:0, y:33,   timeSec:5*g_tactTimeSec},
+  {tag:"line-022-Begin", pageId:"pg02", x:0, y:244,  timeSec:5*g_tactTimeSec},
+  {tag:"line-023-Begin", pageId:"pg02", x:0, y:454,  timeSec:7*g_tactTimeSec},
+  {tag:"line-024-Begin", pageId:"pg02", x:0, y:668,  timeSec:7*g_tactTimeSec},
+  {tag:"line-025-Begin", pageId:"pg02", x:0, y:876,  timeSec:7*g_tactTimeSec},
+  {tag:"line-031-Begin", pageId:"pg03", x:0, y:39,   timeSec:6*g_tactTimeSec},
+  {tag:"line-032-Begin", pageId:"pg03", x:0, y:273,  timeSec:7*g_tactTimeSec},
+  {tag:"line-033-Begin", pageId:"pg03", x:0, y:485,  timeSec:4*g_tactTimeSec},
+  {tag:"line-034-Begin", pageId:"pg03", x:0, y:661,  timeSec:5*g_tactTimeSec},
+  {tag:"Control-Height", pageId:"pg01", x:0, y:1130, timeSec:0},  
+  {tag:"Control-Height", pageId:"pg02", x:0, y:1130, timeSec:0},  
+  {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeSec:0},  
+];
+
+////////////////////////////////////////////////////////////////////////////////
+// Copies one score position record while modifying the duration field
+function score_viewpoint(scoreLineObj, timeSec)
+{
+  let scoreStation = Object.assign(scoreLineObj);  // shallow copy is OK here
+  scoreStation.timeSec = timeSec;
+  return  scoreStation;
+}
+////////////////////////////////////////////////////////////////////////////////
+
+
+// TODO, pass the whole array from the HTML ?table?
+// TODO: double-check times
+/* The grouped view-points are built assuming 3 lines are visible at each one.
+ * Correspond to the intended order - with repetitions
+ * Times are incorrect */
+var g_scoreStations_Groupped = [
+  {...score_viewpoint(g_scoreLines[0],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[2],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[4],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[6],   (1+4/7)   * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[0],   (2/6+1)   * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[2],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[4],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[6],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[8],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[10],  (1+1+2/4) * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[0],   (2/6+1)   * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[2],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[4],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[6],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[8],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[10],  (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[11],  (1+1+1)   * 7*g_tactTimeSec)},
+  g_scoreLines.find(x => (x.tag == "Control-Height")),
+];
+
+
+// TODO, pass the whole array from the HTML ?table?
+// TODO: double-check times
+/* The grouped view-points are built assuming 3 lines are visible at each one.
+ * Correspond to the lazy order - without repetitions
+ * Times are incorrect */
+var g_scoreStations_Groupped_NoRepeat = [
+  {...score_viewpoint(g_scoreLines[0],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[2],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[4],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[6],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[8],   (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[10],  (1+1)     * 7*g_tactTimeSec)},
+  {...score_viewpoint(g_scoreLines[11],  (1+1+1)   * 7*g_tactTimeSec)},
+  ...g_scoreLines.filter(x => (x.tag == "Control-Height")),
+];
+
+////////////////////////////////////////////////////////////////////////////////
+// ... the copy will be 2-level deep - fine for the task
+//// var g_scoreStations = g_scoreStations_Groupped_NoRepeat.map(a => {return {...a}});
+////////////////////////////////////////////////////////////////////////////////
+
+
+// Straight line play order - without repetitions
+/*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+var g_linePlayOrder_Straight = [
+  {pageId:"pg01", lineIdx:0, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:1, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:2, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:3, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:4, timeSec:6*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:0, timeSec:5*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:1, timeSec:5*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:2, timeSec:7*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:3, timeSec:7*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:4, timeSec:7*g_tactTimeSec},
+  {pageId:"pg03", lineIdx:0, timeSec:6*g_tactTimeSec},
+  {pageId:"pg03", lineIdx:1, timeSec:7*g_tactTimeSec},
+  {pageId:"pg03", lineIdx:2, timeSec:4*g_tactTimeSec},
+  {pageId:"pg03", lineIdx:3, timeSec:5*g_tactTimeSec},
+];
+
+// Full line play order - with repetitions
+/*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+var g_linePlayOrder_full = [
+  {pageId:"pg01", lineIdx:0, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:1, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:2, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:3, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:4, timeSec:6*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:0, timeSec:5*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:1, timeSec:5*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:2, timeSec:4*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:0, timeSec:2*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:1, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:2, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:3, timeSec:6*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:4, timeSec:6*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:0, timeSec:5*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:1, timeSec:5*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:2, timeSec:7*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:3, timeSec:7*g_tactTimeSec},
+  {pageId:"pg02", lineIdx:4, timeSec:7*g_tactTimeSec},
+  {pageId:"pg03", lineIdx:0, timeSec:6*g_tactTimeSec},
+  {pageId:"pg03", lineIdx:1, timeSec:7*g_tactTimeSec},
+  {pageId:"pg03", lineIdx:2, timeSec:4*g_tactTimeSec},
+  {pageId:"pg03", lineIdx:3, timeSec:5*g_tactTimeSec},  
+];
+
+////////////////////////////////////////////////////////////////////////////////
+// ... the copy will be 2-level deep - fine for the task
+var g_linePlayOrder = g_linePlayOrder_full.map(a => {return {...a}});
+////////////////////////////////////////////////////////////////////////////////
+
+// var g_imgPaths = [  "Vals_by_Petrov__01.jpg",
+//                     "Vals_by_Petrov__02.jpg",
+//                     "Vals_by_Petrov__03.jpg"  ];
+  var g_pageImgPathsMap = new Map([
+    ["pg01", "Vals_by_Petrov__01.jpg"],
+    ["pg02", "Vals_by_Petrov__02.jpg"],
+    ["pg03", "Vals_by_Petrov__03.jpg"],
+  ]);
+
+// // Load the layout code
+// import { ScorePageOccurence, PlayOrder } from "../Code/PlayOrder.js";
+
+</script>
+
+<!-- Load the utility code -->
+<script src="../Code/ScrollerCommonUtils.js"></script>
+<!-- Load the layout code -->
+<script src="../Code/PlayOrder.js"></script>
+<script src="../Code/ScoreImgLayout.js"></script>
+<!-- Load the scrolling code -->
+<!-- script src="../Code/img_scroll.js"></script> --> 
+
+
+
+
+</head>
+<body
+>
+
+<!-- <img src="Vals_by_Petrov__01.jpg" alt="Vals_by_Petrov__p1" id="pg01"/> -->
+<!-- <img src="Vals_by_Petrov__02.jpg" alt="Vals_by_Petrov__p2" id="pg02"/> -->
+<!-- <img src="Vals_by_Petrov__03.jpg" alt="Vals_by_Petrov__p3" id="pg03"/> -->
+
+</body>
+
+
+<!-- Create the play-order layout (AFTER the body)-->
+<script type="text/javascript">
+////////////////////////////////////////////////////////////////////////////////
+
+// arguments:
+//     name,
+//     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
+//     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+//     imagePathsArray /*STR*/  //TODO: maybe a Map?
+var plo = new PlayOrder("Vals_by_Petrov",
+                        g_scoreLines,
+                        g_linePlayOrder,
+                        g_pageImgPathsMap,
+                        2/*lines in a step*/
+                       );
+
+// arguments:
+//    pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
+//    imgPageOccurences /*pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+var iml = new ScoreImgLayout(g_pageImgPathsMap,
+                             plo.imgPageOccurences
+                            );
+iml.render_images();
+
+////////////////////////////////////////////////////////////////////////////////
+// prepare global data for the scroller and start it
+var g_imageDimensions = iml.get_image_dimensions_map();
+
+// ... the copy will be 2-level deep - fine for the task
+var g_scoreStations = plo.scoreStations.map(a => {return {...a}});
+
+// ... the copy will be 2-level deep - fine for the task
+var g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
+////////////////////////////////////////////////////////////////////////////////
+</script>
+
+<!-- Load the scrolling code -->
+<script src="../Code/img_scroll.js"></script> 
+
+</html>
+
