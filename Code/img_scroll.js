@@ -3,7 +3,8 @@
 
 /* Manual Scroll    == compute next position based on current scroll.
  * No Manual Scroll == compute next position based on current step, ignore scroll position.
- * Disclaimer: maual scroll isn't properly debugged. */
+ * (Do not confuse "Manual Scroll" with "Manual Step".)
+ * Disclaimer: manual scroll isn't properly debugged. */
 const g_permitManualScroll = false;  // 
 
 
