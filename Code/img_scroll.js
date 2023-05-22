@@ -1,6 +1,12 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
+/* Manual Scroll    == compute next position based on current scroll.
+ * No Manual Scroll == compute next position based on current step, ignore scroll position.
+ * Disclaimer: maual scroll isn't properly debugged. */
+const g_permitManualScroll = false;  // 
+
+
 var g_stepManual = true;  // false = auto-scroll, true = manual-stepping
 
 var g_totalHeight = -1; // for document scroll height
@@ -286,7 +292,7 @@ function _manual_one_step(stepIncrement)
   const currWinY = get_scroll_current_y();
   let newStep = -1; 
 ////debugger;   // OK_TMP
-  if ( currWinY != g_lastJumpedToWinY )   {
+  if ( g_permitManualScroll && (currWinY != g_lastJumpedToWinY) )   {
     newStep = find_nearest_matching_position(g_scoreStations,
                                                 currWinY, g_currStep);
     console.log(`-I- Manual scroll to winY=${currWinY} detected`);
