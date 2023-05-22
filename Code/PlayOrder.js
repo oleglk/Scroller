@@ -255,9 +255,14 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     // compute this page vertical crop parameters
     const lineHeight    = this._get_page_line_height(page);
     const pageImgHeight = this._get_page_total_height(page); // not! cropped
+    let   pageImgBottom = read_optional_image_bottom_record(
+                                     this.scoreLines/*scoreStations not ready*/,
+                                     page, /*alertErr=*/false);
     const yTop       = firstLineRec.yOnPage;         // uppermost on current page
-    const yBottom    = Math.min((lastLineRec.yOnPage + lineHeight),
-                                pageImgHeight);      // lowermost on current page
+    const yBottom    =                               // lowermost on current page
+          (pageImgBottom > 0)? pageImgBottom // prefer explicitly provided bottom
+                             : Math.min((lastLineRec.yOnPage + lineHeight),
+                                        pageImgHeight);
 
     const occ = new ScorePageOccurence(
       //{occId:STR, pageId:STR, firstLine:INT,lastLine:INT, yTop:INT,yBottom:INT}

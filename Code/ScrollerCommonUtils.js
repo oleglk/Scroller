@@ -297,6 +297,26 @@ function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
   return  rec.y;
 }
 
+
+/* Returns image bottommost sensible Y coordinate or -1 on error
+ * Takes the (control!) data from 'scoreStationsArray or scoreLinesArray'  */
+function read_optional_image_bottom_record(scoreStationsOrScoreLinesArray,
+                                           pageId, alertErr=false)
+{
+  const rec = scoreStationsOrScoreLinesArray.find((value, index, array) => {
+    return  ( (value.tag == "Control-Bottom") && (value.pageId == pageId) )
+  });
+  if ( rec === undefined )  {
+    wrn = `-W- Missing bottom record for page '${pageId}'`;
+    console.log(wrn);
+    if ( alertErr )  {
+      console.trace();  alert(wrn);
+    }
+    return  -1;
+  }
+  return  rec.y;
+}
+
 /** END: access to scoreStationsArray *****************************************/
 
 
