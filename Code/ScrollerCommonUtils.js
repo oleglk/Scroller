@@ -399,6 +399,20 @@ function check_file_exists(url) {
   xhr.send(); 
   return xhr.status !== 404; 
 }
+
+
+// From: https://stackoverflow.com/questions/11729835/how-to-disable-prevent-this-page-from-creating-additional-dialogs
+function alert_without_notice(message)
+{
+  setTimeout( function() { alert(message); }, 1000 );
+}
+
+
+// function prompt_without_notice(messageStr, defaultVal)
+// {
+//   TODO
+// }
+
 /*******************************************************************************
  ** END: common utilities                                                   **
 *******************************************************************************/
