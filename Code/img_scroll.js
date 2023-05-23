@@ -1,6 +1,10 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
+//(does not work) import Dialog from './ModalDialog.js';
+
+const g_helpAndTempoDialog = new Dialog();
+
 /* Manual Scroll    == compute next position based on current scroll.
  * No Manual Scroll == compute next position based on current step, ignore scroll position.
  * (Do not confuse "Manual Scroll" with "Manual Step".)
@@ -130,8 +134,14 @@ function show_and_process_help_and_tempo_dialog()
 {
   let defaultTempo = (g_stepManual)? 0 : g_tempo;
   let helpStr = build_help_string(1, 1) + "\n" + build_help_string(0, 0) +
-                `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
-  const tempoStr = window.prompt( helpStr, defaultTempo);
+      `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
+  
+  ////////const tempoStr = window.prompt( helpStr, defaultTempo);
+  let tempoStr = "";
+  g_helpAndTempoDialog.prompt( helpStr, defaultTempo ).then(
+    (res) => { tempoStr = res; }
+  );
+  
   let modeMsg = "UNDEF"
   if ( (tempoStr == "") || (tempoStr == "0") )  {
     g_stepManual = true;
