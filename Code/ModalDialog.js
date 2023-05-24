@@ -113,9 +113,12 @@ class Dialog {
     this.elements.cancel.hidden = dialog.cancel === ''
     this.elements.message.innerText = dialog.message
 
-    /* If sounds exists, update `src` */
-    this.elements.soundAccept.src = dialog.soundAccept || ''
-    this.elements.soundOpen.src = dialog.soundOpen || ''
+    //~ /* If sounds exists, update `src` */
+    //~ this.elements.soundAccept.src = dialog.soundAccept || ''
+    //~ this.elements.soundOpen.src = dialog.soundOpen || ''
+    /* Oleg: block sound-related stuff - it doesn't work */
+    this.elements.soundAccept.src = ''
+    this.elements.soundOpen.src = ''
 
     /* A target can be added (from the element invoking the dialog */
     this.elements.target = dialog.target || ''
@@ -127,7 +130,8 @@ class Dialog {
     this.focusable = this.getFocusable()
     this.hasFormData = this.elements.fieldset.elements.length > 0
     if (dialog.soundOpen) {
-      this.elements.soundOpen.play()
+      /* Oleg: block sound-related stuff - it doesn't work */
+      // this.elements.soundOpen.play()
     }
     this.toggle(true)
     if (this.hasFormData) {
@@ -151,7 +155,8 @@ class Dialog {
       this.elements.accept.addEventListener( 'click', () => {
         let value = this.hasFormData ? 
             this.collectFormData(new FormData(this.elements.form)) : true;
-        if (this.elements.soundAccept.src) this.elements.soundAccept.play()
+        /* Oleg: block sound-related stuff - it doesn't work */
+        //if (this.elements.soundAccept.src) this.elements.soundAccept.play()
         this.toggle()
         resolve(value)
       }, { once: true } /*{once: true} == remove event listeners immediately*/ )
@@ -204,13 +209,18 @@ class Dialog {
   /* mimic native Javascript dialog.prompt().
    * {target: event.target} - a reference to DOM element that calls the method */
   prompt(message, value, config = { target: event.target }) {
+//debugger  // OK_TMP
     // add a template with an <input> that we’ll wrap in a <label>
     const template = `
   <label aria-label="${message}">
     <input name="prompt" value="${value}">
   </label>`
     const settings = Object.assign({}, config, { message, template })
-    this.open(settings)
+    try  {
+      this.open(settings)
+    } catch (error) {
+      console.error(error);
+    }
     return this.waitForUser()
   }
 
