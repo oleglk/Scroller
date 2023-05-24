@@ -46,6 +46,8 @@ class Dialog {
     // For screen readers, we need an aria-labelledby attribute pointing to the ID of the tag that describes the dialog
     this.dialog.setAttribute('aria-labelledby', this.elements.message.id)
 
+    this.focusOwnerBeforeDialog = ''  // to know where to return focus at close
+
     // HTML dialog element has a built-in cancel() method
     this.elements.cancel.addEventListener('click', () => { 
       this.dialog.dispatchEvent(new Event('cancel')) 
@@ -70,19 +72,30 @@ class Dialog {
     })
     
     /* call toggle() at the end of `init`: */
-    this.toggle()
+    this.toggle(false)
   }//END_OF__init()
 
   
   // to hide the HTML dialog element for browsers that do not support it
-  toggle(open = false) {
-    if (this.dialogSupported && open) this.dialog.showModal()
-    if (!this.dialogSupported) {
+  toggle(open) {
+    if (this.dialogSupported && open)  {
+      console.log("-D- Open-dialog at:");  console.trace();  // OK_TMP
+      this.dialog.showModal()
+      this.dialog.hidden = false  // Oleg
+    }
+    if (!this.dialogSupported || (open == false)/*Oleg*/) {
+      console.log("-D- Close-dialog at:");  console.trace();  // OK_TMP
       document.body.classList.toggle(this.settings.bodyClass, open)
       this.dialog.hidden = !open
       /* If a `target` exists, set focus on it when closing */
-      if (this.elements.target && !open) {
-        this.elements.target.focus()
+//debugger;  // OK_TMP
+      // if (this.elements.target && !open) {
+      //   this.elements.target.focus()
+      // }
+      if ((this.focusOwnerBeforeDialog !== undefined) &&
+          (this.focusOwnerBeforeDialog != ''))  {
+        this.focusOwnerBeforeDialog.focus()  // Oleg: restore focus to pre-dialog
+        this.focusOwnerBeforeDialog = ''     // Oleg: forget it
       }
     }
   }
@@ -123,6 +136,13 @@ class Dialog {
     /* A target can be added (from the element invoking the dialog */
     this.elements.target = dialog.target || ''
 
+    /* Oleg: if old focused element known, store it to return focus upon close */
+    if (this.elements.target != '')  {
+      this.focusOwnerBeforeDialog = this.elements.target.activeElement
+    } else {
+      this.focusOwnerBeforeDialog = ''
+    }
+
     /* Optional HTML for custom dialogs */
     this.elements.template.innerHTML = dialog.template || ''
 
@@ -149,7 +169,7 @@ class Dialog {
   waitForUser() {
     return new Promise(resolve => {
       this.dialog.addEventListener( 'cancel', () => { 
-        this.toggle()
+        this.toggle(false)
         resolve(false)  /* simpler alternative to 'reject()' */
       }, { once: true } /*{once: true} == remove event listeners immediately*/ )
       this.elements.accept.addEventListener( 'click', () => {
@@ -157,7 +177,8 @@ class Dialog {
             this.collectFormData(new FormData(this.elements.form)) : true;
         /* Oleg: block sound-related stuff - it doesn't work */
         //if (this.elements.soundAccept.src) this.elements.soundAccept.play()
-        this.toggle()
+//debugger  // OK_TMP        
+        this.toggle(false)
         resolve(value)
       }, { once: true } /*{once: true} == remove event listeners immediately*/ )
     })
