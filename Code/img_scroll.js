@@ -136,7 +136,8 @@ function show_and_process_help_and_tempo_dialog()
   let helpStr = build_help_string(1, 1) + "\n" + build_help_string(0, 0) +
       `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
 
-  g_helpAndTempoDialog = new Dialog();
+  g_helpAndTempoDialog = new Dialog(
+    {eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick']});
   
   ////////const tempoStr = window.prompt( helpStr, defaultTempo);
   let tempoStr = "";

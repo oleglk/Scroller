@@ -7,6 +7,7 @@ class Dialog {
     this.settings = Object.assign(
       {
         /* DEFAULT SETTINGS - see description below */
+        eventsToBlockWhileOpen: [],
       },
       settings
     )
@@ -47,6 +48,7 @@ class Dialog {
     this.dialog.setAttribute('aria-labelledby', this.elements.message.id)
 
     this.focusOwnerBeforeDialog = ''  // to know where to return focus at close
+    //this.settings.eventsToBlockWhileOpen = [];
 
     // HTML dialog element has a built-in cancel() method
     this.elements.cancel.addEventListener('click', () => { 
@@ -170,6 +172,7 @@ class Dialog {
     return new Promise(resolve => {
       this.dialog.addEventListener( 'cancel', () => { 
         this.toggle(false)
+        window.removeEventListener('click', this._blockEventHandler)
         resolve(false)  /* simpler alternative to 'reject()' */
       }, { once: true } /*{once: true} == remove event listeners immediately*/ )
       this.elements.accept.addEventListener( 'click', () => {
@@ -179,12 +182,28 @@ class Dialog {
         //if (this.elements.soundAccept.src) this.elements.soundAccept.play()
 //debugger  // OK_TMP        
         this.toggle(false)
+        this.settings.eventsToBlockWhileOpen.forEach( (evType) =>
+          window.removeEventListener(evType, this._blockEventHandler) )
         resolve(value)
       }, { once: true } /*{once: true} == remove event listeners immediately*/ )
+      // Oleg: block mouse clicks while dialog open
+      this.settings.eventsToBlockWhileOpen.forEach( (evType) =>
+        window.addEventListener(evType, this._blockEventHandler, {once: false}) )
     })
   }
 
+  
+  _blockEventHandler(event)  {  // Oleg: blocks mouse clicks while dialog open
+    // TODO: do not block if target is in "focusable" list
+    console.log("---IGNORED---")
+    event.preventDefault();
+    // Unfortunately event prevention blocks timed alert
+    /* Keep the rest of the handlers from being executed
+     *   (and it prevents the event from bubbling up the DOM tree) */
+    event.stopImmediatePropagation();
+  }
 
+  
   collectFormData(formData) {
     const object = {};
     formData.forEach((value, key) => {
