@@ -46,13 +46,17 @@ function build_help_string(showHeader, modeManual=g_stepManual)
 {
   let ret = "";
   if ( showHeader ) {
-    ret +=  `======== Musical score scroller ========
-   
+    ret +=  `
+========================================   
+== Musical Score Scroller
+== by Oleg Kosyakovsky - Haifa, Israel - 2023
+========================================   
+
+
 => Left-mouse-button-Double-Click \t= Restart\n`
   }
   ret += `
-========================================   
-Mode: ${(modeManual)? "MANUAL" : "AUTO"};
+Step Mode: ${(modeManual)? "MANUAL" : "AUTO"};
 ========================================`;
 
   if ( modeManual ) {
@@ -141,6 +145,7 @@ async function show_and_process_help_and_tempo_dialog()
     {
       eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick'],
       supportCancel:          false,
+      accept:                 "OK",
     } );
   
   ////////const tempoStr = window.prompt( helpStr, defaultTempo);
