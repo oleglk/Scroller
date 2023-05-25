@@ -66,6 +66,14 @@ class Dialog {
       if (this.settings.supportCancel &&
           (e.key === 'Escape'))
         this.dialog.dispatchEvent(new Event('cancel'))
+      if (!this.settings.supportCancel &&
+          (e.key === 'Escape'))  {  // this isn't caught if focus not on dialog
+        event.preventDefault();
+        /* Keep the rest of the handlers from being executed
+         *   (and it prevents the event from bubbling up the DOM tree) */
+        event.stopImmediatePropagation();
+        console.log("<Escape> key event suppressed on modal-dialog level")
+      }
       if (e.key === 'Tab') {
         e.preventDefault()
         const len =  this.focusable.length - 1;
@@ -207,7 +215,6 @@ class Dialog {
     // TODO: do not block if target is in "focusable" list
     console.log("---IGNORED---")
     event.preventDefault();
-    // Unfortunately event prevention blocks timed alert
     /* Keep the rest of the handlers from being executed
      *   (and it prevents the event from bubbling up the DOM tree) */
     event.stopImmediatePropagation();

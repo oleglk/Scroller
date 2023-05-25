@@ -34,6 +34,7 @@ var g_windowEventListenersRegistry = [];  // for {event-type :: handler}
 //window.addEventListener("load", scroll__onload);
 //window.addEventListener("load", (event) => { scroll__onload(event) });
 
+
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__scroll__onload  = (event) => { scroll__onload(event) }
@@ -147,9 +148,14 @@ async function show_and_process_help_and_tempo_dialog()
       supportCancel:          false,
       accept:                 "OK",
     } );
-  
+
+  window.addEventListener("keydown", _confirm_escape_handler);
+
   ////////const tempoStr = window.prompt( helpStr, defaultTempo);
   const res = await g_helpAndTempoDialog.prompt( helpStr, defaultTempo );
+
+  window.removeEventListener("keydown", _confirm_escape_handler);
+
   //debugger;  // OK_TMP
   // 'res' is 'false' upon cancel or an object with form-data upon accept
   if ( res == false )  {
@@ -442,4 +448,19 @@ function register_window_event_listener(eventType, handler)
   }
   window.addEventListener(eventType, handler);
   g_windowEventListenersRegistry[eventType] = handler;
+}
+
+
+function _confirm_escape_handler(event)
+{
+  if ( event.key === 'Escape' )  {
+    if ( false == window.confirm(
+                       "Pressing OK will abort the Musical Score Scroller") )  {
+      event.preventDefault();
+      /* Keep the rest of the handlers from being executed
+       *   (and it prevents the event from bubbling up the DOM tree) */
+      event.stopImmediatePropagation();
+      console.log("<Escape> key event suppressed at browser-window level")
+    }
+  }
 }
