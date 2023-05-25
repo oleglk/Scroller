@@ -71,7 +71,7 @@ Mode: ${(modeManual)? "MANUAL" : "AUTO"};
 
 
 // Scrolls to line-01
-function scroll__onload(event)
+async function scroll__onload(event)
 {
   /* Keep the rest of the handlers from being executed
   *   (and it prevents the event from bubbling up the DOM tree) */
@@ -86,7 +86,7 @@ function scroll__onload(event)
   console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
   
   // Use tempo prompt to print help and determine operation mode and the tempo
-  show_and_process_help_and_tempo_dialog();  // loops by itself untill accepted
+  while ( false == await show_and_process_help_and_tempo_dialog() );
 
   // Assign event handlers according to the operation mode
   // To facilitate passing parameters to event handlers, use an anonymous function
@@ -130,7 +130,7 @@ function scroll__onload(event)
 
 /* Uses tempo prompt to print help and determine operation mode and the tempo.
  * Returns true on success, false on error */
-function show_and_process_help_and_tempo_dialog()
+async function show_and_process_help_and_tempo_dialog()
 {
   let defaultTempo = (g_stepManual)? 0 : g_tempo;
   let helpStr = build_help_string(1, 1) + "\n" + build_help_string(0, 0) +
@@ -144,37 +144,37 @@ function show_and_process_help_and_tempo_dialog()
     } );
   
   ////////const tempoStr = window.prompt( helpStr, defaultTempo);
-  g_helpAndTempoDialog.prompt( helpStr, defaultTempo ).then(
-    (res) => {
-      //debugger;  // OK_TMP
-      // 'res' is 'false' upon cancel or an object with form-data upon accept
-      if ( res == false )  {
-        return  false;
-      }
-      let formData = res;
-      //debugger;  // OK_TMP
-      let tempoStr = ('prompt' in formData)? formData.prompt : "MISSING";
-      let modeMsg = "UNDEF"
-      if ( (tempoStr == "") || (tempoStr == "0") )  {
-        g_stepManual = true;
-        modeMsg = "MANUAL-STEP MODE SELECTED";
-      } else  {
-        const tempo = Number(tempoStr);
-        // check validity of 'tempo
-        if ( isNaN(tempo) || (tempo < 0) )  {
-          err = `Invalid tempo "${tempoStr}"; should be a positive number (beats/sec) or zero`;
-          console.log("-E- " + err);      alert(err);
-          return  false;
-        }
-        g_stepManual = false;
-        g_tempo = tempo;
-        modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEAT(s)/SEC`;
-      }
-      console.log("-I- " + modeMsg);
-      timed_alert(modeMsg +
-                  ((g_stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
-                  (g_stepManual)? 1.5 : 5);
-    } );
+  const res = await g_helpAndTempoDialog.prompt( helpStr, defaultTempo );
+  //debugger;  // OK_TMP
+  // 'res' is 'false' upon cancel or an object with form-data upon accept
+  if ( res == false )  {
+    return  false;
+  }
+  let formData = res;
+  //debugger;  // OK_TMP
+  let tempoStr = ('prompt' in formData)? formData.prompt : "MISSING";
+  let modeMsg = "UNDEF"
+  if ( (tempoStr == "") || (tempoStr == "0") )  {
+    g_stepManual = true;
+    g_tempo = 0;
+    modeMsg = "MANUAL-STEP MODE SELECTED";
+  } else  {
+    const tempo = Number(tempoStr);
+    // check validity of 'tempo
+    if ( isNaN(tempo) || (tempo < 0) )  {
+      err = `Invalid tempo "${tempoStr}"; should be a positive number (beats/sec) or zero`;
+      console.log("-E- " + err);      alert(err);
+      return  false;
+    }
+    g_stepManual = false;
+    g_tempo = tempo;
+    modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEAT(s)/SEC`;
+  }
+  console.log("-I- " + modeMsg);
+  timed_alert(modeMsg +
+              ((g_stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
+              (g_stepManual)? 1.5 : 5);
+
   return  true;
 }
 
