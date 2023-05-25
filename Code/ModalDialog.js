@@ -8,6 +8,7 @@ class Dialog {
       {
         /* DEFAULT SETTINGS - see description below */
         eventsToBlockWhileOpen: [],
+        supportCancel:          true,
       },
       settings
     )
@@ -48,12 +49,13 @@ class Dialog {
     this.dialog.setAttribute('aria-labelledby', this.elements.message.id)
 
     this.focusOwnerBeforeDialog = ''  // to know where to return focus at close
-    //this.settings.eventsToBlockWhileOpen = [];
 
     // HTML dialog element has a built-in cancel() method
-    this.elements.cancel.addEventListener('click', () => { 
-      this.dialog.dispatchEvent(new Event('cancel')) 
-    })
+    if (this.settings.supportCancel)  {
+      this.elements.cancel.addEventListener('click', () => { 
+        this.dialog.dispatchEvent(new Event('cancel')) 
+      })
+    }
 
     // add keydown event listener handling all our keyboard navigation logic:
     this.dialog.addEventListener('keydown', e => {
@@ -61,7 +63,9 @@ class Dialog {
         if (!this.dialogSupported) e.preventDefault()
         this.elements.accept.dispatchEvent(new Event('click'))
       }
-      if (e.key === 'Escape') this.dialog.dispatchEvent(new Event('cancel'))
+      if (this.settings.supportCancel &&
+          (e.key === 'Escape'))
+        this.dialog.dispatchEvent(new Event('cancel'))
       if (e.key === 'Tab') {
         e.preventDefault()
         const len =  this.focusable.length - 1;
@@ -124,8 +128,12 @@ class Dialog {
 
     /* set innerText of the elements */
     this.elements.accept.innerText = dialog.accept
-    this.elements.cancel.innerText = dialog.cancel
-    this.elements.cancel.hidden = dialog.cancel === ''
+    if (this.settings.supportCancel) {
+      this.elements.cancel.innerText = dialog.cancel
+      this.elements.cancel.hidden = dialog.cancel === ''
+    } else {
+      this.elements.cancel.hidden = true
+    }
     this.elements.message.innerText = dialog.message
 
     //~ /* If sounds exists, update `src` */
@@ -170,11 +178,13 @@ class Dialog {
   // mimic the functionality that waits for a user’s input after execution
   waitForUser() {
     return new Promise(resolve => {
-      this.dialog.addEventListener( 'cancel', () => { 
-        this.toggle(false)
-        window.removeEventListener('click', this._blockEventHandler)
-        resolve(false)  /* simpler alternative to 'reject()' */
-      }, { once: true } /*{once: true} == remove event listeners immediately*/ )
+      if (this.settings.supportCancel)  {
+        this.dialog.addEventListener( 'cancel', () => { 
+          this.toggle(false)
+          window.removeEventListener('click', this._blockEventHandler)
+          resolve(false)  /* simpler alternative to 'reject()' */
+        }, { once: true } /*{once: true} == remove event listeners immediately*/)
+      }
       this.elements.accept.addEventListener( 'click', () => {
         let value = this.hasFormData ? 
             this.collectFormData(new FormData(this.elements.form)) : true;

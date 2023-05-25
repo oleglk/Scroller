@@ -86,7 +86,7 @@ function scroll__onload(event)
   console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
   
   // Use tempo prompt to print help and determine operation mode and the tempo
-  while ( false == show_and_process_help_and_tempo_dialog() )   {}
+  show_and_process_help_and_tempo_dialog();  // loops by itself untill accepted
 
   // Assign event handlers according to the operation mode
   // To facilitate passing parameters to event handlers, use an anonymous function
@@ -136,35 +136,45 @@ function show_and_process_help_and_tempo_dialog()
   let helpStr = build_help_string(1, 1) + "\n" + build_help_string(0, 0) +
       `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
 
+  // build the prompt-dialog so that it cannot be canceled
   g_helpAndTempoDialog = new Dialog(
-    {eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick']});
+    {
+      eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick'],
+      supportCancel:          false,
+    } );
   
   ////////const tempoStr = window.prompt( helpStr, defaultTempo);
-  let tempoStr = "";
   g_helpAndTempoDialog.prompt( helpStr, defaultTempo ).then(
-    (res) => { tempoStr = res; }
-  );
-  
-  let modeMsg = "UNDEF"
-  if ( (tempoStr == "") || (tempoStr == "0") )  {
-    g_stepManual = true;
-    modeMsg = "MANUAL-STEP MODE SELECTED";
-  } else  {
-    const tempo = Number(tempoStr);
-    // heck validity of 'tempo
-    if ( isNaN(tempo) || (tempo < 0) )  {
-      err = `Invalid tempo "${tempoStr}"; should be a positive number (beats/sec) or zero`;
-      console.log("-E- " + err);      alert(err);
-      return  false;
-    }
-    g_stepManual = false;
-    g_tempo = tempo;
-    modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEAT(s)/SEC`;
-  }
-  console.log("-I- " + modeMsg);
-  timed_alert(modeMsg +
-            ((g_stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
-            (g_stepManual)? 1.5 : 5);
+    (res) => {
+      //debugger;  // OK_TMP
+      // 'res' is 'false' upon cancel or an object with form-data upon accept
+      if ( res == false )  {
+        return  false;
+      }
+      let formData = res;
+      //debugger;  // OK_TMP
+      let tempoStr = ('prompt' in formData)? formData.prompt : "MISSING";
+      let modeMsg = "UNDEF"
+      if ( (tempoStr == "") || (tempoStr == "0") )  {
+        g_stepManual = true;
+        modeMsg = "MANUAL-STEP MODE SELECTED";
+      } else  {
+        const tempo = Number(tempoStr);
+        // check validity of 'tempo
+        if ( isNaN(tempo) || (tempo < 0) )  {
+          err = `Invalid tempo "${tempoStr}"; should be a positive number (beats/sec) or zero`;
+          console.log("-E- " + err);      alert(err);
+          return  false;
+        }
+        g_stepManual = false;
+        g_tempo = tempo;
+        modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEAT(s)/SEC`;
+      }
+      console.log("-I- " + modeMsg);
+      timed_alert(modeMsg +
+                  ((g_stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
+                  (g_stepManual)? 1.5 : 5);
+    } );
   return  true;
 }
 
