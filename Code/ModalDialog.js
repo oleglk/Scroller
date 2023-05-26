@@ -183,7 +183,7 @@ class Dialog {
   }
 
 
-  // mimic the functionality that waits for a user’s input after execution
+  // mimic the functionality that waits for a user's input after execution
   waitForUser() {
     return new Promise(resolve => {
       if (this.settings.supportCancel)  {

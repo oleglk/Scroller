@@ -22,7 +22,7 @@ var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 
 var g_nextTimerIntervalId = 0;
 
-var g_windowEventListenersRegistry = [];  // for {event-type :: handler}
+var g_windowEventListenersRegistry = new Map();//for {event-type::handler}
 
 
 //////////////////// Assume existence of the following global variables: ////////
@@ -81,6 +81,10 @@ async function scroll__onload(event)
   /* Keep the rest of the handlers from being executed
   *   (and it prevents the event from bubbling up the DOM tree) */
   event.stopImmediatePropagation(); // crucial because of prompt inside handler!
+  
+  // Unregister main events to prevent interference with help/tempo.mode dialog
+  ["click", "contextmenu", "dblclick"].forEach(
+        evType => unregister_window_event_listener( evType ));
   
   // set tab title to score-file name
   let fileName = window.location.pathname.split("/").pop();
@@ -442,12 +446,21 @@ function scroll_perform_one_step(stepNum)
 
 function register_window_event_listener(eventType, handler)
 {
-  if ( g_windowEventListenersRegistry.hasOwnProperty(eventType) ) {
+  if ( g_windowEventListenersRegistry.has(eventType) ) {
     window.removeEventListener(eventType,
-                               g_windowEventListenersRegistry[eventType]);
+                          g_windowEventListenersRegistry.get(eventType));
   }
   window.addEventListener(eventType, handler);
-  g_windowEventListenersRegistry[eventType] = handler;
+  g_windowEventListenersRegistry.set(eventType, handler);
+}
+
+function unregister_window_event_listener(eventType)
+{
+  if ( g_windowEventListenersRegistry.has(eventType) ) {
+    window.removeEventListener(eventType,
+                          g_windowEventListenersRegistry.get(eventType));
+  }
+  g_windowEventListenersRegistry.delete(eventType);
 }
 
 
