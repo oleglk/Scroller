@@ -63,7 +63,8 @@ class PlayOrder
     //scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
     this.scoreDataLines = null;
     this.pageLineHeights = null;  // map of {pageId :: max-line-height}
-    this.pageHeights = null;  // map of {pageId :: image-height}
+    this.pageHeights = null;      // map of {pageId :: image-height}
+    this.pageLineCounts = null;   // map of {pageId :: lines-number-on-page}
 
     //imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     this.imgPageOccurences = null;
@@ -89,7 +90,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       // TODO: abort
       return  false;  // error already printed
     }
-    
+
+    this.pageLineCounts  = this._find_all_pages_line_counts();
     this.pageLineHeights = this._compute_all_pages_line_heights();
 
     this.imgPageOccurences = this.compute_image_pages_layout();
@@ -251,18 +253,23 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 //debugger;  // OK_TMP
       return  null;
     }
+    
+    const linesOnPageCount = this._get_page_line_count(page);
+    const lastLineIsBottom = ( lastLineLocalIdx == (linesOnPageCount - 1) );
 
     // compute this page vertical crop parameters
     const lineHeight    = this._get_page_line_height(page);
     const pageImgHeight = this._get_page_total_height(page); // not! cropped
-    let   pageImgBottom = read_optional_image_bottom_record(
+    let   givenPageImgBottom = read_optional_image_bottom_record(
                                      this.scoreLines/*scoreStations not ready*/,
                                      page, /*alertErr=*/false);
+    let   derivedPageImgBottom = Math.min((lastLineRec.yOnPage + lineHeight),
+                                          pageImgHeight);
     const yTop       = firstLineRec.yOnPage;         // uppermost on current page
     const yBottom    =                               // lowermost on current page
-          (pageImgBottom > 0)? pageImgBottom // prefer explicitly provided bottom
-                             : Math.min((lastLineRec.yOnPage + lineHeight),
-                                        pageImgHeight);
+          ((givenPageImgBottom > 0) && (lastLineIsBottom))?
+                         // take explicitly provided bottom if given and relevant
+                         givenPageImgBottom : derivedPageImgBottom;
 
     const occ = new ScorePageOccurence(
       //{occId:STR, pageId:STR, firstLine:INT,lastLine:INT, yTop:INT,yBottom:INT}
@@ -290,7 +297,36 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   // }
 
 
-  /* Builds and returns array of per-image/page line heights
+  // Returns number of lines on page 'pageId' or -1 on error
+  _get_page_line_count(pageId)
+  {
+    if ( !this.pageLineCounts.has(pageId) )  {
+      const err = `-E- Missing lines count for page/image ${pageId} (image-path "TODO")`;
+      console.log(err);  console.trace();  alert(err);
+      return  -1;
+    }
+    return  this.pageLineCounts.get(pageId);
+  }
+
+
+  /* Builds and returns map of per-image/page number of lines on the page
+   * based on 'this.scoreDataLines' */
+  _find_all_pages_line_counts()
+  {
+    let pageIdToLineCount = new Map();
+    this.scoreDataLines.forEach( scoreLine => {
+      // scoreLine == {tag, pageId, x, y, timeSec}
+      if ( !pageIdToLineCount.has(scoreLine.pageId) )
+        pageIdToLineCount.set( scoreLine.pageId, 1 );
+      else
+        pageIdToLineCount.set( scoreLine.pageId,
+                               1 + pageIdToLineCount.get(scoreLine.pageId) );
+    });
+    return  pageIdToLineCount;
+  }
+  
+
+  /* Builds and returns map of per-image/page line heights
    * based on 'this.scoreDataLines' */
   _compute_all_pages_line_heights()
   {
@@ -309,7 +345,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     {
       const currLine = scoreLinesSorted[i-1];  // {tag, pageId, x, y, timeSec}
       const nextLine = scoreLinesSorted[i];    // {tag, pageId, x, y, timeSec}
-      if ( currLine.pageId !== nextLine.pageId )  {   // last on page
+      if ( currLine.pageId !== nextLine.pageId )  { // 'currLine' is last on page
         // image(s)/page(s) with single score line need special treatment
         if ( !pageIdToLineCount.has(currLine.pageId) )  {
           // (e.g. next line is on other page AND no prior lines on this page)
