@@ -1,6 +1,43 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
+
+//////// Begin: arrange provided-score global data /////////////////////////////
+
+// Create the play-order layout (occurs AFTER the HTML body)
+// arguments:
+//     name,
+//     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
+//     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+//     imagePathsArray /*STR*/  //TODO: maybe a Map?
+var plo = new PlayOrder("Papirossen",
+                        g_scoreLines,
+                        g_linePlayOrder,
+                        g_pageImgPathsMap,
+                        2/*lines in a step*/
+                       );
+
+// Compute and render the score images in the play order
+// arguments:
+//    pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
+//    imgPageOccurences /*pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+var iml = new ScoreImgLayout(g_pageImgPathsMap,
+                             plo.imgPageOccurences
+                            );
+iml.render_images();
+
+////////////////////////////////////////////////////////////////////////////////
+// prepare global data for the scroller and start it
+//var g_imageDimensions = iml.get_image_dimensions_map();
+
+// ... the copy will be 2-level deep - fine for the task
+var g_scoreStations = plo.scoreStations.map(a => {return {...a}});
+
+// ... the copy will be 2-level deep - fine for the task
+var g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
+
+//////// End  : arrange provided-score global data /////////////////////////////
+
 //(does not work) import Dialog from './ModalDialog.js';
 
 let g_helpAndTempoDialog = null;
