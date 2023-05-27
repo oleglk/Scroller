@@ -23,11 +23,15 @@ img {
 <!-- Load of the scrolling code deferred until data is defined -->
 <!-- <script src="../Code/img_scroll.js"></script>  -->
 
+
 <script type="text/javascript">
 ////////////////////////////////////////////////////////////////////////////////
 
 
-// TODO: pass 'g_tempo', 'g_tactsInLine', 'g_beatsInTact' from the HTML
+
+//TODO: define 'g_scoreName', 'g_tempo', 'g_tactsInLine', 'g_beatsInTact' in HTML
+const g_scoreName = "Papirossen";
+
 // TODO: provide a way for user to force alternative 'g_tempo'
 var g_tempo = 10*60;  //60; // beats-per-minute
 var g_tactsInLine = 7;
@@ -107,11 +111,11 @@ var g_linePlayOrder_straight = [
 var g_linePlayOrder = g_linePlayOrder_straight.map(a => {return {...a}});
 ////////////////////////////////////////////////////////////////////////////////
 
-
-//var g_imgPaths = [  "Papirossen.jpg"  ];
-  var g_pageImgPathsMap = new Map([
-    ["pg01", "Papirossen.jpg"]
-  ]);
+////////////////////////////////////////////////////////////////////////////////
+var g_pageImgPathsMap = new Map([
+  ["pg01", "Papirossen.jpg"]
+]);
+////////////////////////////////////////////////////////////////////////////////
 
 </script>
 </head>
@@ -119,43 +123,11 @@ var g_linePlayOrder = g_linePlayOrder_straight.map(a => {return {...a}});
 <body>
 </body>
 
-<!-- Create the play-order layout (AFTER the body)-->
-<script type="text/javascript">
-////////////////////////////////////////////////////////////////////////////////
 
-// arguments:
-//     name,
-//     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
-//     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
-//     imagePathsArray /*STR*/  //TODO: maybe a Map?
-var plo = new PlayOrder("Papirossen",
-                        g_scoreLines,
-                        g_linePlayOrder,
-                        g_pageImgPathsMap,
-                        2/*lines in a step*/
-                       );
-
-// arguments:
-//    pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
-//    imgPageOccurences /*pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
-var iml = new ScoreImgLayout(g_pageImgPathsMap,
-                             plo.imgPageOccurences
-                            );
-iml.render_images();
-
-////////////////////////////////////////////////////////////////////////////////
-// prepare global data for the scroller and start it
-//var g_imageDimensions = iml.get_image_dimensions_map();
-
-// ... the copy will be 2-level deep - fine for the task
-var g_scoreStations = plo.scoreStations.map(a => {return {...a}});
-
-// ... the copy will be 2-level deep - fine for the task
-var g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
-////////////////////////////////////////////////////////////////////////////////
-</script>
-
-<!-- Load the scrolling code -->
+<!-- ..................... In the very end .............. (?AFTER the body?) -->
+<!-- Load the scrolling code                                                 -->
+<!-- (... then create the play-order layout)                                 -->
+<!-- (... then prepare global data for the scroller and start it)            -->
 <script src="../Code/img_scroll.js"></script> 
 
 </html>
