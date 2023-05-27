@@ -1,42 +1,16 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
+const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
 
-//////// Begin: arrange provided-score global data /////////////////////////////
 
-// Create the play-order layout (occurs AFTER the HTML body)
-// arguments:
-//     name,
-//     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
-//     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
-//     imagePathsArray /*STR*/  //TODO: maybe a Map?
-var plo = new PlayOrder("Papirossen",
-                        g_scoreLines,
-                        g_linePlayOrder,
-                        g_pageImgPathsMap,
-                        2/*lines in a step*/
-                       );
+//////// Begin: prepare global data for the scroller and start it ///////////////
 
-// Compute and render the score images in the play order
-// arguments:
-//    pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
-//    imgPageOccurences /*pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
-var iml = new ScoreImgLayout(g_pageImgPathsMap,
-                             plo.imgPageOccurences
-                            );
-iml.render_images();
-
-////////////////////////////////////////////////////////////////////////////////
-// prepare global data for the scroller and start it
-//var g_imageDimensions = iml.get_image_dimensions_map();
-
-// ... the copy will be 2-level deep - fine for the task
-var g_scoreStations = plo.scoreStations.map(a => {return {...a}});
-
-// ... the copy will be 2-level deep - fine for the task
-var g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
-
-//////// End  : arrange provided-score global data /////////////////////////////
+// (the global collections to be filled must be declared on the top level)
+var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
+var g_imgPageOccurences = null; // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
+arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
+                          g_scoreLines, g_linePlayOrder, g_numLinesInStep);
 
 //(does not work) import Dialog from './ModalDialog.js';
 
@@ -64,21 +38,21 @@ var g_windowEventListenersRegistry = new Map();//for {event-type::handler}
 
 //////////////////// Assume existence of the following global variables: ////////
 // g_imgPageOccurences : array of {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+// g_scoreStations : array of {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
 ////////////////////////////////////////////////////////////////////////////////
-
-
-////////////////
-//window.addEventListener("load", scroll__onload);
-//window.addEventListener("load", (event) => { scroll__onload(event) });
 
 
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__scroll__onload  = (event) => { scroll__onload(event) }
+
+
+// !ASSIGNMENT OF A HANDLER FOR PAGE-LOAD EVENT EFFECTIVELY STARTS THE SCROLLER!
 register_window_event_listener("load", wrap__scroll__onload);
+//////// End  : prepare global data for the scroller and start it ///////////////
 
-////////////////
 
+////////// Utilities ///////////////////////////////////////////////////////////
 
 function build_help_string(showHeader, modeManual=g_stepManual)
 {
@@ -109,6 +83,43 @@ Step Mode: ${(modeManual)? "MANUAL" : "AUTO"};
   }
   ret += "========================================";
   return  ret;
+}
+
+
+/* Builds browser page with score images' occurences in the play order.
+ * Collects score data in the expected global collections */ 
+function arrange_score_global_data(scoreName, pageImgPathsMap,
+                                   scoreLinesArray, linePlayOrderArray,
+                                   numLinesInStep)
+{
+  // Create the play-order layout (occurs AFTER the HTML body)
+  // arguments:
+  //     name,
+  //     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
+  //     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+  //     imagePathsMap, /*{pageId(STR) : path(STR)*/
+  //     numLinesInStep  /*INT*/ 
+  let plo = new PlayOrder(scoreName,
+                          scoreLinesArray,
+                          linePlayOrderArray,
+                          pageImgPathsMap,
+                          numLinesInStep
+                         );
+
+  // Compute and render the score images' occurences in the play order
+  // arguments:
+  //    pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
+  //    imgPageOccurences /*pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
+  let iml = new ScoreImgLayout(pageImgPathsMap,
+                               plo.imgPageOccurences
+                              );
+  iml.render_images();
+
+  // ... the copy will be 2-level deep - fine for the task
+  g_scoreStations = plo.scoreStations.map(a => {return {...a}});
+
+  // ... the copy will be 2-level deep - fine for the task
+  g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
 }
 
 
