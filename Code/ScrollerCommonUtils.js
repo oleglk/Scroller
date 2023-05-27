@@ -99,6 +99,15 @@ function convert_y_window_to_img(imgHtmlPageOccId, winY) {
  ** BEGIN: access to scoreStationsArray                                       **
 *******************************************************************************/
 
+// Copies one score position record while modifying the duration field
+function score_viewpoint(scoreLineObj, timeSec)
+{
+  let scoreStation = Object.assign(scoreLineObj);  // shallow copy is OK here
+  scoreStation.timeSec = timeSec;
+  return  scoreStation;
+}
+
+
 // Returns new array with only position-related lines from 'scoreStationsArray'
 function filter_positions(scoreStationsArray)
 {
@@ -316,7 +325,6 @@ function read_optional_image_bottom_record(scoreStationsOrScoreLinesArray,
   }
   return  rec.y;
 }
-
 /** END: access to scoreStationsArray *****************************************/
 
 

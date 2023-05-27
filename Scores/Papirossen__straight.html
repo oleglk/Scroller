@@ -1,4 +1,5 @@
-<!-- TMP_Papirossen -->
+<!-- Papirossen (straight - without repetitions) -->
+<!-- Score/notes for "Papirossen" -->
 
 <!DOCTYPE HTML>
 
@@ -11,7 +12,17 @@ img {
 }
 </style>
 
-<!-- Score/notes for "Papirossen" -->
+
+<!-- Load the generic Dialog class code -->
+<script src="../Code/ModalDialog.js"></script>
+<!-- Load the utility code -->
+<script src="../Code/ScrollerCommonUtils.js"></script>
+<!-- Load the layout code -->
+<script src="../Code/PlayOrder.js"></script>
+<script src="../Code/ScoreImgLayout.js"></script>
+<!-- Load of the scrolling code deferred until data is defined -->
+<!-- <script src="../Code/img_scroll.js"></script>  -->
+
 <script type="text/javascript">
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -42,13 +53,6 @@ var g_scoreLines = [
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
-// Copies one score position record while modifying the duration field
-function score_viewpoint(scoreLineObj, timeSec)
-{
-  let scoreStation = Object.assign(scoreLineObj);  // shallow copy is OK here
-  scoreStation.timeSec = timeSec;
-  return  scoreStation;
-}
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -110,24 +114,9 @@ var g_linePlayOrder = g_linePlayOrder_straight.map(a => {return {...a}});
   ]);
 
 </script>
-
-
-<!-- Load the generic Dialog class code -->
-<script src="../Code/ModalDialog.js"></script>
-<!-- Load the utility code -->
-<script src="../Code/ScrollerCommonUtils.js"></script>
-<!-- Load the layout code -->
-<script src="../Code/PlayOrder.js"></script>
-<script src="../Code/ScoreImgLayout.js"></script>
-<!-- <\!-- Load the scrolling code -\-> -->
-<!-- <script src="../Code/img_scroll.js"></script>  -->
-
-
 </head>
+
 <body>
-
-<!-- <img src="Papirossen.jpg" alt="Papirossen" id="pg01"/> -->
-
 </body>
 
 <!-- Create the play-order layout (AFTER the body)-->
