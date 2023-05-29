@@ -421,6 +421,7 @@ async function restart_handler(event)
       eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick'],
       supportCancel:          true,
       accept:                 "OK",
+      cancel:                 "Cancel",
     } );
   const restartStr = "Press <OK> to restart from the top, <Cancel> to continue...";
 
