@@ -123,6 +123,11 @@ async function render_img_crop_height(occId, url, yTop, yBottom, forcedWidth=-1)
     // this image will hold our source image data
     const inputImage = new Image();
 
+    inputImage.onerror = () => {
+      const err = `Image '${url}' (page '${occId}') failed to load`;
+      /*alert(err);  */throw new Error(err);
+    }
+
     // we want to wait for our image to load
     inputImage.onload = () => {
       // let's store the width and height of our image

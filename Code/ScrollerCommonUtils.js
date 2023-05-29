@@ -9,10 +9,15 @@ function get_image_occurence_scale_y(imgPageOccurencesArray, occId,
 {
   const topAndBottom = read_image_occurence_y_bounds(
                                        imgPageOccurencesArray, occId, alertErr);
-  if ( topAndBottom === null )  { return  -1; } // error already printed
+  if ( topAndBottom === null )  {
+    //return  -1; // error already printed
+    throw new Error(`Failed detecting y-scale of page '${describe_image_page_occurence(occId)}'`);
+  }
   const origHeight = topAndBottom.yBottom - topAndBottom.yTop + 1;
 
   const imgHtmlElem   = document.getElementById(occId);  // TODO: check for error
+  if ( imgHtmlElem === null )
+    throw new Error(`Missing image/page '${describe_image_page_occurence(occId)}'`);
   const renderHeight  = imgHtmlElem.offsetHeight;
 
   return  renderHeight / origHeight;
@@ -91,6 +96,18 @@ function convert_y_window_to_img(imgHtmlPageOccId, winY) {
   
   const imgY = (winY - pageHtmlElem.offsetTop) / pageScaleY + yTop;
   return  imgY;
+}
+
+
+function describe_image_page_occurence(occId)
+{
+  if ( (typeof g_pageImgPathsMap === 'undefined') ||
+       (g_pageImgPathsMap === null) )
+    throw new Error("Page-to-image-path map isn't ready");
+  if ( !g_pageImgPathsMap.has(occId) )  {
+    throw new Error(`Unknown page/image occurence '${occId}'; probably the image failed to load`);
+  }
+  return  `${occId}(${g_pageImgPathsMap.get(occId)}`
 }
 ////////////////////////////////////////////////////////////////////////////////
 
