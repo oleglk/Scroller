@@ -188,18 +188,27 @@ class Dialog {
     return new Promise(resolve => {
       if (this.settings.supportCancel)  {
         this.dialog.addEventListener( 'cancel', () => { 
-          this.toggle(false)
-          window.removeEventListener('click', this._blockEventHandler)
+          event.preventDefault();
+          /* Keep the rest of the handlers from being executed
+           *   (and it prevents the event from bubbling up the DOM tree) */
+          event.stopImmediatePropagation();
+          this.toggle(false)  // erase the dialog from screen
+          this.settings.eventsToBlockWhileOpen.forEach( (evType) =>
+            window.removeEventListener(evType, this._blockEventHandler) )
           resolve(false)  /* simpler alternative to 'reject()' */
         }, { once: true } /*{once: true} == remove event listeners immediately*/)
       }
       this.elements.accept.addEventListener( 'click', () => {
+        event.preventDefault();
+        /* Keep the rest of the handlers from being executed
+         *   (and it prevents the event from bubbling up the DOM tree) */
+        event.stopImmediatePropagation();
         let value = this.hasFormData ? 
             this.collectFormData(new FormData(this.elements.form)) : true;
         /* Oleg: block sound-related stuff - it doesn't work */
         //if (this.elements.soundAccept.src) this.elements.soundAccept.play()
 //debugger  // OK_TMP        
-        this.toggle(false)
+        this.toggle(false)  // erase the dialog from screen
         this.settings.eventsToBlockWhileOpen.forEach( (evType) =>
           window.removeEventListener(evType, this._blockEventHandler) )
         resolve(value)

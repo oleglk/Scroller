@@ -399,7 +399,7 @@ function _manual_one_step(stepIncrement)
 }
 
 
-function restart_handler(event)
+async function restart_handler(event)
 {
   // restart with confirmation in auto mode would require pause scrolling
   //    though (at least on Linux) double-click is hidden
@@ -415,14 +415,46 @@ function restart_handler(event)
   *   (and it prevents the event from bubbling up the DOM tree) */
   event.stopImmediatePropagation();  // crucial because of alert inside handler!
 
+  // build the confirm-resart-dialog
+  confirmRestartDialog = new Dialog(
+    {
+      eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick'],
+      supportCancel:          true,
+      accept:                 "OK",
+    } );
+  const restartStr = "Press <OK> to restart from the top, <Cancel> to continue...";
 
-  if ( confirm("Press <OK> to restart from the top, <Cancel> to continue...")) {
+  // Unregister main events to prevent interference with restart dialog
+  let copyOfRegistry = new Map(g_windowEventListenersRegistry);  // shallow-copy
+  ["click", "contextmenu", "dblclick"].forEach(
+        evType => unregister_window_event_listener( evType ));
+  window.addEventListener("keydown", _confirm_escape_handler);
+
+  const res = await confirmRestartDialog.confirm( restartStr );
+
+  window.removeEventListener("keydown", _confirm_escape_handler);
+  // Restore registration of main events
+//debugger;  // OK_TMP
+  register_specified_window_event_listeners(copyOfRegistry);
+
+  //debugger;  // OK_TMP
+  // 'res' is 'false' upon cancel or 'true' upon accept
+  if ( res == true )  {
     console.log("Restart-from-top is confirmed");
     scroll__onload(event/*TODO: maybe extract onload worked function*/);
   } else {
     console.log("Restart-from-top is canceled; continuing");
     timed_alert("... continuing ...", 3/*sec*/);
   }
+
+
+  // if ( confirm("Press <OK> to restart from the top, <Cancel> to continue...")) {
+  //   console.log("Restart-from-top is confirmed");
+  //   scroll__onload(event/*TODO: maybe extract onload worked function*/);
+  // } else {
+  //   console.log("Restart-from-top is canceled; continuing");
+  //   timed_alert("... continuing ...", 3/*sec*/);
+  // }
 }
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
@@ -502,13 +534,25 @@ function register_window_event_listener(eventType, handler)
   g_windowEventListenersRegistry.set(eventType, handler);
 }
 
+
+function register_specified_window_event_listeners(eventTypeToHandlerMap)
+{
+  eventTypeToHandlerMap.forEach( (handler/*value*/, eventType/*key*/) => {
+    register_window_event_listener(eventType, handler);
+  } );
+}
+
+
+// Removes listener for specified event and returns the original event registry
 function unregister_window_event_listener(eventType)
 {
+  let copyOfRegistry = new Map(g_windowEventListenersRegistry);  // shallow-copy
   if ( g_windowEventListenersRegistry.has(eventType) ) {
     window.removeEventListener(eventType,
                           g_windowEventListenersRegistry.get(eventType));
   }
   g_windowEventListenersRegistry.delete(eventType);
+  return  copyOfRegistry;
 }
 
 
