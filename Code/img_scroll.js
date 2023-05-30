@@ -1,6 +1,11 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
+  
+// register the global error handler
+window.onerror = _scroller_global_error_handler;
+window.onunhandledrejection = _scroller_global_rejection_handler;
+
 const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
 
 
@@ -133,6 +138,9 @@ async function scroll__onload(event)
   // Unregister main events to prevent interference with help/tempo.mode dialog
   ["click", "contextmenu", "dblclick"].forEach(
         evType => unregister_window_event_listener( evType ));
+  
+  //~ // register the global error handler
+  //~ window.onerror = _scroller_global_error_handler;
   
   // set tab title to score-file name
   let fileName = window.location.pathname.split("/").pop();
@@ -569,4 +577,21 @@ function _confirm_escape_handler(event)
       console.log("<Escape> key event suppressed at browser-window level")
     }
   }
+}
+
+
+function _scroller_global_error_handler(eventStr, source, lineno, colno, error)
+{
+  let msg = `
+Error occurred in ${source}:(line=${lineno},col=${colno}):
+${eventStr}`;
+  console.log("-E- " + msg + "\n" + error);
+  alert("-E- " + msg + "\n" + "(please see console log for more details)");
+  return true;  //  to cancel the default behavior of the error event of Window
+}
+
+function _scroller_global_rejection_handler(e)
+{
+  console.log(e.reason);
+  alert(e.reason);
 }
