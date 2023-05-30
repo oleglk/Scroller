@@ -2,25 +2,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 
   
-// register the global error handler
-// window.onerror = _scroller_global_error_handler;
-// window.onunhandledrejection = _scroller_global_rejection_handler;
-
+// register the global error handlers in the very beginning
 window.addEventListener("error", function (e) {
-  return _scroller_global_error_handler__oneArg(e);
+  return _scroller_global_error_handler(e);
 })
 window.addEventListener('unhandledrejection', function (e) {
-  return _scroller_global_rejection_handler__oneArg(e);
+  return _scroller_global_rejection_handler(e);
 })
-
-// window.addEventListener("error", function (e) {
-//    alert("Error(exception) occurred: " + e.error.message);
-//    return false;
-// })
-
-// window.addEventListener('unhandledrejection', function (e) {
-//   alert("Error(unhandledrejection) occurred: " + e.reason.message);
-// })
 
 
 const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
@@ -166,10 +154,6 @@ async function scroll__onload(event)
   ["click", "contextmenu", "dblclick"].forEach(
         evType => unregister_window_event_listener( evType ));
   
-  // // register the global error handler
-  // window.onerror = _scroller_global_error_handler;
-  // window.onunhandledrejection = _scroller_global_rejection_handler;
-
   // set tab title to score-file name
   let fileName = window.location.pathname.split("/").pop();
   let pageName = `Scroll: ${remove_filename_extension(fileName)}`;
@@ -614,43 +598,9 @@ function _confirm_escape_handler(event)
 }
 
 
-function _common_global_error_handler(typeStr,
-                                      eventStr, source, lineno, colno, error)
+/////// Begin: global error/exception handlers /////////////////////////////////
+function _scroller_global_error_handler(errorEvent)
 {
-  let msg = `
-Error (${typeStr}) occurred in ${source}:(line=${lineno},col=${colno}):
-${eventStr}`;
-  console.log("-E- " + msg + "\n" + error);
-debugger;  // OK_TMP
-  alert("-E- " + msg + "\n" + "(please see console log for more details)");
-  return false;  //  to retain the default behavior of the error event of Window
-}
-function _scroller_global_error_handler(eventStr, source, lineno, colno, error)
-{
-  return  _common_global_error_handler("exception",
-                                       eventStr, source, lineno, colno, error);
-}
-function _scroller_global_rejection_handler(e)
-{
-  return  _common_global_error_handler("rejected-promise",
-                                       eventStr, source, lineno, colno, error);
-//   console.log(e.reason);
-// debugger;  // OK_TMP
-//   alert(e.reason);
-//   return  false;
-}
-
-function _common_global_error_handler__oneArg(typeStr, event)
-{
-  msg = `_common_global_error_handler__oneArg(${typeStr}): ${event}`;
-  console.log(msg);
-  alert(msg);
-}
-function _scroller_global_error_handler__oneArg(errorEvent)
-{
-//  msg = `_common_global_error_handler__oneArg(${typeStr}): ${event}`;
-//  console.log(msg);
-//  alert(msg);
   let msg =
 `Error in Scroller (exception) occurred in ${errorEvent.filename}:(line=${errorEvent.lineno},col=${errorEvent.colno}):
 
@@ -660,7 +610,8 @@ ${errorEvent.message}`;
   alert("-E- " + msg + "\n\n" + "(please see console log for more details)");
   return false;  //  to retain the default behavior of the error event of Window
 }
-function _scroller_global_rejection_handler__oneArg(promiseRejectionEvent)
+
+function _scroller_global_rejection_handler(promiseRejectionEvent)
 {
   let msg =
 `Error in Scroller (rejected promise).
@@ -671,3 +622,4 @@ Reason: ${promiseRejectionEvent.reason}`;
   alert("-E- " + msg + "\n\n" + "(please see console log for more details)");
   return false;  //  to retain the default behavior of the error event of Window
 }
+/////// End:   global error/exception handlers /////////////////////////////////
