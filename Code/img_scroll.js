@@ -3,8 +3,25 @@
 
   
 // register the global error handler
-window.onerror = _scroller_global_error_handler;
-window.onunhandledrejection = _scroller_global_rejection_handler;
+// window.onerror = _scroller_global_error_handler;
+// window.onunhandledrejection = _scroller_global_rejection_handler;
+
+window.addEventListener("error", function (e) {
+  return _scroller_global_error_handler__oneArg(e);
+})
+window.addEventListener('unhandledrejection', function (e) {
+  return _scroller_global_rejection_handler__oneArg(e);
+})
+
+// window.addEventListener("error", function (e) {
+//    alert("Error(exception) occurred: " + e.error.message);
+//    return false;
+// })
+
+// window.addEventListener('unhandledrejection', function (e) {
+//   alert("Error(unhandledrejection) occurred: " + e.reason.message);
+// })
+
 
 const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
 
@@ -49,7 +66,17 @@ var g_windowEventListenersRegistry = new Map();//for {event-type::handler}
 
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
-const wrap__scroll__onload  = (event) => { scroll__onload(event) }
+const wrap__scroll__onload  = (event) => {
+  scroll__onload(event).catch( (e) => {
+    console.log(e);
+//debugger;  // OK_TMP
+    //throw new Error("Re-thrown error: " + e);
+    throw e;
+  } );
+  /* error/exception is explicitly propagated to reach 'onerror; handler,
+   * since JS returns rejected promise with error
+   * (something like:  return Promise.Reject(error)) */
+}
 
 
 // !ASSIGNMENT OF A HANDLER FOR PAGE-LOAD EVENT EFFECTIVELY STARTS THE SCROLLER!
@@ -139,16 +166,23 @@ async function scroll__onload(event)
   ["click", "contextmenu", "dblclick"].forEach(
         evType => unregister_window_event_listener( evType ));
   
-  //~ // register the global error handler
-  //~ window.onerror = _scroller_global_error_handler;
-  
+  // // register the global error handler
+  // window.onerror = _scroller_global_error_handler;
+  // window.onunhandledrejection = _scroller_global_rejection_handler;
+
   // set tab title to score-file name
   let fileName = window.location.pathname.split("/").pop();
   let pageName = `Scroll: ${remove_filename_extension(fileName)}`;
   document.title = pageName;
-  
-  const posDescrStr = positions_toString(g_scoreStations, "\n");
-  console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
+
+  //  try {
+    const posDescrStr = positions_toString(g_scoreStations, "\n");
+    console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
+  // } catch (e) {
+  //   console.log(e);
+  //   alert(e);
+  //   throw new Error("Re-thrown error: " + e);
+  // }
   
   // Use tempo prompt to print help and determine operation mode and the tempo
   while ( false == await show_and_process_help_and_tempo_dialog() );
@@ -450,7 +484,7 @@ async function restart_handler(event)
   // 'res' is 'false' upon cancel or 'true' upon accept
   if ( res == true )  {
     console.log("Restart-from-top is confirmed");
-    scroll__onload(event/*TODO: maybe extract onload worked function*/);
+    wrap__scroll__onload(event/*TODO: maybe extract onload worker function*/);
   } else {
     console.log("Restart-from-top is canceled; continuing");
     timed_alert("... continuing ...", 3/*sec*/);
@@ -580,18 +614,60 @@ function _confirm_escape_handler(event)
 }
 
 
-function _scroller_global_error_handler(eventStr, source, lineno, colno, error)
+function _common_global_error_handler(typeStr,
+                                      eventStr, source, lineno, colno, error)
 {
   let msg = `
-Error occurred in ${source}:(line=${lineno},col=${colno}):
+Error (${typeStr}) occurred in ${source}:(line=${lineno},col=${colno}):
 ${eventStr}`;
   console.log("-E- " + msg + "\n" + error);
+debugger;  // OK_TMP
   alert("-E- " + msg + "\n" + "(please see console log for more details)");
-  return true;  //  to cancel the default behavior of the error event of Window
+  return false;  //  to retain the default behavior of the error event of Window
 }
-
+function _scroller_global_error_handler(eventStr, source, lineno, colno, error)
+{
+  return  _common_global_error_handler("exception",
+                                       eventStr, source, lineno, colno, error);
+}
 function _scroller_global_rejection_handler(e)
 {
-  console.log(e.reason);
-  alert(e.reason);
+  return  _common_global_error_handler("rejected-promise",
+                                       eventStr, source, lineno, colno, error);
+//   console.log(e.reason);
+// debugger;  // OK_TMP
+//   alert(e.reason);
+//   return  false;
+}
+
+function _common_global_error_handler__oneArg(typeStr, event)
+{
+  msg = `_common_global_error_handler__oneArg(${typeStr}): ${event}`;
+  console.log(msg);
+  alert(msg);
+}
+function _scroller_global_error_handler__oneArg(errorEvent)
+{
+//  msg = `_common_global_error_handler__oneArg(${typeStr}): ${event}`;
+//  console.log(msg);
+//  alert(msg);
+  let msg =
+`Error in Scroller (exception) occurred in ${errorEvent.filename}:(line=${errorEvent.lineno},col=${errorEvent.colno}):
+
+${errorEvent.message}`;
+  console.log("-E- " + msg);
+//debugger;  // OK_TMP
+  alert("-E- " + msg + "\n\n" + "(please see console log for more details)");
+  return false;  //  to retain the default behavior of the error event of Window
+}
+function _scroller_global_rejection_handler__oneArg(promiseRejectionEvent)
+{
+  let msg =
+`Error in Scroller (rejected promise).
+
+Reason: ${promiseRejectionEvent.reason}`;
+  console.log("-E- " + msg + "\n");
+//debugger;  // OK_TMP
+  alert("-E- " + msg + "\n\n" + "(please see console log for more details)");
+  return false;  //  to retain the default behavior of the error event of Window
 }
