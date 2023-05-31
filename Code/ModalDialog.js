@@ -9,6 +9,7 @@ class Dialog {
         /* DEFAULT SETTINGS - see description below */
         eventsToBlockWhileOpen: [],
         supportCancel:          true,
+        suppressEscape:         false,
       },
       settings
     )
@@ -66,7 +67,7 @@ class Dialog {
       if (this.settings.supportCancel &&
           (e.key === 'Escape'))
         this.dialog.dispatchEvent(new Event('cancel'))
-      if (!this.settings.supportCancel &&
+      if (this.settings.suppressEscape && !this.settings.supportCancel &&
           (e.key === 'Escape'))  {  // this isn't caught if focus not on dialog
         event.preventDefault();
         /* Keep the rest of the handlers from being executed
@@ -249,7 +250,7 @@ class Dialog {
 
 
   /* mimic native Javascript dialog.alert() */
-  alert(message, config = { target: event.target }) {
+  alert(message, config = { target: event.target, suppressEscape: false }) {
     /* We set cancel and template to empty strings,
      * so that — even if we had set default values earlier —
      * these will not be hidden, and only message and accept are shown */
@@ -264,7 +265,7 @@ class Dialog {
 
 
   /* mimic native Javascript dialog.confirm() */
-  confirm(message, config = { target: event.target }) {
+  confirm(message, config = { target: event.target, suppressEscape: false }) {
     // shows the message, cancel and accept items
     const settings = Object.assign({}, config, { message, template: '' })
     this.open(settings)
@@ -274,7 +275,8 @@ class Dialog {
 
   /* mimic native Javascript dialog.prompt().
    * {target: event.target} - a reference to DOM element that calls the method */
-  prompt(message, value, config = { target: event.target }) {
+  prompt(message, value,
+         config = { target: event.target, suppressEscape: true }) {
 //debugger  // OK_TMP
     // add a template with an <input> that we’ll wrap in a <label>
     const template = `
