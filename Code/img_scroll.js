@@ -1,7 +1,18 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
-  
+
+/////////// Global-events-registry should be defined on top of the code ////////
+var g_windowEventListenersRegistry = null; //for {event-type::handler}
+function _global_events_registry()  // wraps access to the registry
+{
+  if ( g_windowEventListenersRegistry === null )
+    g_windowEventListenersRegistry = new Map();
+  return  g_windowEventListenersRegistry;
+}
+////////////////////////////////////////////////////////////////////////////////
+
+
 // register the global error handlers in the very beginning
 window.addEventListener("error", function (e) {
   return _scroller_global_error_handler(e);
@@ -9,6 +20,8 @@ window.addEventListener("error", function (e) {
 window.addEventListener('unhandledrejection', function (e) {
   return _scroller_global_rejection_handler(e);
 })
+
+////throw new Error("OK_TMP: Test global error handler");
 
 
 const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
@@ -21,6 +34,8 @@ var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR],
 var g_imgPageOccurences = null; // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
                           g_scoreLines, g_linePlayOrder, g_numLinesInStep);
+
+//(meaningless - will not wait for:)  modal_alert("OK_TMP: Test modal_alert()");
 
 //(does not work) import Dialog from './ModalDialog.js';
 
@@ -42,8 +57,6 @@ var g_scrollIsOn = false;
 var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 
 var g_nextTimerIntervalId = 0;
-
-var g_windowEventListenersRegistry = new Map();//for {event-type::handler}
 
 
 //////////////////// Assume existence of the following global variables: ////////
@@ -452,7 +465,7 @@ async function restart_handler(event)
   const restartStr = "Press <OK> to restart from the top, <Cancel> to continue...";
 
   // Unregister main events to prevent interference with restart dialog
-  let copyOfRegistry = new Map(g_windowEventListenersRegistry);  // shallow-copy
+  let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
   ["click", "contextmenu", "dblclick"].forEach(
         evType => unregister_window_event_listener( evType ));
   window.addEventListener("keydown", _confirm_escape_handler);
@@ -553,12 +566,12 @@ function scroll_perform_one_step(stepNum)
 
 function register_window_event_listener(eventType, handler)
 {
-  if ( g_windowEventListenersRegistry.has(eventType) ) {
+  if ( _global_events_registry().has(eventType) ) {
     window.removeEventListener(eventType,
-                          g_windowEventListenersRegistry.get(eventType));
+                          _global_events_registry().get(eventType));
   }
   window.addEventListener(eventType, handler);
-  g_windowEventListenersRegistry.set(eventType, handler);
+  _global_events_registry().set(eventType, handler);
 }
 
 
@@ -573,12 +586,12 @@ function register_specified_window_event_listeners(eventTypeToHandlerMap)
 // Removes listener for specified event and returns the original event registry
 function unregister_window_event_listener(eventType)
 {
-  let copyOfRegistry = new Map(g_windowEventListenersRegistry);  // shallow-copy
-  if ( g_windowEventListenersRegistry.has(eventType) ) {
+  let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
+  if ( _global_events_registry().has(eventType) ) {
     window.removeEventListener(eventType,
-                          g_windowEventListenersRegistry.get(eventType));
+                          _global_events_registry().get(eventType));
   }
-  g_windowEventListenersRegistry.delete(eventType);
+  _global_events_registry().delete(eventType);
   return  copyOfRegistry;
 }
 
@@ -598,6 +611,32 @@ function _confirm_escape_handler(event)
 }
 
 
+
+async function modal_alert(msg)
+{
+  // build the aler-dialog
+  alertDialog = new Dialog(
+    {
+      eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick'],
+      supportCancel:          false,
+      accept:                 "OK",
+    } );
+
+  // Unregister main events to prevent interference with restart dialog
+  let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
+  ["click", "contextmenu", "dblclick"].forEach(
+    evType => unregister_window_event_listener( evType ));
+  ////(no need) window.addEventListener("keydown", _confirm_escape_handler);
+
+  await alertDialog.alert( msg );
+
+  //// (no need) window.removeEventListener("keydown", _confirm_escape_handler);
+  // Restore registration of main events
+  //debugger;  // OK_TMP
+  register_specified_window_event_listeners(copyOfRegistry);
+}
+
+
 /////// Begin: global error/exception handlers /////////////////////////////////
 function _scroller_global_error_handler(errorEvent)
 {
@@ -607,7 +646,8 @@ function _scroller_global_error_handler(errorEvent)
 ${errorEvent.message}`;
   console.log("-E- " + msg);
 //debugger;  // OK_TMP
-  alert("-E- " + msg + "\n\n" + "(please see console log for more details)");
+  modal_alert("-E- " + msg + "\n\n" +
+              "(please see console log for more details)");
   return false;  //  to retain the default behavior of the error event of Window
 }
 
@@ -619,7 +659,8 @@ function _scroller_global_rejection_handler(promiseRejectionEvent)
 Reason: ${promiseRejectionEvent.reason}`;
   console.log("-E- " + msg + "\n");
 //debugger;  // OK_TMP
-  alert("-E- " + msg + "\n\n" + "(please see console log for more details)");
+  modal_alert("-E- " + msg + "\n\n" +
+              "(please see console log for more details)");
   return false;  //  to retain the default behavior of the error event of Window
 }
 /////// End:   global error/exception handlers /////////////////////////////////
