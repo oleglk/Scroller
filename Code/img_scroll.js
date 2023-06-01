@@ -534,7 +534,7 @@ function messge_onKeyPress(event)
  * afterwards - if in auto-scroll mode - starts timer to requested interval. */
 function scroll_perform_one_step(stepNum)
 {
-throw new Error("OK_TMP: test UI event handlers and auto-scroll");
+////throw new Error("OK_TMP: test UI event handlers and auto-scroll");
   if ( !g_stepManual && !g_scrollIsOn )  { return }
   if ( (stepNum < 0) || (stepNum >= filter_positions(g_scoreStations).length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
@@ -646,7 +646,8 @@ function _scroller_global_error_handler(errorEvent)
 
 ${errorEvent.message}`;
 
-  // Unregister all custom event handlers to prevent further acting
+  /* Unregister all custom event handlers to prevent further acting
+   * (done before modal_alert() to avoid re-register the handlers) */
   ["click", "contextmenu", "dblclick", "load", "keydown"].forEach(
     evType => unregister_window_event_listener( evType ));
 
@@ -667,7 +668,8 @@ function _scroller_global_rejection_handler(promiseRejectionEvent)
 
 Reason: ${promiseRejectionEvent.reason}`;
 
-  // Unregister all custom event handlers to prevent further acting
+  /* Unregister all custom event handlers to prevent further acting
+   * (done before modal_alert() to avoid re-register the handlers) */
   ["click", "contextmenu", "dblclick", "load", "keydown"].forEach(
     evType => unregister_window_event_listener( evType ));
 
