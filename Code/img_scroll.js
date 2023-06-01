@@ -534,6 +534,7 @@ function messge_onKeyPress(event)
  * afterwards - if in auto-scroll mode - starts timer to requested interval. */
 function scroll_perform_one_step(stepNum)
 {
+throw new Error("OK_TMP: test UI event handlers and auto-scroll");
   if ( !g_stepManual && !g_scrollIsOn )  { return }
   if ( (stepNum < 0) || (stepNum >= filter_positions(g_scoreStations).length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
@@ -646,9 +647,10 @@ function _scroller_global_error_handler(errorEvent)
 ${errorEvent.message}`;
   console.log("-E- " + msg);
 //debugger;  // OK_TMP
-  modal_alert("-E- " + msg + "\n\n" +
+  modal_alert("-E- " + msg + "\n\n -- The script is now aborted --\n\n" +
               "(please see console log for more details)");
-  return false;  //  to retain the default behavior of the error event of Window
+  window.stop();
+//return false;  //  to retain the default behavior of the error event of Window
 }
 
 function _scroller_global_rejection_handler(promiseRejectionEvent)
@@ -659,8 +661,9 @@ function _scroller_global_rejection_handler(promiseRejectionEvent)
 Reason: ${promiseRejectionEvent.reason}`;
   console.log("-E- " + msg + "\n");
 //debugger;  // OK_TMP
-  modal_alert("-E- " + msg + "\n\n" +
+  modal_alert("-E- " + msg + "\n\n -- The script is now aborted --\n\n" +
               "(please see console log for more details)");
-  return false;  //  to retain the default behavior of the error event of Window
+  window.stop();
+//return false;  //  to retain the default behavior of the error event of Window
 }
 /////// End:   global error/exception handlers /////////////////////////////////
