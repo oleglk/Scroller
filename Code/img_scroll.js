@@ -14,12 +14,12 @@ function _global_events_registry()  // wraps access to the registry
 
 
 // register the global error handlers in the very beginning
-window.addEventListener("error", function (e) {
+window.addEventListener( "error", function (e) {
   return _scroller_global_error_handler(e);
-})
-window.addEventListener('unhandledrejection', function (e) {
+}, { once: true } )
+window.addEventListener( 'unhandledrejection', function (e) {
   return _scroller_global_rejection_handler(e);
-})
+}, {once: true} )
 
 ////throw new Error("OK_TMP: Test global error handler");
 
@@ -623,7 +623,7 @@ async function modal_alert(msg)
       accept:                 "OK",
     } );
 
-  // Unregister main events to prevent interference with restart dialog
+  // Unregister main events to prevent interference with this dialog
   let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
   ["click", "contextmenu", "dblclick"].forEach(
     evType => unregister_window_event_listener( evType ));
@@ -645,12 +645,19 @@ function _scroller_global_error_handler(errorEvent)
 `Error in Scroller (exception) occurred in ${errorEvent.filename}:(line=${errorEvent.lineno},col=${errorEvent.colno}):
 
 ${errorEvent.message}`;
+
+  // Unregister all custom event handlers to prevent further acting
+  ["click", "contextmenu", "dblclick", "load", "keydown"].forEach(
+    evType => unregister_window_event_listener( evType ));
+
   console.log("-E- " + msg);
 //debugger;  // OK_TMP
   modal_alert("-E- " + msg + "\n\n -- The script is now aborted --\n\n" +
               "(please see console log for more details)");
-  window.stop();
-//return false;  //  to retain the default behavior of the error event of Window
+
+  window.stop();  // though unclear whether it at all works
+
+  return false;  //  to retain the default behavior of the error event of Window
 }
 
 function _scroller_global_rejection_handler(promiseRejectionEvent)
@@ -659,11 +666,18 @@ function _scroller_global_rejection_handler(promiseRejectionEvent)
 `Error in Scroller (rejected promise).
 
 Reason: ${promiseRejectionEvent.reason}`;
+
+  // Unregister all custom event handlers to prevent further acting
+  ["click", "contextmenu", "dblclick", "load", "keydown"].forEach(
+    evType => unregister_window_event_listener( evType ));
+
   console.log("-E- " + msg + "\n");
 //debugger;  // OK_TMP
   modal_alert("-E- " + msg + "\n\n -- The script is now aborted --\n\n" +
               "(please see console log for more details)");
-  window.stop();
-//return false;  //  to retain the default behavior of the error event of Window
+
+  window.stop();  // though unclear whether it at all works
+
+  return false;  //  to retain the default behavior of the error event of Window
 }
 /////// End:   global error/exception handlers /////////////////////////////////
