@@ -80,16 +80,17 @@ class PlayOrder
    * Returns true on success. false on error. */
   _process_inputs()
   {
-    
     this.scoreDataLines = filter_and_massage_positions(this.scoreLines);
     // <= /*{pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}*/
 _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     this.pageHeights = this._find_all_pages_heights();
     if ( this.pageHeights == null )  {
-      // TODO: abort
+      // actually exception is thrown; should not get here
       return  false;  // error already printed
     }
+
+////this._get_page_total_height("Test-Inexistent-pageId");  // OK_TMP 
 
     this.pageLineCounts  = this._find_all_pages_line_counts();
     this.pageLineHeights = this._compute_all_pages_line_heights();
@@ -297,13 +298,13 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   // }
 
 
-  // Returns number of lines on page 'pageId' or -1 on error
+  // Returns number of lines on page 'pageId'; throws exception on error
   _get_page_line_count(pageId)
   {
     if ( !this.pageLineCounts.has(pageId) )  {
       const err = `-E- Missing lines count for page/image ${pageId} (image-path "TODO")`;
-      console.log(err);  console.trace();  alert(err);
-      return  -1;
+      throw new Error(err);
+      //console.log(err);  console.trace();  alert(err);      return  -1;
     }
     return  this.pageLineCounts.get(pageId);
   }
@@ -377,13 +378,14 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   }
 
 
-  // Returns estimated pixel-height of one line on page 'pageId' or -1 on error
+  /* Returns estimated pixel-height of one line on page 'pageId';
+   * throws exception on error */
   _get_page_line_height(pageId)
   {
     if ( !this.pageLineHeights.has(pageId) )  {
       const err = `-E- Missing line height for page/image ${pageId} (image-path "TODO")`;
-      console.log(err);  console.trace();  alert(err);
-      return  -1;
+      throw new Error(err);
+      //console.log(err);  console.trace();  alert(err);      return  -1;
     }
     return  this.pageLineHeights.get(pageId);
   }
@@ -391,7 +393,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   
 
   /* Builds and returns array of per-image/page total heights
-   * based on 'this.scoreDataLines' */
+   * based on 'this.scoreDataLines'; throws exception on error */
   _find_all_pages_heights()
   {
     let pageIdToHeight = new Map();
@@ -401,7 +403,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
         const h = read_image_size_record(this.scoreLines, scoreLine.pageId,
                                          true/*alertErr*/);
         if ( h < 0 )  {
-          return  null;  // error already printed
+          throw new Error("-E- Failed detcting all page heights");
+          //return  null;  // error already printed
         }
         pageIdToHeight.set(scoreLine.pageId, h);
       }
@@ -410,13 +413,14 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   }
   
   
-  // Returns pixel-height of page 'pageId' (original image)  or -1 on error
+  /* Returns pixel-height of page 'pageId' (original image);
+   * throws exception on error. */
   _get_page_total_height(pageId)
   {
     if ( !this.pageHeights.has(pageId) )  {
       const err = `-E- Missing height for page/image ${pageId} (image-path "TODO")`;
-      console.log(err);  console.trace();  alert(err);
-      return  -1;
+      throw new Error(err);
+      //console.log(err);  console.trace();  alert(err);      return  -1;
     }
     return  this.pageHeights.get(pageId);
   }
