@@ -1,6 +1,26 @@
 // ScrollerCommonUtils.js
 
 ////////////////////////////////////////////////////////////////////////////////
+function verify_all_image_occurences_rendering(imgPageOccurencesArray)
+{
+  let cntBad = 0;
+  imgPageOccurencesArray.forEach( (occ) => {
+    //{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+    const imgHtmlElem   = document.getElementById(occ.occId);
+    if ( imgHtmlElem === null )
+      throw new Error(`Missing image/page '${describe_image_page_occurence(occ.occId)}'`);
+    if ( imgHtmlElem.offsetHeight < (occ.yBottom - occ.yTop) )  {
+      console.log(`-E- Invalid rendering of image/page occurence '${occ.occId}' (path=TODO)`);
+      cntBad += 1;
+    }
+  } );
+  if ( cntBad > 0 )  {
+    throw new Error(`Invalid rendering of ${cntBad} image/page occurence(s) out of ${imgPageOccurencesArray.length}`);
+  }
+  console.log(`Success rendering all ${imgPageOccurencesArray.length} image/page occurence(s)`);
+}
+
+
 /* Returns scale of the image/page occurence
  * (page occurences preserve scales of the original images)
  * (but page occurence could be a cropped portion of the original image) */

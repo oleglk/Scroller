@@ -172,6 +172,8 @@ async function scroll__onload(event)
   let pageName = `Scroll: ${remove_filename_extension(fileName)}`;
   document.title = pageName;
 
+  verify_all_image_occurences_rendering(g_imgPageOccurences);
+
   //  try {
     const posDescrStr = positions_toString(g_scoreStations, "\n");
     console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
