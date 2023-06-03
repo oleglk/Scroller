@@ -422,7 +422,7 @@ function verify_score_lines_sanity(scoreLinesArray)
       let lineHeight = (i > 0)? (currLine.y - scoreDataLines[i-1].y) : 0;
       if ( (i > firstAndLast[0]) && (lineHeight < minLineHeight) )  {
         //debugger;  // OK_TMP
-        throw new Error(`-E- ${_DataLineDescr(i-1)} has unreasonably small height ${lineHeight} (estimated minimum = ${minLineHeight}); please check vertical coordinates of ${_DataLineDescr(i-1)} and ${_DataLineDescr(i)}`);
+        throw new Error(`-E- ${_DataLineDescr(i-1)} has unreasonably small height ${(lineHeight>=0)?lineHeight:"(negative)"} (estimated minimum = ${minLineHeight}); please check vertical coordinates of ${_DataLineDescr(i-1)} and ${_DataLineDescr(i)}`);
       }
     }
   }
