@@ -364,6 +364,7 @@ function read_optional_image_bottom_record(scoreStationsOrScoreLinesArray,
 }
 
 
+// Throws exception if iconsistency encountered in 'scoreLinesArray'
 function verify_score_lines_sanity(scoreLinesArray)
 {
   //~ for ( let i = 0;  i < scorePositions.length;  i += 1 )  {
@@ -374,55 +375,59 @@ function verify_score_lines_sanity(scoreLinesArray)
   // ?TODO: check time deviations: one tact in a line is minimum?
 
   // scoreLinesArray==[{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}]
-  const scoreDataLines = filter_positions(scoreStationsArray); // only data lines
+  const scoreDataLines = filter_positions(scoreLinesArray); // only data lines
+
+  const _DataLineDescr = (idx) => `score line #${idx} (${scoreDataLines[idx].tag})`;
 //debugger;  // OK_TMP
-  // verify line vertical coordinates' sequence per a page
-  let pageIdToFirstLineY = new Map();
-  let pageIdToLineCount  = new Map();
-  // we can chek heights of all lines except the first and last ones on each page
-  let currIsFirstOnPage = true;
+
+  // find indices of first- and last lines on each page
+  let pageIdToBoundIndices = new Map(); // {pageId : [firstLineIdx, lastLineIdx]}
   for ( let i = 1;  i < scoreDataLines.length;  i += 1 )
   {
     const currLine = scoreDataLines[i-1];  // {tag, pageId, x, y, timeSec}
     const nextLine = scoreDataLines[i];    // {tag, pageId, x, y, timeSec}
-    if ( currLine.pageId === nextLine.pageId )  { //
-      if ( currIsFirstOnPage == true )  {
-        pageIdToFirstLineY.set(currLine.pageId, currLine.y);
-        currIsFirstOnPage = false;
-        continue;  // cannot check the 1st line on a page
-      }
-TODO
-
+    if ( !pageIdToBoundIndices.has(currLine.pageId) )  {
+      pageIdToBoundIndices.set(currLine.pageId, [i-1]); // store first line index
+    }
     if ( currLine.pageId !== nextLine.pageId )  { // 'currLine' is last on page
-      // image(s)/page(s) with single score line need special treatment
-      if ( !pageIdToLineCount.has(currLine.pageId) )  {
-        // (e.g. next line is on other page AND no prior lines on this page)
-        const pageImgHeight = this._get_page_total_height(currLine.pageId);  // not! cropped
-        pageIdToLineCount.set( currLine.pageId, 1 );
-        pageIdToLineHeightSum.set( currLine.pageId, pageImgHeight ); // unoptimal!
-        // TODO: provide per-image last line bottom instead of total height
+      pageIdToBoundIndices.get(currLine.pageId).push(i-1);//store last line index
+      if ( pageIdToBoundIndices.has(nextLine.pageId) )  {
+        throw new Error(`-E- Repeated appearance of page '${nextLine.pageId}' in ${_DataLineDescr(i)}; previously seen in score lines #${pageIdToBoundIndices.get(nextLine.pageId)}`);
       }
-      continue;
     }
-    if ( !pageIdToLineCount.has(currLine.pageId) )  {
-      pageIdToLineCount.set( currLine.pageId, 0 );
-      pageIdToLineHeightSum.set( currLine.pageId, 0 );
-    }
-    pageIdToLineCount.set( currLine.pageId,
-                           pageIdToLineCount.get(currLine.pageId) + 1 );
-    pageIdToLineHeightSum.set( currLine.pageId,
-                               (pageIdToLineHeightSum.get(currLine.pageId) +
-                                (nextLine.yOnPage - currLine.yOnPage)) );
   }
-  let pageIdToLineHeight = new Map();
-  // note, 2% added to line height to warrant finger labels inclusion
-  pageIdToLineHeightSum.forEach( (totalHeight, pageId) => {
-    pageIdToLineHeight.set(pageId,
-                           1.02* totalHeight / pageIdToLineCount.get(pageId));
-  } )
-  
-  return  pageIdToLineHeight;
+  // treat the case of singl line in the last page
+  const lastIdx = scoreDataLines.length - 1;
+  const lastLine = scoreDataLines[lastIdx];   // {tag, pageId, x, y, timeSec}
+  if ( !pageIdToBoundIndices.has(lastLine.pageId) )  {
+    pageIdToBoundIndices.set(lastLine.pageId, [lastIdx, lastIdx]);
+  }
 
+  // verify line vertical coordinates' sequence per a page
+  // we can check heights of all lines except the last one on each page
+  for (const [pageId, firstAndLast] of pageIdToBoundIndices.entries()) {
+    let numLines = firstAndLast[1] - firstAndLast[0] + 1;
+    let pageHeight = read_image_size_record(scoreLinesArray, pageId,
+                                                       /*alertErr=*/true);
+    let pageBottom = read_optional_image_bottom_record(scoreLinesArray, pageId,
+                                                       /*alertErr=*/true);
+    let maxY = (pageBottom > 0)? pageBottom : pageHeight;
+    let minLineHeight = Math.round(Math.min(0.4* maxY/numLines), maxY/6); //heur
+    
+    for ( let i = firstAndLast[0];  i <= firstAndLast[1];  i += 1 )  {
+      let currLine = scoreDataLines[i];  // {tag, pageId, x, y, timeSec}
+      if ( (currLine.y < 0) || (currLine.y >= maxY) )  {
+        throw new Error(`-E- ${_DataLineDescr(i)} has coordiante ${currLine.y} outside the range [0, ${maxY}]`);
+      }
+      let lineHeight = (i > 0)? (currLine.y - scoreDataLines[i-1].y) : 0;
+      if ( (i > firstAndLast[0]) && (lineHeight < minLineHeight) )  {
+        //debugger;  // OK_TMP
+        throw new Error(`-E- ${_DataLineDescr(i-1)} has unreasonably small height ${lineHeight} (estimated minimum = ${minLineHeight}); please check vertical coordinates of ${_DataLineDescr(i-1)} and ${_DataLineDescr(i)}`);
+      }
+    }
+  }
+  console.log(`-I- Success verifying sanity of line coordinates sequence for all ${scoreDataLines.length} score line(s) of ${pageIdToBoundIndices.size} score page(s)`);
+  return;
 }
 /** END: access to scoreStationsArray / scoreLinesArray ***********************/
 
