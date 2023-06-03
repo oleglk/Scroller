@@ -133,7 +133,7 @@ function describe_image_page_occurence(occId)
 
 
 /*******************************************************************************
- ** BEGIN: access to scoreStationsArray                                       **
+ ** BEGIN: access to scoreStationsArray / scoreLinesArray                     **
 *******************************************************************************/
 
 // Copies one score position record while modifying the duration field
@@ -362,7 +362,69 @@ function read_optional_image_bottom_record(scoreStationsOrScoreLinesArray,
   }
   return  rec.y;
 }
-/** END: access to scoreStationsArray *****************************************/
+
+
+function verify_score_lines_sanity(scoreLinesArray)
+{
+  //~ for ( let i = 0;  i < scorePositions.length;  i += 1 )  {
+    //~ v = scorePositions[i];
+    //~ descr += ((i > 0)? separatorStr : "") + one_position_toString(i, v);
+  //~ }
+  
+  // ?TODO: check time deviations: one tact in a line is minimum?
+
+  // scoreLinesArray==[{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}]
+  const scoreDataLines = filter_positions(scoreStationsArray); // only data lines
+//debugger;  // OK_TMP
+  // verify line vertical coordinates' sequence per a page
+  let pageIdToFirstLineY = new Map();
+  let pageIdToLineCount  = new Map();
+  // we can chek heights of all lines except the first and last ones on each page
+  let currIsFirstOnPage = true;
+  for ( let i = 1;  i < scoreDataLines.length;  i += 1 )
+  {
+    const currLine = scoreDataLines[i-1];  // {tag, pageId, x, y, timeSec}
+    const nextLine = scoreDataLines[i];    // {tag, pageId, x, y, timeSec}
+    if ( currLine.pageId === nextLine.pageId )  { //
+      if ( currIsFirstOnPage == true )  {
+        pageIdToFirstLineY.set(currLine.pageId, currLine.y);
+        currIsFirstOnPage = false;
+        continue;  // cannot check the 1st line on a page
+      }
+TODO
+
+    if ( currLine.pageId !== nextLine.pageId )  { // 'currLine' is last on page
+      // image(s)/page(s) with single score line need special treatment
+      if ( !pageIdToLineCount.has(currLine.pageId) )  {
+        // (e.g. next line is on other page AND no prior lines on this page)
+        const pageImgHeight = this._get_page_total_height(currLine.pageId);  // not! cropped
+        pageIdToLineCount.set( currLine.pageId, 1 );
+        pageIdToLineHeightSum.set( currLine.pageId, pageImgHeight ); // unoptimal!
+        // TODO: provide per-image last line bottom instead of total height
+      }
+      continue;
+    }
+    if ( !pageIdToLineCount.has(currLine.pageId) )  {
+      pageIdToLineCount.set( currLine.pageId, 0 );
+      pageIdToLineHeightSum.set( currLine.pageId, 0 );
+    }
+    pageIdToLineCount.set( currLine.pageId,
+                           pageIdToLineCount.get(currLine.pageId) + 1 );
+    pageIdToLineHeightSum.set( currLine.pageId,
+                               (pageIdToLineHeightSum.get(currLine.pageId) +
+                                (nextLine.yOnPage - currLine.yOnPage)) );
+  }
+  let pageIdToLineHeight = new Map();
+  // note, 2% added to line height to warrant finger labels inclusion
+  pageIdToLineHeightSum.forEach( (totalHeight, pageId) => {
+    pageIdToLineHeight.set(pageId,
+                           1.02* totalHeight / pageIdToLineCount.get(pageId));
+  } )
+  
+  return  pageIdToLineHeight;
+
+}
+/** END: access to scoreStationsArray / scoreLinesArray ***********************/
 
 
 /** BEGIN: access to imgPageOccurencesArray ************************************/
