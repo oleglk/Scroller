@@ -29,6 +29,10 @@ const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one ste
 
 //////// Begin: prepare global data for the scroller and start it ///////////////
 
+// TODO: check existance of all global variables (preferably in a function)
+if ( g_htmlScoreHolderId === null )  throw new Error(`-E- Missing ID for score-placeholder HTML element (in 'g_htmlScoreHolderId')`);
+
+
 // (the global collections to be filled must be declared on the top level)
 var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
 var g_imgPageOccurences = null; // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
@@ -196,6 +200,21 @@ async function scroll__onload(event)
                                     wrap__scroll_start_handler);
 
   } else  {
+    ///////////// BEGIN: swipe-related stuff ////////////////////////////////////
+    var touchSurface = document.getElementById(g_htmlScoreHolderId);
+    if ( touchSurface === null )
+      throw new Error(`-E- Missing score-placeholder HTML element`);
+    swipedetect(touchSurface,
+                function(swipedir) {
+                  if (swipedir != 'none') {
+                    console.log(`-I- Swipe detected; direction: ${swipedir}`);
+                  } else {
+                    console.log(`-I- No swipe detected`);
+                  }
+                });
+    // Seems like touch won't work with just touchpad - needs a touchscreen;
+    // deregistering 'click' didn't help
+    ///////////// END:   swipe-related stuff ////////////////////////////////////
     register_window_event_listener( "click",
                                     wrap__manual_step_back_handler);
     register_window_event_listener( "contextmenu",
