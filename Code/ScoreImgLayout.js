@@ -1,6 +1,9 @@
 // ScoreImgLayout.js - places oredered cropped images on an HTML page
 // Uses placement definition produced by class PlayOrder
 
+const g_htmlScoreHolderId = "TheScore";   // TODO: make a static class attribute
+
+
 class ScoreImgLayout
 {
   constructor (
@@ -50,6 +53,11 @@ class ScoreImgLayout
     }
     this._maxWidth = maxWidth;
     console.log(`Maximal width = ${this._maxWidth}`);
+    
+    // create a "div" to hold all the images
+    let g = document.createElement('div');
+    g.setAttribute("id", g_htmlScoreHolderId);
+    document.body.appendChild(g);
 
     this._croppedCanvasArray = [];
 
@@ -164,8 +172,9 @@ async function render_img_crop_height(occId, url, yTop, yBottom, forcedWidth=-1)
       ctx.drawImage(inputImage, 0, yTop, inputWidth,  inputHeight,
                                 0, 0,    outputWidth, outputHeight)
 
-      // show the canvas
-      document.body.appendChild(outputImage);
+      // show the canvas inside the 'g_htmlScoreHolderId' div
+      //document.body.appendChild(outputImage);
+      document.getElementById(g_htmlScoreHolderId).appendChild(outputImage);
 
       resolve(outputImage);
     };
