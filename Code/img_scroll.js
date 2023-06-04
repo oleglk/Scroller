@@ -1,6 +1,8 @@
 // img_scroll.js
 ////////////////////////////////////////////////////////////////////////////////
 
+import("./ScrollerCommonUtils.js");
+
 
 /////////// Global-events-registry should be defined on top of the code ////////
 var g_windowEventListenersRegistry = null; //for {event-type::handler}

@@ -1,7 +1,8 @@
 // ScrollerCommonUtils.js
 
+
 ////////////////////////////////////////////////////////////////////////////////
-function verify_all_image_occurences_rendering(imgPageOccurencesArray)
+export function verify_all_image_occurences_rendering(imgPageOccurencesArray)
 {
   let cntBad = 0;
   imgPageOccurencesArray.forEach( (occ) => {
@@ -24,7 +25,7 @@ function verify_all_image_occurences_rendering(imgPageOccurencesArray)
 /* Returns scale of the image/page occurence
  * (page occurences preserve scales of the original images)
  * (but page occurence could be a cropped portion of the original image) */
-function get_image_occurence_scale_y(imgPageOccurencesArray, occId,
+export function get_image_occurence_scale_y(imgPageOccurencesArray, occId,
                                      alertErr=false)
 {
   const topAndBottom = read_image_occurence_y_bounds(
@@ -45,7 +46,7 @@ function get_image_occurence_scale_y(imgPageOccurencesArray, occId,
 
 
 // Returns scale of the original image (not possibly cropped occurence)
-function get_image_scale_y(scoreStationsArray, occId, origImgPageId="")
+export function get_image_scale_y(scoreStationsArray, occId, origImgPageId="")
 {
   const imgHtmlElem   = document.getElementById(occId);
   const renderHeight  = imgHtmlElem.offsetHeight;
@@ -55,7 +56,7 @@ function get_image_scale_y(scoreStationsArray, occId, origImgPageId="")
 }
 
 
-function get_original_image_size(scoreStationsArray, pageId, alertErr=false)
+export function get_original_image_size(scoreStationsArray, pageId, alertErr=false)
 {
   let height = read_image_size_record(scoreStationsArray, pageId,
                                       /*alertErr=*/false);
@@ -67,7 +68,7 @@ function get_original_image_size(scoreStationsArray, pageId, alertErr=false)
 
 
 // See https://javascript.info/size-and-scroll-window
-function get_scroll_height()
+export function get_scroll_height()
 {
   let scrollHeight = Math.max(
     document.body.scrollHeight, document.documentElement.scrollHeight,
@@ -80,7 +81,7 @@ function get_scroll_height()
 
 
 // Returns the rendered vertical position (winY) of the current scroll status
-function get_scroll_current_y()
+export function get_scroll_current_y()
 {
   // adopted from: https://stackoverflow.com/questions/4096863/how-to-get-and-set-the-current-web-page-scroll-position
   return  document.documentElement.scrollTop || document.body.scrollTop;
@@ -89,7 +90,7 @@ function get_scroll_current_y()
 
 // Converts vertical position from image coordinates to rendered window
 // !!!! TODO: Recompute y-offset for possibly cropped page occurence !!!
-function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
+export function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageOccId);
   // page occurences preserve scales of the original images
   const pageScaleY = get_image_occurence_scale_y(g_imgPageOccurences,
@@ -105,7 +106,7 @@ function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
 
 
 // Converts vertical position from image coordinates to rendered window
-function convert_y_window_to_img(imgHtmlPageOccId, winY) {
+export function convert_y_window_to_img(imgHtmlPageOccId, winY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageId);
   // page occurences preserve scales of the original images
   const pageScaleY = get_image_occurence_scale_y(g_imgPageOccurences,
@@ -119,7 +120,7 @@ function convert_y_window_to_img(imgHtmlPageOccId, winY) {
 }
 
 
-function describe_image_page_occurence(occId)
+export function describe_image_page_occurence(occId)
 {
   if ( (typeof g_pageImgPathsMap === 'undefined') ||
        (g_pageImgPathsMap === null) )
@@ -137,7 +138,7 @@ function describe_image_page_occurence(occId)
 *******************************************************************************/
 
 // Copies one score position record while modifying the duration field
-function score_viewpoint(scoreLineObj, timeSec)
+export function score_viewpoint(scoreLineObj, timeSec)
 {
   let scoreStation = Object.assign(scoreLineObj);  // shallow copy is OK here
   scoreStation.timeSec = timeSec;
@@ -146,7 +147,7 @@ function score_viewpoint(scoreLineObj, timeSec)
 
 
 // Returns new array with only position-related lines from 'scoreStationsArray'
-function filter_positions(scoreStationsArray)
+export function filter_positions(scoreStationsArray)
 {
   return  scoreStationsArray.filter((rec) =>  {
     return  !rec.tag.startsWith("Control-");
@@ -155,7 +156,7 @@ function filter_positions(scoreStationsArray)
 
 
 // Returns new array with only control lines from 'scoreStationsArray'
-function filter_controls(scoreStationsArray)
+export function filter_controls(scoreStationsArray)
 {
   return  scoreStationsArray.filter((rec) =>  {
     return  rec.tag.startsWith("Control-");
@@ -163,7 +164,7 @@ function filter_controls(scoreStationsArray)
 }
 
 
-function positions_toString(scoreStationsArray, separatorStr)
+export function positions_toString(scoreStationsArray, separatorStr)
 {
   let descr = "";
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
@@ -175,7 +176,7 @@ function positions_toString(scoreStationsArray, separatorStr)
 }
 
 
-function one_position_toString(stepIdx, scoreStationRecord)
+export function one_position_toString(stepIdx, scoreStationRecord)
 {
   v = scoreStationRecord; // to shorten the notation
   let lineStr = ('lineOnPageIdx' in v)? ` (line: ${v.lineOnPageIdx})}` : "";
@@ -190,7 +191,7 @@ var DBG_candidates = undefined; //OK_TMP
  * in the closest step to 'lastStep'.
  * If in doubt, prefers the step before 'lastStep'.
  * If not found, return 'lastStep' */
-function find_nearest_matching_position(scoreStationsArray, winY, lastStep)
+export function find_nearest_matching_position(scoreStationsArray, winY, lastStep)
 {
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   if ( lastStep >= scorePositions.length )  {
@@ -254,7 +255,7 @@ function find_nearest_matching_position(scoreStationsArray, winY, lastStep)
 
 /* Returns position records that enclose 'winY';
  * each record extended with step number  */
-function find_matching_positions(scoreStationsArray, winY)
+export function find_matching_positions(scoreStationsArray, winY)
 {
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   // build an ascending list of position-Y-s - to detect the order
@@ -288,7 +289,7 @@ function find_matching_positions(scoreStationsArray, winY)
  *   from 'scoreLinesAndControlArray'
  * scoreLinesAndControlArray == {tag:STR, pageId:STR, x:INT,y:INT, timeSec:FLOAT}
  * result             <= {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT} */
-function filter_and_massage_positions(scoreLinesAndControlArray)
+export function filter_and_massage_positions(scoreLinesAndControlArray)
 {
   let onlyDataLines = scoreLinesAndControlArray.filter((rec) =>  {
     return  !rec.tag.startsWith("Control-");
@@ -316,7 +317,7 @@ function filter_and_massage_positions(scoreLinesAndControlArray)
 }
 
 
-function derive_position_y_window(scoreStationsArray, step)
+export function derive_position_y_window(scoreStationsArray, step)
 {
   const scorePositions = filter_positions(scoreStationsArray); // only data lines
   return  convert_y_img_to_window(
@@ -327,7 +328,7 @@ function derive_position_y_window(scoreStationsArray, step)
 /* Returns image height or -1 on error
  * Note, height is that of the original image (not possibly cropped occurence)
  * Takes the data from 'scoreStationsArray'  */
-function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
+export function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 {
   const rec = scoreStationsArray.find((value, index, array) => {
     return  ( (value.tag == "Control-Height") && (value.pageId == pageId) )
@@ -346,7 +347,7 @@ function read_image_size_record(scoreStationsArray, pageId, alertErr=false)
 
 /* Returns image bottommost sensible Y coordinate or -1 on error
  * Takes the (control!) data from 'scoreStationsArray or scoreLinesArray'  */
-function read_optional_image_bottom_record(scoreStationsOrScoreLinesArray,
+export function read_optional_image_bottom_record(scoreStationsOrScoreLinesArray,
                                            pageId, alertErr=false)
 {
   const rec = scoreStationsOrScoreLinesArray.find((value, index, array) => {
@@ -365,7 +366,7 @@ function read_optional_image_bottom_record(scoreStationsOrScoreLinesArray,
 
 
 // Throws exception if iconsistency encountered in 'scoreLinesArray'
-function verify_score_lines_sanity(scoreLinesArray)
+export function verify_score_lines_sanity(scoreLinesArray)
 {
   //~ for ( let i = 0;  i < scorePositions.length;  i += 1 )  {
     //~ v = scorePositions[i];
@@ -435,7 +436,7 @@ function verify_score_lines_sanity(scoreLinesArray)
 /** BEGIN: access to imgPageOccurencesArray ************************************/
 //imgPageOccurencesArray /*{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}*/
 
-function read_image_occurence_yTop(imgPageOccurencesArray, occId, alertErr=false)
+export function read_image_occurence_yTop(imgPageOccurencesArray, occId, alertErr=false)
 {
   const topAndBottom = read_image_occurence_y_bounds(
                                        imgPageOccurencesArray, occId, alertErr);
@@ -443,7 +444,7 @@ function read_image_occurence_yTop(imgPageOccurencesArray, occId, alertErr=false
   return  topAndBottom.yTop;
 }
 
-function read_image_occurence_yBottom(imgPageOccurencesArray, occId,
+export function read_image_occurence_yBottom(imgPageOccurencesArray, occId,
                                       alertErr=false)
 {
   const topAndBottom = read_image_occurence_y_bounds(
@@ -454,7 +455,7 @@ function read_image_occurence_yBottom(imgPageOccurencesArray, occId,
 
 
 // Returns {yTop=<OCC>.yTop, yBottom=<OCC>.yBottom} or null on error
-function read_image_occurence_y_bounds(imgPageOccurencesArray, occId,
+export function read_image_occurence_y_bounds(imgPageOccurencesArray, occId,
                                        alertErr=false)
 {
   const rec = imgPageOccurencesArray.find((value, index, array) => {
@@ -477,7 +478,7 @@ function read_image_occurence_y_bounds(imgPageOccurencesArray, occId,
 
 // Copied from https://stackoverflow.com/questions/2998784/how-to-output-numbers-with-leading-zeros-in-javascript
 // Prepends number with zeroes
-function zero_pad(num, places)
+export function zero_pad(num, places)
 {
   return String(num).padStart(places, '0');
 }
@@ -487,7 +488,7 @@ function zero_pad(num, places)
  * Automatically closing alert/message.
  * (from: https://stackoverflow.com/questions/15466802/how-can-i-auto-hide-alert-box-after-it-showing-it)
  ******************************************************************************/
-function timed_alert(msg, durationSec)
+export function timed_alert(msg, durationSec)
 {
   var el = document.createElement("div");
   el.setAttribute("style","position:fixed;top:85%;left:20%;background-color:lightblue;");
@@ -502,7 +503,7 @@ function timed_alert(msg, durationSec)
  * (from:  https://www.tutorialspoint.com/unique-sort-removing-duplicates-and-sorting-an-array-in-javascript)
  ^ Example: const uniq_sort([1, 1, 1, 3, 2, 2, 8, 3, 4],  (a, b) => a - b);
  ******************************************************************************/
-function uniq_sort(arr, cmpFunc) {
+export function uniq_sort(arr, cmpFunc) {
    const map = {};
    const res = [];
    for (let i = 0; i < arr.length; i++) {
@@ -515,7 +516,7 @@ function uniq_sort(arr, cmpFunc) {
 }
 
 
-function remove_filename_extension(filename)
+export function remove_filename_extension(filename)
 {
   var lastDotPosition = filename.lastIndexOf(".");
   if (lastDotPosition === -1) return filename;
@@ -525,7 +526,7 @@ function remove_filename_extension(filename)
 
 
 // !!! DOES NOT WORK!!!  Copied from: https://www.quora.com/How-do-you-check-if-a-file-exists-in-JavaScript 
-function check_file_exists(url) { 
+export function check_file_exists(url) { 
   var xhr = new XMLHttpRequest(); 
   xhr.open('HEAD', url, false); 
   xhr.send(); 
@@ -534,7 +535,7 @@ function check_file_exists(url) {
 
 
 // From: https://stackoverflow.com/questions/11729835/how-to-disable-prevent-this-page-from-creating-additional-dialogs
-function alert_without_notice(message)
+export function alert_without_notice(message)
 {
   setTimeout( function() { alert(message); }, 1000 );
 }
@@ -548,3 +549,10 @@ function alert_without_notice(message)
 /*******************************************************************************
  ** END: common utilities                                                   **
 *******************************************************************************/
+
+
+//// How to list all functions in the module:
+////   grep "^function " Code/ScrollerCommonUtils.js |awk '{gsub(/\(.*/, "", $2);  print $2}'
+
+//// How to generate "export" statement for all functions in the module:
+////   grep "^function " Code/ScrollerCommonUtils.js |awk 'BEGIN {printf("export {");}    {gsub(/\(.*/, "", $2);  printf(" %s,", $2)}   END {printf(" };\n");}'

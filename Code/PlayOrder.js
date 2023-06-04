@@ -1,5 +1,6 @@
 // PlayOrder.js
 
+import("./ScrollerCommonUtils.js");
 
 //~ /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
 //~ class ScoreLineRecord

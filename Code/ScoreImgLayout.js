@@ -1,6 +1,8 @@
 // ScoreImgLayout.js - places oredered cropped images on an HTML page
 // Uses placement definition produced by class PlayOrder
 
+import("./ScrollerCommonUtils.js");
+
 class ScoreImgLayout
 {
   constructor (
