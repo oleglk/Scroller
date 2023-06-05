@@ -13,13 +13,6 @@ img {
 </style>
 
 
-<!-- Load the generic Dialog class code -->
-<script src="../Code/ModalDialog.js"></script>
-<!-- Load the utility code -->
-<script src="../Code/ScrollerCommonUtils.js"></script>
-<!-- Load the layout code -->
-<script src="../Code/PlayOrder.js"></script>
-<script src="../Code/ScoreImgLayout.js"></script>
 <!-- Load of the scrolling code deferred until data is defined -->
 <!-- <script src="../Code/img_scroll.js"></script>  -->
 
@@ -65,55 +58,6 @@ var g_scoreLines = [
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-
-// TODO, pass the whole array from the HTML ?table?
-// TODO: double-check times
-/* The grouped view-points are built assuming 3 lines are visible at each one.
- * Correspond to the intended order - with repetitions
- * Times are incorrect */
-var g_scoreStations_Groupped = [
-  {...score_viewpoint(g_scoreLines[0],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[2],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[4],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[6],   (1+4/7)   * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[0],   (2/6+1)   * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[2],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[4],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[6],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[8],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[10],  (1+1+2/4) * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[0],   (2/6+1)   * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[2],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[4],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[6],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[8],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[10],  (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[11],  (1+1+1)   * 7*g_tactTimeSec)},
-  g_scoreLines.find(x => (x.tag == "Control-Height")),
-];
-
-
-// TODO, pass the whole array from the HTML ?table?
-// TODO: double-check times
-/* The grouped view-points are built assuming 3 lines are visible at each one.
- * Correspond to the lazy order - without repetitions
- * Times are incorrect */
-var g_scoreStations_Groupped_NoRepeat = [
-  {...score_viewpoint(g_scoreLines[0],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[2],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[4],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[6],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[8],   (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[10],  (1+1)     * 7*g_tactTimeSec)},
-  {...score_viewpoint(g_scoreLines[11],  (1+1+1)   * 7*g_tactTimeSec)},
-  ...g_scoreLines.filter(x => (x.tag == "Control-Height")),
-];
-
-////////////////////////////////////////////////////////////////////////////////
-// ... the copy will be 2-level deep - fine for the task
-//// var g_scoreStations = g_scoreStations_Groupped_NoRepeat.map(a => {return {...a}});
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -184,6 +128,15 @@ var g_pageImgPathsMap = new Map([
 
 
 <!-- ..................... In the very end .............. (?AFTER the body?) -->
+
+<!-- Load the generic Dialog class code -->
+<script src="../Code/ModalDialog.js"></script>
+<!-- Load the utility code -->
+<script src="../Code/ScrollerCommonUtils.js"></script>
+<!-- Load the layout code -->
+<script src="../Code/PlayOrder.js"></script>
+<script src="../Code/ScoreImgLayout.js"></script>
+
 <!-- Load the scrolling code                                                 -->
 <!-- (... then create the play-order layout)                                 -->
 <!-- (... then prepare global data for the scroller and start it)            -->

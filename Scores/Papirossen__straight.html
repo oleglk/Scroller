@@ -13,13 +13,6 @@ img {
 </style>
 
 
-<!-- Load the generic Dialog class code -->
-<script src="../Code/ModalDialog.js"></script>
-<!-- Load the utility code -->
-<script src="../Code/ScrollerCommonUtils.js"></script>
-<!-- Load the layout code -->
-<script src="../Code/PlayOrder.js"></script>
-<script src="../Code/ScoreImgLayout.js"></script>
 <!-- Load of the scrolling code deferred until data is defined -->
 <!-- <script src="../Code/img_scroll.js"></script>  -->
 
@@ -57,25 +50,6 @@ var g_scoreLines = [
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-
-// TODO, pass the whole array from the HTML ?table?
-// TODO: double-check times
-/* The grouped view-points are built assuming 3 lines are visible at each one:
- * - show 01,02,03 while playing 01,02,03,01,02 
- * - show 03,04,05 while playing 03,04
- * - show 04,05,06 while playing 05,06,04,05,06 */
-var g_scoreStations_Groupped = [
-  {...score_viewpoint(g_scoreLines[0],  (1+1+2/3+1+1) * g_fullLineInSec)},
-  {...score_viewpoint(g_scoreLines[2],  (2/3+1) * g_fullLineInSec)},
-  {...score_viewpoint(g_scoreLines[3],  (1+2/3+1+1+2/3) * g_fullLineInSec)},
-  g_scoreLines.find(x => (x.tag == "Control-Height")),
-];
-
-////////////////////////////////////////////////////////////////////////////////
-// ... the copy will be 2-level deep - fine for the task
-var g_scoreStations = g_scoreStations_Groupped.map(a => {return {...a}});
 ////////////////////////////////////////////////////////////////////////////////
 
 // Full line play order - with repetitions
@@ -125,6 +99,15 @@ var g_pageImgPathsMap = new Map([
 
 
 <!-- ..................... In the very end .............. (?AFTER the body?) -->
+
+<!-- Load the generic Dialog class code -->
+<script src="../Code/ModalDialog.js"></script>
+<!-- Load the utility code -->
+<script src="../Code/ScrollerCommonUtils.js"></script>
+<!-- Load the layout code -->
+<script src="../Code/PlayOrder.js"></script>
+<script src="../Code/ScoreImgLayout.js"></script>
+
 <!-- Load the scrolling code                                                 -->
 <!-- (... then create the play-order layout)                                 -->
 <!-- (... then prepare global data for the scroller and start it)            -->
