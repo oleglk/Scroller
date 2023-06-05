@@ -20,19 +20,24 @@ set SCRIPT_DIR [file normalize [file dirname [info script]]]
 proc concat_files {inPathList outPath {separatorPrefix ""}}  {
   set out [open $outPath w]
   fconfigure $out -translation binary
+  if { $separatorPrefix != "" }  {
+    puts $out "$separatorPrefix ====== $::appName (single-file assembly of all sources) ======"
+    puts $out "$separatorPrefix         (C) Oleg Kosyakovsky   (Haifa  Israel  2023)"
+    puts $out "";      puts $out ""
+  }
   foreach fname $inPathList  {
     set fPath [file normalize $fname]
     set in [open $fname]
     fconfigure $in -translation binary
     if { $separatorPrefix != "" }  {
       puts $out "";      puts $out ""
-      puts $out "$separatorPrefix ...... BEGIN: source file '$fname' ......."
+      puts $out "$separatorPrefix (concatenated) ...... BEGIN: source file '$fname' ......."
       puts $out "";      puts $out ""
     }
     fcopy $in $out
     if { $separatorPrefix != "" }  {
       puts $out "";      puts $out ""
-      puts $out "$separatorPrefix ...... END:   source file '$fname' ......."
+      puts $out "$separatorPrefix (concatenated) ...... END:   source file '$fname' ......."
     }
     close $in
   }
@@ -58,7 +63,7 @@ if { [file exists $outPath] }  {
   file rename -force --  $outPath  "$outPath.OLD"
 }
 
-concat_files  $inPathList  $outPath  "// (concatenated) "
+concat_files  $inPathList  $outPath  "//"
 if { ! [file exists $outPath] }  {
   error "Creation of assembly for $appName failed"
 } else {
