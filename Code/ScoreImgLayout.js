@@ -109,14 +109,17 @@ class ScoreImgLayout
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
+ * @param {string} htmlId - id attribute to attach to the DOM object
  * @param {string} url - The source image
- * @param {number} aspectRatio - The aspect ratio
+ * @param {number} yTop    - upper Y for cropping; -1 means no top   crop
+ * @param {number} yBottom - lower Y for cropping; -1 means no bottom crop
  * @param {number} forcedWidth - Override for canvas width
  * @return {Promise<HTMLCanvasElement>} A Promise that resolves with the resulting image as a canvas element
  * (Adopted from:
  *    https://pqina.nl/blog/cropping-images-to-an-aspect-ratio-with-javascript/)
  */
-async function render_img_crop_height(occId, url, yTop, yBottom, forcedWidth=-1)
+// TODO: convert into static
+async function render_img_crop_height(htmlId, url, yTop, yBottom, forcedWidth=-1)
 {
   // we return a Promise that gets resolved with our canvas element
   return new Promise((resolve, reject) => {
@@ -132,7 +135,7 @@ async function render_img_crop_height(occId, url, yTop, yBottom, forcedWidth=-1)
     const inputImage = new Image();
 
     inputImage.onerror = () => {
-      const err = `Image '${url}' (page '${occId}') failed to load`;
+      const err = `Image '${url}' (page '${htmlId}') failed to load`;
       /*alert(err);  */throw new Error(err);
     }
 
@@ -141,6 +144,9 @@ async function render_img_crop_height(occId, url, yTop, yBottom, forcedWidth=-1)
       // let's store the width and height of our image
       const inputWidth = inputImage.naturalWidth;
       const origHeight = inputImage.naturalHeight;
+
+      if ( yTop    < 0 )  yTop    = 0;
+      if ( yBottom < 0 )  yBottom = origHeight - 1;
 
       let  inputHeight = yBottom - yTop + 1;  // the vertical crop
       if ( inputHeight == (origHeight + 1) )  {
@@ -161,7 +167,7 @@ async function render_img_crop_height(occId, url, yTop, yBottom, forcedWidth=-1)
 
       // create a canvas that will present the output image
       const outputImage = document.createElement('canvas');
-      outputImage.id = occId;
+      outputImage.id = htmlId;
 
       // set it to the same size as the _cropped_ image
       outputImage.width  = outputWidth;
