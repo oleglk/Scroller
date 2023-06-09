@@ -19,11 +19,8 @@ img {
 // TODO: pass 'g_tempo', 'g_tactsInLine', 'g_beatsInTact' from the HTML
 // TODO: provide a way for user to force alternative 'g_tempo'
 var g_tempo = 10*60;  //60; // beats-per-minute
-var g_tactsInLine = 7;
 var g_beatsInTact = 4;
 
-const g_beatsForFullLine = g_tactsInLine * g_beatsInTact;
-const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -68,6 +65,7 @@ var g_pageImgPathsMap = new Map();
 <script src="../Code/ScrollerCommonUtils.js"></script> 
 <!-- Load the line-finder code -->
 <script src="../Code/ScoreLineFinder.js"></script> 
+<script src="../Code/raw_score_process.js"></script> 
 
 
 </head>
