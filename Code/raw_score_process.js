@@ -31,6 +31,31 @@ function raw__onload(event)
     pageImagePathsMap.set( iAndP[1].id, iAndP[1].url );
   }
 
-  // TODO: analyze
+  // TODO, open a dialog to prompt for marking color
+  // analyze
+  let lineFinder = new ScoreLineFinder(pageImagePathsMap,
+                                       ScoreLineFinder.default_markRGB);
+  const cntGood = lineFinder.scan_all_pages();
+  if ( cntGood < pageImagePathsMap.length )  {
+    const cntBad = pageImagePathsMap.length - cntGood;
+    err = `-E- Failed searching for score-lines in ${cntBad} score-page image(s) out of $pageImagePathsMap.length}`;
+    // console.log(msg);  alert(msg);
+    throw new Error(err);
+  }
+  msg = `-I- Success searching for score-lines in all ${cntGood} score-page image(s)`;
+  console.log(msg);  alert(msg);
+  // results are in 'lineFinder.scoreLines'
+
+  let scoreLinesArray = lineFinder.copy_score_lines();
+
+  console.log(`===== Generated Score lines: ====`);
+  console.log( format_score_lines(scoreLinesArray) );
+  console.log(`=================================`);
 }
 // wrapper had to be moved to the top - before the 1st use
+
+
+function format_score_lines(scoreLinesArray)
+{
+    return  scoreLinesArray.join("\n");  // TODO: generate the actual code
+}

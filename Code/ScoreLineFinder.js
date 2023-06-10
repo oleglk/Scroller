@@ -5,6 +5,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 class ScoreLineFinder
 {
+  static default_markRGB = [255,255,0];  // default line-marking color is yellow
+  
   constructor (
     pageImagePathsMap,  /*pageId:STR => imgPath:STR*/
     markRGB          /*[r,g,b] of the color used for line-bounds marks*/
@@ -29,17 +31,27 @@ class ScoreLineFinder
   }
 
 
+  // Processes all pages in 'this.pageImagePathsMap'; returns count of successes 
   scan_all_pages()
   {
     let cntGood = 0;
+    this.scoreLines = [];
+    
     for (const img of this.pageImagePathsMap.entries()) {
-      if ( true == scan_one_page(img[0], img[1]) )
+      if ( true == this.scan_one_page(img[0], img[1]) )
         cntGood += 1;
     }
     if ( cntGood == this.pageImagePathsMap.length )  {
       msg = `-I- Success searching for score-lines in all ${cntGood} score-page image(s)`;
       console.log(msg);  alert(msg);
-      // TODO: request file-to-sabe name and store the results
+      // TODO: request file-to-save name and store the results
+      return  cntGood;
+    } else {
+      const cntBad = this.pageImagePathsMap.length - cntGood;
+      err = `-E- Failed searching for score-lines in ${cntBad} score-page image(s) out of ${this.pageImagePathsMap.length}`;
+      console.log(msg);  alert(msg);
+      throw new Error(err);
+      return  cntGood;
     }
   }
 
@@ -47,15 +59,60 @@ class ScoreLineFinder
   /* Seaches the image for score-line marks.
    * Appends data- and metadata for the image to 'this.scoreLines'.
    * Returns true on success false on error */
-  scan_one_page(htmlPageId, imgUrl)
+  /*?async?*/ scan_one_page(htmlPageId, imgUrl)
   {
-    const imgCanvas = document.getElementById(htmlPageId);
+    const imgElement = document.getElementById(htmlPageId);  // TODO: check result
+    const imgCanvas = /*?await?*/ ScoreLineFinder._get_canvas_from_image(imgElement);
     if ( imgCanvas === null )
       throw new Error(`-E- Missing in HTML image-page "${htmlPageId}" (url="${imgUrl}")`);
+    const descr = `page '${htmlPageId} (path='${imgUrl}')`;
 
     // TODO: read pixels from the image canvas
+    const imgData = imgCanvas.getImageData(0, 0,
+                                           imgCanvas.width, imgCanvas.height);
+    if ( imgData === null )  {
+      const err = `-E- Failed reading pixels from ${descr}`;
+      console.log(err);  alert(err);
+      return  false;
+      //throw new Error(err);
+    }
+    console.log(`-I- Succes reading data from ${descr};  dimensions=${imgData.width}x${imgData.height}`);
+    //const pixels = TODO;
+    return true;
+ }
+
+
+  // static async get_image_pixels(url)
+  // {
+  //   var img = new Image();
+  //   img.src = url;
+  //   var canvas = document.createElement('canvas');
+  //   var context = canvas.getContext('2d');
+  //   context.drawImage(img, 0, 0);
+  //   return context.getImageData(?x?, ?y?, 1, 1).data;
+  // }
+
+
+  // WRONG; need to rewrite as async by the book ???
+  // Copied from:
+  //  https://stackoverflow.com/questions/67399203/get-a-canvas-object-from-an-img-element
+  static /*?async?*/ _get_canvas_from_image(image) {  //was: getCanvasFromImage()
+   const canvas = document.createElement('canvas');
+   canvas.width = image.width;
+   canvas.height = image.height;
+   const ctx = canvas.getContext('2d');
+   ctx.drawImage(image, 0, 0);
+   return canvas;
   }
 
+
+  copy_score_lines()
+  {
+    //// let clonedArray = JSON.parse(JSON.stringify(this.scoreLines));  //slow
+    let clonedArray = this.scoreLines.map(a => {return {...a}}); // 2-level - OK
+    return  clonedArray;
+  }
+  
   
   toString()
   {
