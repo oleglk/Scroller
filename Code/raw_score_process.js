@@ -1,13 +1,14 @@
 // raw_score_process.js
 
 var pageIdsAndImagePaths = null;  // OK_TMP
+var tmp__lineFinder = null;  // OK_TMP
 
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__raw__onload  = (event) => { raw__onload(event) }
 window.addEventListener("load", wrap__raw__onload);
 
-function raw__onload(event)
+async function raw__onload(event)
 {
   /* Keep the rest of the handlers from being executed
   *   (and it prevents the event from bubbling up the DOM tree) */
@@ -35,7 +36,8 @@ function raw__onload(event)
   // analyze
   let lineFinder = new ScoreLineFinder(pageImagePathsMap,
                                        ScoreLineFinder.default_markRGB);
-  const cntGood = lineFinder.scan_all_pages();
+tmp__lineFinder = lineFinder;  // OK_TMP - allow debug access
+  const cntGood = await lineFinder.scan_all_pages();
   if ( cntGood < pageImagePathsMap.length )  {
     const cntBad = pageImagePathsMap.length - cntGood;
     err = `-E- Failed searching for score-lines in ${cntBad} score-page image(s) out of $pageImagePathsMap.length}`;
