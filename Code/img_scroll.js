@@ -123,7 +123,7 @@ function build_help_string(showHeader, showFooter, modeManual=g_stepManual)
     let showStep = -1;
     if (      g_currStep <  0           )  showStep = 0;
     else if ( g_currStep >= numStations )  showStep = numStations - 1;
-    else                                   showStep = g_currStep;                
+    else                                   showStep = g_currStep;
     ret += `
 > > > > CURRENT STEP is ${showStep} out of 0...${numStations-1} < < < <`;
   }
@@ -530,7 +530,16 @@ async function restart_handler(event)
       accept:                 "OK",
       cancel:                 "Cancel",
     } );
-  const restartStr = "Press <OK> to re-select operation mode, <Cancel> to continue...";
+  
+  const numStations = filter_positions(g_scoreStations).length;
+  let showStep = -1;
+  if (      g_currStep <  0           )  showStep = 0;
+  else if ( g_currStep >= numStations )  showStep = numStations - 1;
+  else                                   showStep = g_currStep;
+  
+  const restartStr = `
+Press <OK> to re-select operation mode, <Cancel> to continue...
+> > > > (CURRENT STEP is ${showStep} out of 0...${numStations-1}) < < < <`;
 
   // Unregister main events to prevent interference with restart dialog
   let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
