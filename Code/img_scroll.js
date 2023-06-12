@@ -93,8 +93,9 @@ register_window_event_listener("load", wrap__scroll__onload);
 
 ////////// Utilities ///////////////////////////////////////////////////////////
 
-function build_help_string(showHeader, modeManual=g_stepManual)
+function build_help_string(showHeader, showFooter, modeManual=g_stepManual)
 {
+  const numStations = filter_positions(g_scoreStations).length;
   let ret = "";
   if ( showHeader ) {
     ret +=  `
@@ -104,7 +105,7 @@ function build_help_string(showHeader, modeManual=g_stepManual)
 ========================================   
 
 
-=> Left-mouse-button-Double-Click \t= Restart\n`
+=> Left-mouse-button-Double-Click \t= Change Mode\n`
   }
   ret += `
 Step Mode: ${(modeManual)? "MANUAL" : "AUTO"};
@@ -121,6 +122,15 @@ Step Mode: ${(modeManual)? "MANUAL" : "AUTO"};
 => When paused, you can manually adjust the scroll position\n`;
   }
   ret += "========================================";
+  if ( showFooter )  {
+    let showStep = -1;
+    if (      g_currStep <  0           )  showStep = 0;
+    else if ( g_currStep >= numStations )  showStep = numStations - 1;
+    else                                   showStep = g_currStep;                
+    ret += `
+
+> > > > CURRENT STEP is ${showStep} out of 0...${numStations-1} < < < <`;
+  }
   return  ret;
 }
 
@@ -255,7 +265,7 @@ async function scroll__onload(event)
 async function show_and_process_help_and_tempo_dialog()
 {
   let defaultTempo = (g_stepManual)? 0 : g_tempo;
-  let helpStr = build_help_string(1, 1) + "\n" + build_help_string(0, 0) +
+  let helpStr = build_help_string(1,0, 1, 1) + "\n" + build_help_string(0,1, 0) +
       `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
 
   // build the prompt-dialog so that it cannot be canceled
