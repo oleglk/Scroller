@@ -94,12 +94,12 @@ class Dialog {
   // to hide the HTML dialog element for browsers that do not support it
   toggle(open) {
     if (this.dialogSupported && open)  {
-      console.log("-D- Open-dialog at:");  console.trace();  // OK_TMP
+      //console.log("-D- Open-dialog at:");  console.trace();  // OK_TMP
       this.dialog.showModal()
       this.dialog.hidden = false  // Oleg
     }
     if (!this.dialogSupported || (open == false)/*Oleg*/) {
-      console.log("-D- Close-dialog at:");  console.trace();  // OK_TMP
+      //console.log("-D- Close-dialog at:");  console.trace();  // OK_TMP
       document.body.classList.toggle(this.settings.bodyClass, open)
       this.dialog.hidden = !open
       /* If a `target` exists, set focus on it when closing */
