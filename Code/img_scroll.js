@@ -156,6 +156,7 @@ function arrange_score_global_data(scoreName, pageImgPathsMap,
 }
 
 
+// Initiates scrolling operation starting from the current step 'g_currStep'
 // Scrolls to line-01
 async function scroll__onload(event)
 {
@@ -206,17 +207,24 @@ async function scroll__onload(event)
   
   g_totalHeight = get_scroll_height();
 
-  // scroll to the first ocuurence of any page
-  const firstPageOccId = filter_positions(g_scoreStations)[0].pageId;
-  const firstPage = document.getElementById(firstPageOccId);
-  const topPos = firstPage.offsetTop;
-  //alert(`Page onload event; scroll to the first page (${firstPageOccId}) at y=${topPos}`);
-  console.log(`Scroll to the first page (${firstPageOccId}) at y=${topPos}`);
-  // window.scrollTo({ top: topPos, behavior: 'smooth'});
-  window.scrollTo(0, topPos);
-  g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'topPos' ?
+  let scrollToPos = -1;
+  if ( g_currStep < 0 )  {
+    // scroll to the very first ocuurence of any page
+    const firstPageOccId = filter_positions(g_scoreStations)[0].pageId;
+    const firstPage = document.getElementById(firstPageOccId);
+    scrollToPos = firstPage.offsetTop;
+    //alert(`Page onload event; scroll to the first page (${firstPageOccId}) at y=${scrollToPos}`);
+    console.log(`Scroll to the first page (${firstPageOccId}) at y=${scrollToPos}`);
+    g_currStep = (g_stepManual)? 0 : -1;
+  } else {
+    // scroll to step 'g_currStep'
+    const rec = filter_positions(g_scoreStations)[g_currStep];
+    scrollToPos = convert_y_img_to_window(rec.pageId, rec.y);
+  }
+  // window.scrollTo({ top: scrollToPos, behavior: 'smooth'});
+  window.scrollTo(0, scrollToPos);
+  g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'scrollToPos' ?
   g_scrollIsOn = false;
-  g_currStep = (g_stepManual)? 0 : -1;
 }
 // wrapper had to be moved to the top - before the 1st use
 
@@ -333,6 +341,7 @@ const wrap__scroll_start_handler  = (event) => { scroll_start_handler(event) }
 // Automatic-scroll-mode handler of scroll-stop
 function scroll_stop_handler(event)
 {
+  //console.log(`-D- click-event: 'detail'=${event.detail}`);
   /* Keep the rest of the handlers from being executed
   *   (and it prevents the event from bubbling up the DOM tree) */
   //event.stopImmediatePropagation();  // crucial because of alert inside handler!
@@ -378,6 +387,7 @@ const wrap__manual_step_forth_handler  = (event) => {
 // Manual-step-mode handler of step-back
 function manual_step_back_handler(event)
 {
+  //console.log(`-D- click-event: 'detail'=${event.detail}`);
   event.preventDefault();
   // Unfortunately event prevention blocks timed alert
   /* Keep the rest of the handlers from being executed
@@ -457,7 +467,7 @@ async function restart_handler(event)
   *   (and it prevents the event from bubbling up the DOM tree) */
   event.stopImmediatePropagation();  // crucial because of alert inside handler!
 
-  // build the confirm-resart-dialog
+  // build the confirm-restart-dialog
   confirmRestartDialog = new Dialog(
     {
       eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick'],
@@ -465,7 +475,7 @@ async function restart_handler(event)
       accept:                 "OK",
       cancel:                 "Cancel",
     } );
-  const restartStr = "Press <OK> to restart from the top, <Cancel> to continue...";
+  const restartStr = "Press <OK> to re-select operation mode, <Cancel> to continue...";
 
   // Unregister main events to prevent interference with restart dialog
   let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
@@ -483,10 +493,10 @@ async function restart_handler(event)
   //debugger;  // OK_TMP
   // 'res' is 'false' upon cancel or 'true' upon accept
   if ( res == true )  {
-    console.log("Restart-from-top is confirmed");
+    console.log(`Restart-from-step-${g_currStep} is confirmed`);
     wrap__scroll__onload(event/*TODO: maybe extract onload worker function*/);
   } else {
-    console.log("Restart-from-top is canceled; continuing");
+    console.log("Restart-from-step-${g_currStep} is canceled; continuing");
     timed_alert("... continuing ...", 3/*sec*/);
   }
 
