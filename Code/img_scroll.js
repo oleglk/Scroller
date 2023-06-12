@@ -59,6 +59,12 @@ var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 var g_nextTimerIntervalId = 0;
 
 
+//////// settings and variables for ignoring single-click upon double-click ////
+const _g_singleClickDelayMs = 400;  //
+var   _g_clickCount = 0;  // for ignoring single-click upon double-click
+var   _g_singleClickTimer = null;
+/////////////////////////////////////////////////////////////////////////////////
+
 //////////////////// Assume existence of the following global variables: ////////
 // g_imgPageOccurences : array of {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
 // g_scoreStations : array of {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
@@ -208,22 +214,31 @@ async function scroll__onload(event)
   g_totalHeight = get_scroll_height();
 
   let scrollToPos = -1;
+  const numStations = filter_positions(g_scoreStations).length;
   if ( g_currStep < 0 )  {
     // scroll to the very first ocuurence of any page
     const firstPageOccId = filter_positions(g_scoreStations)[0].pageId;
     const firstPage = document.getElementById(firstPageOccId);
     scrollToPos = firstPage.offsetTop;
     //alert(`Page onload event; scroll to the first page (${firstPageOccId}) at y=${scrollToPos}`);
-    console.log(`Scroll to the first page (${firstPageOccId}) at y=${scrollToPos}`);
+    console.log(`-D- Initial scroll to the first page (${firstPageOccId}) at y=${scrollToPos}`);
     g_currStep = (g_stepManual)? 0 : -1;
-  } else {
+  } else if ( g_currStep < numStations )  {
     // scroll to step 'g_currStep'
     const rec = filter_positions(g_scoreStations)[g_currStep];
     scrollToPos = convert_y_img_to_window(rec.pageId, rec.y);
+    console.log(`-D- Initial scroll to step ${g_currStep} at y=${scrollToPos}`);
+  } else {
+    // already after the end - tell not to scroll
+    scrollToPos = g_lastJumpedToWinY = get_scroll_current_y();
+    console.log(`-D- Initial scroll rejected - already at the bottom - y=${scrollToPos}`);
+    g_currStep = numStations - 1;
   }
-  // window.scrollTo({ top: scrollToPos, behavior: 'smooth'});
-  window.scrollTo(0, scrollToPos);
-  g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'scrollToPos' ?
+  if ( scrollToPos != g_lastJumpedToWinY )  {
+    // window.scrollTo({ top: scrollToPos, behavior: 'smooth'});
+    window.scrollTo(0, scrollToPos);
+    g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'scrollToPos' ?
+  }
   g_scrollIsOn = false;
 }
 // wrapper had to be moved to the top - before the 1st use
@@ -355,9 +370,26 @@ function scroll_stop_handler(event)
   alert(msg);
   scroll_abort();
 }
+
+
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
-const wrap__scroll_stop_handler  = (event) => { scroll_stop_handler(event) }
+const wrap__scroll_stop_handler  = (event) => {
+  event.preventDefault();
+  _g_clickCount++;
+  if (_g_clickCount === 1) {
+    _g_singleClickTimer = setTimeout(
+      function() {
+        _g_clickCount = 0;    scroll_stop_handler(event);
+      }, _g_singleClickDelayMs );
+  } else if (_g_clickCount === 2) {
+    clearTimeout(_g_singleClickTimer);
+    _g_clickCount = 0;
+    console.log("-D- Ignoring 2nd single-click");;
+  }
+  
+  //////////scroll_stop_handler(event)
+}
 
 
 // Manual-step-mode handler of step-forth
@@ -381,7 +413,8 @@ function manual_step_forth_handler(event)
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__manual_step_forth_handler  = (event) => {
-                                              manual_step_forth_handler(event) }
+  manual_step_forth_handler(event)
+}
 
 
 // Manual-step-mode handler of step-back
@@ -402,10 +435,26 @@ function manual_step_back_handler(event)
   }
   return  _manual_one_step(-1);
 }
+
+
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__manual_step_back_handler  = (event) => {
-                                              manual_step_back_handler(event) }
+  event.preventDefault();
+  _g_clickCount++;
+  if (_g_clickCount === 1) {
+    _g_singleClickTimer = setTimeout(
+      function() {
+        _g_clickCount = 0;    manual_step_back_handler(event);
+      }, _g_singleClickDelayMs );
+  } else if (_g_clickCount === 2) {
+    clearTimeout(_g_singleClickTimer);
+    _g_clickCount = 0;
+    console.log("-D- Ignoring 2nd single-click");;
+  }
+  
+  ////manual_step_back_handler(event)
+}
 
 
 // Performs common for both forth and back actions of one manual step
