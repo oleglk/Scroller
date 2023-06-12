@@ -99,36 +99,32 @@ function build_help_string(showHeader, showFooter, modeManual=g_stepManual)
   let ret = "";
   if ( showHeader ) {
     ret +=  `
-========================================   
-== Musical Score Scroller
+ . . . . . . MUSICAL SCORE SCROLLER . . . . . .
 == by Oleg Kosyakovsky - Haifa, Israel - 2023
-========================================   
 
 
-=> Left-mouse-button-Double-Click \t= Change Mode\n`
+=> Left-mouse-button-Double-Click \t= Change Mode\n`;
   }
   ret += `
-Step Mode: ${(modeManual)? "MANUAL" : "AUTO"};
-========================================`;
-
+============= Step Mode: ${(modeManual)? "MANUAL " : "AUTO =="}=============`;
+    
   if ( modeManual ) {
     ret += `
 => Left-mouse-button-Click \t= Go Back
-=> Right-mouse-button-Click\t= Go Forth\n`;
+=> Right-mouse-button-Click\t= Go Forth`;
   } else {
     ret += `
 => Right-mouse-button-Click\t= Stop/Pause Auto-Scroll
 => Left-mouse-button-Click \t= Start/Resume Auto-Scroll
-=> When paused, you can manually adjust the scroll position\n`;
+=> When paused, you can manually adjust the scroll position`;
   }
-  ret += "========================================";
   if ( showFooter )  {
+    ret += "\n\n========================================";
     let showStep = -1;
     if (      g_currStep <  0           )  showStep = 0;
     else if ( g_currStep >= numStations )  showStep = numStations - 1;
     else                                   showStep = g_currStep;                
     ret += `
-
 > > > > CURRENT STEP is ${showStep} out of 0...${numStations-1} < < < <`;
   }
   return  ret;
