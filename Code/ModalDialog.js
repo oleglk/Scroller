@@ -194,6 +194,8 @@ class Dialog {
            *   (and it prevents the event from bubbling up the DOM tree) */
           event.stopImmediatePropagation();
           this.toggle(false)  // erase the dialog from screen
+clearTimeout(_g_singleClickTimer);// prevent delayed firing of single-click
+console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (dialog-cancel)`);
           this.settings.eventsToBlockWhileOpen.forEach( (evType) =>
             window.removeEventListener(evType, this._blockEventHandler) )
           resolve(false)  /* simpler alternative to 'reject()' */
