@@ -388,10 +388,10 @@ const wrap__scroll_stop_handler  = (event) => {
       function() {
         _g_clickCount = 0;    scroll_stop_handler(event);
       }, _g_singleClickDelayMs );
-    console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) ENGAGED`);
+    //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) ENGAGED`);
   } else if (_g_clickCount === 2) {
     clearTimeout(_g_singleClickTimer);
-    console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (stop)`);
+    //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (stop)`);
     _g_clickCount = 0;
     console.log("-D- Ignoring 2nd single-click");;
   }
@@ -455,11 +455,11 @@ const wrap__manual_step_back_handler  = (event) => {
       function() {
         _g_clickCount = 0;    manual_step_back_handler(event);
       }, _g_singleClickDelayMs );
-console.trace();  // OK_TMP
-    console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) ENGAGED`);
+    //console.trace();  // OK_TMP
+    //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) ENGAGED`);
   } else if (_g_clickCount === 2) {
     clearTimeout(_g_singleClickTimer);
-    console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (back)`);
+    //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (back)`);
     _g_clickCount = 0;
     console.log("-D- Ignoring 2nd single-click");;
   }
@@ -562,7 +562,7 @@ Press <OK> to re-select operation mode, <Cancel> to continue...
 
   //debugger;  // OK_TMP
   clearTimeout(_g_singleClickTimer);// prevent delayed firing of single-click
-  console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (after-restart)`);
+  //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (after-restart)`);
 
   // 'res' is 'false' upon cancel or 'true' upon accept
   if ( res == true )  {
@@ -587,7 +587,7 @@ Press <OK> to re-select operation mode, <Cancel> to continue...
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__restart_handler  = (event) => {
   clearTimeout(_g_singleClickTimer);// prevent delayed firing of single-click
-  console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (before-restart)`);
+  //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (before-restart)`);
   restart_handler(event)
 }
 ///////////// End of handler functions ////////////////////////////////////////
