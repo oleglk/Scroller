@@ -54,6 +54,7 @@ class Dialog {
     // HTML dialog element has a built-in cancel() method
     if (this.settings.supportCancel)  {
       this.elements.cancel.addEventListener('click', () => { 
+        event.stopImmediatePropagation();  // prevents main (step/stop) handlers
         this.dialog.dispatchEvent(new Event('cancel')) 
       })
     }
