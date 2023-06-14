@@ -103,7 +103,7 @@ function build_help_string(showHeader, showFooter, modeManual=g_stepManual)
 == by Oleg Kosyakovsky - Haifa, Israel - 2023
 
 
-=> Left-mouse-button-Double-Click \t= Change Mode\n`;
+=> Left-mouse-button-Double-Click \t= Choose Step Mode (MANUAL/AUTO)\n`;
   }
   ret += `
 ============= Step Mode: ${(modeManual)? "MANUAL " : "AUTO =="}=============`;
@@ -545,7 +545,9 @@ async function restart_handler(event)
   
   const restartStr = `
 Press <OK> to re-select operation mode, <Cancel> to continue...
-> > > > (CURRENT STEP is ${showStep} out of 0...${numStations-1}) < < < <`;
+
+> > > > (CURRENT STEP is ${showStep} out of 0...${numStations-1}) < < < <
+          --- You can "wind" forward/backward in manual-step mode ---`;
 
   // Unregister main events to prevent interference with restart dialog
   let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
