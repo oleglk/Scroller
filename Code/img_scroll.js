@@ -305,6 +305,8 @@ async function show_and_process_help_and_tempo_dialog()
     g_stepManual = false;
     g_tempo = tempo;
     modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEAT(s)/SEC`;
+    PlayOrder._recompute_times_in_score_stations_array(
+      g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder);
   }
   console.log("-I- " + modeMsg);
   timed_alert(modeMsg +

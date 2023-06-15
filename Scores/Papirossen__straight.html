@@ -26,12 +26,11 @@ img {
 const g_scoreName = "Papirossen";
 
 // TODO: provide a way for user to force alternative 'g_tempo'
-var g_tempo = 10*60;  //60; // beats-per-minute
+var g_tempo = 60;  //60; // beats-per-minute
 var g_tactsInLine = 7;
 var g_beatsInTact = 4;
 
-const g_beatsForFullLine = g_tactsInLine * g_beatsInTact;
-const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
+const g_fullLineInBeat = g_tactsInLine * g_beatsInTact;
 
 /* Images are first resized to equal width, then measured:
  * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
@@ -39,45 +38,45 @@ const g_fullLineInSec = g_beatsForFullLine * 60 / g_tempo;
  * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
  * !Having page-width close to screen resolution makes fading alerts visible!*/  
 var g_scoreLines = [
-  {tag:"line-001-Begin", pageId:"pg01", x:0, y:51,  timeSec:g_fullLineInSec},
-  {tag:"line-002-Begin", pageId:"pg01", x:0, y:228,  timeSec:g_fullLineInSec},
-  {tag:"line-003-Begin", pageId:"pg01", x:0, y:412,  timeSec:g_fullLineInSec},
-  {tag:"line-004-Begin", pageId:"pg01", x:0, y:599, timeSec:g_fullLineInSec},
-  {tag:"line-005-Begin", pageId:"pg01", x:0, y:766, timeSec:g_fullLineInSec},
-  {tag:"line-006-Begin", pageId:"pg01", x:0, y:956, timeSec:g_fullLineInSec},
-  {tag:"Control-Bottom", pageId:"pg01", x:0, y:1152, timeSec:0},  
-  {tag:"Control-Height", pageId:"pg01", x:0, y:1170, timeSec:0},  
+  {tag:"line-001-Begin", pageId:"pg01", x:0, y:51,   timeBeat:g_fullLineInBeat},
+  {tag:"line-002-Begin", pageId:"pg01", x:0, y:228,  timeBeat:g_fullLineInBeat},
+  {tag:"line-003-Begin", pageId:"pg01", x:0, y:412,  timeBeat:g_fullLineInBeat},
+  {tag:"line-004-Begin", pageId:"pg01", x:0, y:599,  timeBeat:g_fullLineInBeat},
+  {tag:"line-005-Begin", pageId:"pg01", x:0, y:766,  timeBeat:g_fullLineInBeat},
+  {tag:"line-006-Begin", pageId:"pg01", x:0, y:956,  timeBeat:g_fullLineInBeat},
+  {tag:"Control-Bottom", pageId:"pg01", x:0, y:1152, timeBeat:0},  
+  {tag:"Control-Height", pageId:"pg01", x:0, y:1170, timeBeat:0},  
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 // Full line play order - with repetitions
-/*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+/*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
 var g_linePlayOrder_full = [
-  {pageId:"pg01", lineIdx:0, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:1, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:2, timeSec:2/3*g_fullLineInSec},
-  {pageId:"pg01", lineIdx:0, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:1, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:2, timeSec:2/3*g_fullLineInSec},
-  {pageId:"pg01", lineIdx:3, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:4, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:5, timeSec:2/3*g_fullLineInSec},
-  {pageId:"pg01", lineIdx:3, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:4, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:5, timeSec:2/3*g_fullLineInSec},
+  {pageId:"pg01", lineIdx:0, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:1, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:2, timeBeat:2/3*g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:0, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:1, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:2, timeBeat:2/3*g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:3, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:4, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:5, timeBeat:2/3*g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:3, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:4, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:5, timeBeat:2/3*g_fullLineInBeat},
 ];
 
 // Straight line play order - without repetitions
-/*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+/*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
 var g_linePlayOrder_straight = [
-  {pageId:"pg01", lineIdx:0, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:1, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:2, timeSec:2/3*g_fullLineInSec},
-  {pageId:"pg01", lineIdx:3, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:4, timeSec:g_fullLineInSec},
-  {pageId:"pg01", lineIdx:5, timeSec:2/3*g_fullLineInSec},
+  {pageId:"pg01", lineIdx:0, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:1, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:2, timeBeat:2/3*g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:3, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:4, timeBeat:g_fullLineInBeat},
+  {pageId:"pg01", lineIdx:5, timeBeat:2/3*g_fullLineInBeat},
 ];
 
 ////////////////////////////////////////////////////////////////////////////////

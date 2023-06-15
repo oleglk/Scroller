@@ -216,20 +216,46 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       scoreStationsArray.concat( filter_controls(this.scoreLines) );
 
     console.log(`Assembled score-stations-array with ${scoreStationsArray.length} station(s) for ${this.linePlayOrder.length} played line(s) with station-step ${numLinesInStep}`);
+
+    PlayOrder._recompute_times_in_score_stations_array(
+      scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder);
     return  scoreStationsArray;
   }
   
-  
-  recompute_times_in_score_stations_array()
-  {
-    if ( this.scoreStations.length != this.linePlayOrder.length )
-      throw TODO;
-    for ( let i = 0;  i < this.linePlayOrder.length;  i += numLinesInStep )  {
-      const playedLine = this.linePlayOrder[i];
-      let station = this.scoreStations[i];
-      TODO
-    }
 
+  // Adjusts times in 'scoreStationsArray' (in place) according to 'this.tempo'
+  static _recompute_times_in_score_stations_array(scoreStationsArray, tempo,
+                                              numLinesInStep, linePlayOrderArray)
+  {
+    // linePlayOrderArray = {pageId:STR, lineIdx:INT, timeBeat:FLOAT}
+    // scoreStationsArray = {tag:STR, pageId:STR=occID, origImgPageId:STR, lineOnPageIdx:INT, x:INT, y:INT, timeSec:FLOAT}
+    // each score station corresponds to 'numLinesInStep' played lines
+
+    let scoreStationsData = filter_positions(scoreStationsArray);
+    // 'scoreStationsData' references original data ines in 'scoreStationsArray'
+    
+    let iStation = -1;
+    let totalTimeSec = 0;
+
+//debugger;  // OK_TMP
+    for ( let i1 = 0;  i1 < linePlayOrderArray.length;
+          i1 += numLinesInStep )   {  // 'i1' = idx of station's first line
+      iStation += 1;
+      let i2 = i1 + numLinesInStep;    // 'i2' = idx of station's last  line
+      if ( i2 >= linePlayOrderArray.length )
+        i2 = linePlayOrderArray.length - 1;
+      let timeInStationBeat = 0;
+      for ( let j = i1;  j < i2;  j += 1 )  { 
+        const playedLine = linePlayOrderArray[j];
+        timeInStationBeat += playedLine.timeBeat;
+      }
+      const timeInStationSec = timeInStationBeat * 60.0 / tempo;
+      scoreStationsData[iStation].timeSec = timeInStationSec;
+      console.log(`-D- Lines #${i1}...#${i2-1} scoreStationsData[${iStation}].timeSec = ${scoreStationsData[iStation].timeSec} (=${timeInStationSec} for ${timeInStationBeat} beat(s))`);
+      totalTimeSec += timeInStationSec;
+    }
+    console.log(`-I- Done computing score station duration(s) in ${scoreStationsData.length} station(s) for tempo of ${tempo} beats/sec. Total playing time is ${totalTimeSec} second(s)`);
+    return;
   }
   
   

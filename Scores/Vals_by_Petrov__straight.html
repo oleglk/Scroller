@@ -24,9 +24,8 @@ img {
 const g_scoreName = "Vals_by_Petrov";
 
 // TODO: provide a way for user to force alternative 'g_tempo'
-var g_tempo = 10*60;  //60; // beats-per-minute
+var g_tempo = 60;  //60; // beats-per-minute
 var g_beatsInTact = 3;
-var g_tactTimeSec = g_beatsInTact / g_tempo * 60;  // one tact duration (sec)
 
 
 /* Images are first resized to equal width, then measured:
@@ -35,26 +34,26 @@ var g_tactTimeSec = g_beatsInTact / g_tempo * 60;  // one tact duration (sec)
  * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
  * !Having page-width close to screen resolution makes fading alerts visible!*/  
 var g_scoreLines = [
-  {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,  timeSec:6*g_tactTimeSec},
-  {tag:"line-012-Begin", pageId:"pg01", x:0, y:205,  timeSec:6*g_tactTimeSec},
-  {tag:"line-013-Begin", pageId:"pg01", x:0, y:485,  timeSec:6*g_tactTimeSec},
-  {tag:"line-014-Begin", pageId:"pg01", x:0, y:692,  timeSec:6*g_tactTimeSec},
-  {tag:"line-015-Begin", pageId:"pg01", x:0, y:884,  timeSec:6*g_tactTimeSec},
-  {tag:"line-021-Begin", pageId:"pg02", x:0, y:33,   timeSec:5*g_tactTimeSec},
-  {tag:"line-022-Begin", pageId:"pg02", x:0, y:244,  timeSec:5*g_tactTimeSec},
-  {tag:"line-023-Begin", pageId:"pg02", x:0, y:454,  timeSec:7*g_tactTimeSec},
-  {tag:"line-024-Begin", pageId:"pg02", x:0, y:668,  timeSec:7*g_tactTimeSec},
-  {tag:"line-025-Begin", pageId:"pg02", x:0, y:876,  timeSec:7*g_tactTimeSec},
-  {tag:"line-031-Begin", pageId:"pg03", x:0, y:39,   timeSec:6*g_tactTimeSec},
-  {tag:"line-032-Begin", pageId:"pg03", x:0, y:273,  timeSec:7*g_tactTimeSec},
-  {tag:"line-033-Begin", pageId:"pg03", x:0, y:485,  timeSec:4*g_tactTimeSec},
-  {tag:"line-034-Begin", pageId:"pg03", x:0, y:661,  timeSec:5*g_tactTimeSec},
-  {tag:"Control-Bottom", pageId:"pg01", x:0, y:1080, timeSec:0},  
-  {tag:"Control-Height", pageId:"pg01", x:0, y:1130, timeSec:0},  
-  {tag:"Control-Bottom", pageId:"pg02", x:0, y:1053, timeSec:0},  
-  {tag:"Control-Height", pageId:"pg02", x:0, y:1130, timeSec:0},  
-  {tag:"Control-Bottom", pageId:"pg03", x:0, y:914,  timeSec:0},  
-  {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeSec:0},  
+  {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,  timeBeat:6*g_beatsInTact},
+  {tag:"line-012-Begin", pageId:"pg01", x:0, y:205,  timeBeat:6*g_beatsInTact},
+  {tag:"line-013-Begin", pageId:"pg01", x:0, y:485,  timeBeat:6*g_beatsInTact},
+  {tag:"line-014-Begin", pageId:"pg01", x:0, y:692,  timeBeat:6*g_beatsInTact},
+  {tag:"line-015-Begin", pageId:"pg01", x:0, y:884,  timeBeat:6*g_beatsInTact},
+  {tag:"line-021-Begin", pageId:"pg02", x:0, y:33,   timeBeat:5*g_beatsInTact},
+  {tag:"line-022-Begin", pageId:"pg02", x:0, y:244,  timeBeat:5*g_beatsInTact},
+  {tag:"line-023-Begin", pageId:"pg02", x:0, y:454,  timeBeat:7*g_beatsInTact},
+  {tag:"line-024-Begin", pageId:"pg02", x:0, y:668,  timeBeat:7*g_beatsInTact},
+  {tag:"line-025-Begin", pageId:"pg02", x:0, y:876,  timeBeat:7*g_beatsInTact},
+  {tag:"line-031-Begin", pageId:"pg03", x:0, y:39,   timeBeat:6*g_beatsInTact},
+  {tag:"line-032-Begin", pageId:"pg03", x:0, y:273,  timeBeat:7*g_beatsInTact},
+  {tag:"line-033-Begin", pageId:"pg03", x:0, y:485,  timeBeat:4*g_beatsInTact},
+  {tag:"line-034-Begin", pageId:"pg03", x:0, y:661,  timeBeat:5*g_beatsInTact},
+  {tag:"Control-Bottom", pageId:"pg01", x:0, y:1080, timeBeat:0},  
+  {tag:"Control-Height", pageId:"pg01", x:0, y:1130, timeBeat:0},  
+  {tag:"Control-Bottom", pageId:"pg02", x:0, y:1053, timeBeat:0},  
+  {tag:"Control-Height", pageId:"pg02", x:0, y:1130, timeBeat:0},  
+  {tag:"Control-Bottom", pageId:"pg03", x:0, y:914,  timeBeat:0},  
+  {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeBeat:0},  
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,47 +63,47 @@ var g_scoreLines = [
 // Straight line play order - without repetitions
 /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
 var g_linePlayOrder_straight = [
-  {pageId:"pg01", lineIdx:0, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:1, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:2, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:3, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:4, timeSec:6*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:0, timeSec:5*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:1, timeSec:5*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:2, timeSec:7*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:3, timeSec:7*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:4, timeSec:7*g_tactTimeSec},
-  {pageId:"pg03", lineIdx:0, timeSec:6*g_tactTimeSec},
-  {pageId:"pg03", lineIdx:1, timeSec:7*g_tactTimeSec},
-  {pageId:"pg03", lineIdx:2, timeSec:4*g_tactTimeSec},
-  {pageId:"pg03", lineIdx:3, timeSec:5*g_tactTimeSec},
+  {pageId:"pg01", lineIdx:0, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:1, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:2, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:3, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:4, timeBeat:6*g_beatsInTact},
+  {pageId:"pg02", lineIdx:0, timeBeat:5*g_beatsInTact},
+  {pageId:"pg02", lineIdx:1, timeBeat:5*g_beatsInTact},
+  {pageId:"pg02", lineIdx:2, timeBeat:7*g_beatsInTact},
+  {pageId:"pg02", lineIdx:3, timeBeat:7*g_beatsInTact},
+  {pageId:"pg02", lineIdx:4, timeBeat:7*g_beatsInTact},
+  {pageId:"pg03", lineIdx:0, timeBeat:6*g_beatsInTact},
+  {pageId:"pg03", lineIdx:1, timeBeat:7*g_beatsInTact},
+  {pageId:"pg03", lineIdx:2, timeBeat:4*g_beatsInTact},
+  {pageId:"pg03", lineIdx:3, timeBeat:5*g_beatsInTact},
 ];
 
 // Full line play order - with repetitions
-/*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+/*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
 var g_linePlayOrder_full = [
-  {pageId:"pg01", lineIdx:0, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:1, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:2, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:3, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:4, timeSec:6*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:0, timeSec:5*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:1, timeSec:5*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:2, timeSec:4*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:0, timeSec:2*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:1, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:2, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:3, timeSec:6*g_tactTimeSec},
-  {pageId:"pg01", lineIdx:4, timeSec:6*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:0, timeSec:5*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:1, timeSec:5*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:2, timeSec:7*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:3, timeSec:7*g_tactTimeSec},
-  {pageId:"pg02", lineIdx:4, timeSec:7*g_tactTimeSec},
-  {pageId:"pg03", lineIdx:0, timeSec:6*g_tactTimeSec},
-  {pageId:"pg03", lineIdx:1, timeSec:7*g_tactTimeSec},
-  {pageId:"pg03", lineIdx:2, timeSec:4*g_tactTimeSec},
-  {pageId:"pg03", lineIdx:3, timeSec:5*g_tactTimeSec},  
+  {pageId:"pg01", lineIdx:0, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:1, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:2, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:3, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:4, timeBeat:6*g_beatsInTact},
+  {pageId:"pg02", lineIdx:0, timeBeat:5*g_beatsInTact},
+  {pageId:"pg02", lineIdx:1, timeBeat:5*g_beatsInTact},
+  {pageId:"pg02", lineIdx:2, timeBeat:4*g_beatsInTact},
+  {pageId:"pg01", lineIdx:0, timeBeat:2*g_beatsInTact},
+  {pageId:"pg01", lineIdx:1, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:2, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:3, timeBeat:6*g_beatsInTact},
+  {pageId:"pg01", lineIdx:4, timeBeat:6*g_beatsInTact},
+  {pageId:"pg02", lineIdx:0, timeBeat:5*g_beatsInTact},
+  {pageId:"pg02", lineIdx:1, timeBeat:5*g_beatsInTact},
+  {pageId:"pg02", lineIdx:2, timeBeat:7*g_beatsInTact},
+  {pageId:"pg02", lineIdx:3, timeBeat:7*g_beatsInTact},
+  {pageId:"pg02", lineIdx:4, timeBeat:7*g_beatsInTact},
+  {pageId:"pg03", lineIdx:0, timeBeat:6*g_beatsInTact},
+  {pageId:"pg03", lineIdx:1, timeBeat:7*g_beatsInTact},
+  {pageId:"pg03", lineIdx:2, timeBeat:4*g_beatsInTact},
+  {pageId:"pg03", lineIdx:3, timeBeat:5*g_beatsInTact},  
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
