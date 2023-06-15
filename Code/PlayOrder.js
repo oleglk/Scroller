@@ -1,20 +1,20 @@
 // PlayOrder.js
 
 
-//~ /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
+//~ /*{tag:STR, pageId:STR, x:INT, y:INT, timeBeat:INT}*/
 //~ class ScoreLineRecord
 //~ {
-  //~ constructor(tag/*STR*/, pageId/*STR*/, x/*INT*/, y/*INT*/, timeSec/*FLOAT*/)
+  //~ constructor(tag/*STR*/, pageId/*STR*/, x/*INT*/, y/*INT*/, timeBeat/*FLOAT*/)
   //~ {
     //~ this.tag    = tag;    /*STR*/
     //~ this.pageId = pageId; /*STR*/
     //~ this.x      = x;      /*INT*/
     //~ this.y      = y;      /*INT*/
-    //~ this.timeSec;        /*FLOAT*/
+    //~ this.timeBeat;        /*FLOAT*/
   //~ }
   
   //~ toString() {
-    //~ return `{tag:"${this.tag}", pageId:"${this.pageId}", x:${this.x}, y:${this.y}, timeSec:${this.timeSec}}`
+    //~ return `{tag:"${this.tag}", pageId:"${this.pageId}", x:${this.x}, y:${this.y}, timeBeat:${this.timeBeat}}`
   //~ }
 //~ }
 
@@ -47,20 +47,22 @@ class PlayOrder
   // note, arrays provided in constructor are referenced and not altered
   constructor(
     name,
-    scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
-    linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
+    tempo, /*beats/minute*/
+    scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeBeat:FLOAT}*/
+    linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
     pageImagePathsMap, /*pageId:STR => imgPath:STR*/
     numLinesInStep /*how many lines to jump btw score stations*/
   )
   {
     this.name = name;
+    this.tempo = tempo;
     this.scoreLines = scoreLinesArray;
     this.linePlayOrder = linePlayOrderArray;
     this.pageImagePaths = pageImagePathsMap;
     this.numLinesInStep = numLinesInStep;
     //
 
-    //scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
+    //scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeBeat:FLOAT}
     this.scoreDataLines = null;
     this.pageLineHeights = null;  // map of {pageId :: max-line-height}
     this.pageHeights = null;      // map of {pageId :: image-height}
@@ -81,7 +83,7 @@ class PlayOrder
   _process_inputs()
   {
     this.scoreDataLines = filter_and_massage_positions(this.scoreLines);
-    // <= /*{pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}*/
+    // <= /*{pageId:STR, lineIdx:INT, yOnPage:INT, timeBeat:FLOAT}*/
 _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     this.pageHeights = this._find_all_pages_heights();
@@ -152,6 +154,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   
   /* Builds and returns array of score-stations
    * that refer to play-order page occurences instead of original page images.
+   * For each line computes time in seconds based on specified time in beats.
    * 'numLinesInStep' - how many lines to jump in one step.
    * On error returns null */
   // TODO: pass num lines on screen and verify normal and last steps
@@ -163,9 +166,9 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     }
     
     // imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
-    // scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeSec:FLOAT}
+    // scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeBeat:FLOAT}
     // scoreLines = control lines in the format of 'scoreDataLines'
-    // linePlayOrder = {pageId:STR, lineIdx:INT, timeSec:FLOAT}
+    // linePlayOrder = {pageId:STR, lineIdx:INT, timeBeat:FLOAT}
     // scoreStations = {tag:STR, pageId:STR=occID, origImgPageId:STR, [lineOnPageIdx:INT], x:INT, y:INT, timeSec:FLOAT}
     // (e.g, a record in 'scoreStations' extended with 'origImgPageId' field)
 
@@ -204,7 +207,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                       lineOnPageIdx: playedLine.lineIdx,
                       x:             0,
                       y:             scoreLine.yOnPage,
-                      timeSec:       playedLine.timeSec};
+                      timeSec:       playedLine.timeBeat * 60.0 / this.tempo};
       scoreStationsArray.push( station );
     }
 
@@ -214,6 +217,19 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     console.log(`Assembled score-stations-array with ${scoreStationsArray.length} station(s) for ${this.linePlayOrder.length} played line(s) with station-step ${numLinesInStep}`);
     return  scoreStationsArray;
+  }
+  
+  
+  recompute_times_in_score_stations_array()
+  {
+    if ( this.scoreStations.length != this.linePlayOrder.length )
+      throw TODO;
+    for ( let i = 0;  i < this.linePlayOrder.length;  i += numLinesInStep )  {
+      const playedLine = this.linePlayOrder[i];
+      let station = this.scoreStations[i];
+      TODO
+    }
+
   }
   
   
@@ -316,7 +332,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   {
     let pageIdToLineCount = new Map();
     this.scoreDataLines.forEach( scoreLine => {
-      // scoreLine == {tag, pageId, x, y, timeSec}
+      // scoreLine == {tag, pageId, x, y, timeBeat}
       if ( !pageIdToLineCount.has(scoreLine.pageId) )
         pageIdToLineCount.set( scoreLine.pageId, 1 );
       else
@@ -344,8 +360,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     // we can derive heights of all lines except the last one on each page
     for ( let i = 1;  i < scoreLinesSorted.length;  i += 1 )
     {
-      const currLine = scoreLinesSorted[i-1];  // {tag, pageId, x, y, timeSec}
-      const nextLine = scoreLinesSorted[i];    // {tag, pageId, x, y, timeSec}
+      const currLine = scoreLinesSorted[i-1];  // {tag, pageId, x, y, timeBeat}
+      const nextLine = scoreLinesSorted[i];    // {tag, pageId, x, y, timeBeat}
       if ( currLine.pageId !== nextLine.pageId )  { // 'currLine' is last on page
         // image(s)/page(s) with single score line need special treatment
         if ( !pageIdToLineCount.has(currLine.pageId) )  {
@@ -397,7 +413,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   _find_all_pages_heights()
   {
     let pageIdToHeight = new Map();
-    this.scoreDataLines.forEach( scoreLine => {  // {tag, pageId, x, y, timeSec}
+    this.scoreDataLines.forEach( scoreLine => { // {tag, pageId, x, y, timeBeat}
       if ( !pageIdToHeight.has(scoreLine.pageId) )  {
         // TODO: this could need cropped occurence
         const h = read_image_size_record(this.scoreLines, scoreLine.pageId,

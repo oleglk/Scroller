@@ -34,6 +34,7 @@ var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR],
 var g_imgPageOccurences = null; // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
                           g_scoreLines, g_linePlayOrder, g_numLinesInStep);
+// at this stage 'g_scoreStations' is built, but times reflect default tempo
 
 //(meaningless - will not wait for:)  modal_alert("OK_TMP: Test modal_alert()");
 
@@ -139,12 +140,13 @@ function arrange_score_global_data(scoreName, pageImgPathsMap,
 {
   // Create the play-order layout (occurs AFTER the HTML body)
   // arguments:
-  //     name,
-  //     scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeSec:FLOAT}*/
-  //     linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeSec:FLOAT}*/
-  //     imagePathsMap, /*{pageId(STR) : path(STR)*/
-  //     numLinesInStep  /*INT*/ 
+  //    name,
+  //    scoreLinesArray, /*{tag:STR, pageId:STR, x:INT, y:INT, timeBeat:FLOAT}*/
+  //    linePlayOrderArray, /*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
+  //    imagePathsMap, /*{pageId(STR) : path(STR)*/
+  //    numLinesInStep  /*INT*/ 
   let plo = new PlayOrder(scoreName,
+                          g_tempo,
                           scoreLinesArray,
                           linePlayOrderArray,
                           pageImgPathsMap,
