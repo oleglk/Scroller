@@ -41,6 +41,7 @@ arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
 //(does not work) import Dialog from './ModalDialog.js';
 
 let g_helpAndTempoDialog = null;
+const _g_htmlStatusBoxId = "SCROLLER-STATUS_BOX";
 
 /* Manual Scroll    == compute next position based on current scroll.
  * No Manual Scroll == compute next position based on current step, ignore scroll position.
@@ -309,6 +310,7 @@ async function show_and_process_help_and_tempo_dialog()
       g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder);
   }
   console.log("-I- " + modeMsg);
+  sticky_alert(modeMsg, _g_htmlStatusBoxId);
   timed_alert(modeMsg +
               ((g_stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
               (g_stepManual)? 1.5 : 5);
@@ -635,6 +637,7 @@ function scroll_perform_one_step(stepNum)
   if ( !g_stepManual && !g_scrollIsOn )  { return }
   if ( (stepNum < 0) || (stepNum >= filter_positions(g_scoreStations).length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
+    sticky_alert(`Step ${stepNum}:\n stop scrolling`, _g_htmlStatusBoxId);
     scroll_abort();
     return  0;
   }
@@ -647,6 +650,8 @@ function scroll_perform_one_step(stepNum)
   // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
   g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
+  // TODO: include step time in auto mode
+  sticky_alert(`Step ${stepNum}`, _g_htmlStatusBoxId);
   
   if ( !g_stepManual )  {
 ////scroll_abort(); // OK_TMP

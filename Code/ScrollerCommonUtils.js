@@ -497,6 +497,31 @@ function timed_alert(msg, durationSec)
 }
 
 
+// If 'msg' not empty, draws the message box, otherwise removes it
+function sticky_alert(msg, htmlDivElementId)
+{
+  let divEl = document.getElementById(htmlDivElementId);
+  if ( msg == "" )  {   // remove the element
+    if ( divEl === null )
+      return;  // nothing to do
+    el.parentNode.removeChild(divEl);
+    divEl = null;
+    return;
+  }
+  // draw or update the element
+  const justCreated = (divEl === null);
+  if ( justCreated )   {
+    divEl = document.createElement("div");
+    divEl.setAttribute("style", 
+          "position:fixed;top:60%;left:90%;background-color:lightgreen;");
+    divEl.id = htmlDivElementId;
+  }
+  divEl.innerHTML = msg;
+  if ( justCreated )
+    document.body.appendChild(divEl);
+}
+
+
 /*******************************************************************************
  * Removes duplicates and sorts the array
  * (from:  https://www.tutorialspoint.com/unique-sort-removing-duplicates-and-sorting-an-array-in-javascript)
