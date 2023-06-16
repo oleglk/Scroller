@@ -513,7 +513,7 @@ function sticky_alert(msg, htmlDivElementId)
   if ( justCreated )   {
     divEl = document.createElement("div");
     divEl.setAttribute("style", 
-          "position:fixed;top:60%;left:90%;background-color:lightgreen;");
+          "position:fixed;top:50%;left:85%;background-color:lightgreen;");
     divEl.id = htmlDivElementId;
   }
   divEl.innerHTML = msg;

@@ -305,12 +305,13 @@ async function show_and_process_help_and_tempo_dialog()
     }
     g_stepManual = false;
     g_tempo = tempo;
-    modeMsg = `AUTO-SCROLL MODE SELECTED; TEMPO IS ${g_tempo} BEAT(s)/SEC`;
+    modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${g_tempo} BEAT(s)/SEC`;
     PlayOrder._recompute_times_in_score_stations_array(
       g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder);
   }
   console.log("-I- " + modeMsg);
-  sticky_alert(modeMsg, _g_htmlStatusBoxId);
+  let statusMsg = modeMsg + "\<br\><br\>" + _status_descr(g_currStep, -1);
+  sticky_alert(statusMsg, _g_htmlStatusBoxId);
   timed_alert(modeMsg +
               ((g_stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
               (g_stepManual)? 1.5 : 5);
@@ -637,7 +638,8 @@ function scroll_perform_one_step(stepNum)
   if ( !g_stepManual && !g_scrollIsOn )  { return }
   if ( (stepNum < 0) || (stepNum >= filter_positions(g_scoreStations).length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
-    sticky_alert(`Step ${stepNum}:\n stop scrolling`, _g_htmlStatusBoxId);
+    //sticky_alert(`Step ${stepNum}:\n stop scrolling`, _g_htmlStatusBoxId);
+    sticky_alert(_status_descr(stepNum, -1), _g_htmlStatusBoxId);
     scroll_abort();
     return  0;
   }
@@ -651,7 +653,8 @@ function scroll_perform_one_step(stepNum)
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
   g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
   // TODO: include step time in auto mode
-  sticky_alert(`Step ${stepNum}`, _g_htmlStatusBoxId);
+  sticky_alert(_status_descr(stepNum, (!g_stepManual)? rec.timeSec : -1), 
+               _g_htmlStatusBoxId);
   
   if ( !g_stepManual )  {
 ////scroll_abort(); // OK_TMP
@@ -737,6 +740,27 @@ async function modal_alert(msg)
   // Restore registration of main events
   //debugger;  // OK_TMP
   register_specified_window_event_listeners(copyOfRegistry);
+}
+
+
+function _status_descr(stepIdx, timeInStateOrNegative)
+{
+  const numSteps = filter_positions(g_scoreStations).length;
+  let showStep = -1;
+  if (      stepIdx <  0           )  showStep = 0;
+  else if ( stepIdx >= numSteps    )  showStep = numSteps - 1;
+  else                                showStep = stepIdx;
+
+  let descr = "";
+  let stepStr = `Step ${showStep} out of 0...${numSteps-1}`;
+  if ( (stepIdx < 0) || (stepIdx >= numSteps) ) {
+    descr = stepStr + ((!g_stepManual)? ":\<br\><br\>  scrolling stopped" : "");
+  } else {
+    descr = stepStr;
+    if ( timeInStateOrNegative >= 0 )
+      descr += `\<br\><br\> (duration ${timeInStateOrNegative} sec)`;
+  }
+  return  descr;
 }
 
 
