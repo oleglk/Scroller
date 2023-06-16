@@ -218,14 +218,16 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     console.log(`Assembled score-stations-array with ${scoreStationsArray.length} station(s) for ${this.linePlayOrder.length} played line(s) with station-step ${numLinesInStep}`);
 
     PlayOrder._recompute_times_in_score_stations_array(
-      scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder);
+      scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder,
+      g_shiftSwitchTimeForwardFactor);
     return  scoreStationsArray;
   }
   
 
   // Adjusts times in 'scoreStationsArray' (in place) according to 'this.tempo'
   static _recompute_times_in_score_stations_array(scoreStationsArray, tempo,
-                                              numLinesInStep, linePlayOrderArray)
+                                             numLinesInStep, linePlayOrderArray,
+                                             shiftSwitchTimeForwardFactor=0)
   {
     // linePlayOrderArray = {pageId:STR, lineIdx:INT, timeBeat:FLOAT}
     // scoreStationsArray = {tag:STR, pageId:STR=occID, origImgPageId:STR, lineOnPageIdx:INT, x:INT, y:INT, timeSec:FLOAT}
@@ -233,6 +235,13 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     let scoreStationsData = filter_positions(scoreStationsArray);
     // 'scoreStationsData' references original data ines in 'scoreStationsArray'
+
+    let scrollShiftInBeat = (shiftSwitchTimeForwardFactor > 0)?
+        shiftSwitchTimeForwardFactor * linePlayOrderArray.reduce( (a,b) =>
+          (a.timeBeat > b.timeBeat)? a.timeBeat : b.timeBeat )
+        : 0.0;
+    if ( shiftSwitchTimeForwardFactor > 0 )
+      console.log(`-I- Auto-scroll steps shifted forward by a constant time of ${scrollShiftInBeat} beat(s)`);
     
     let iStation = -1;
     let totalTimeSec = 0;
@@ -249,6 +258,9 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
         const playedLine = linePlayOrderArray[j];
         timeInStationBeat += playedLine.timeBeat;
       }
+      // shift switching time forward if requested
+      if ( iStation == 0 )
+        timeInStationBeat += scrollShiftInBeat;
       const timeInStationSec = timeInStationBeat * 60.0 / tempo;
       scoreStationsData[iStation].timeSec = timeInStationSec;
       console.log(`-D- Lines #${i1}...#${i2-1} scoreStationsData[${iStation}].timeSec = ${scoreStationsData[iStation].timeSec} (=${timeInStationSec} for ${timeInStationBeat} beat(s))`);

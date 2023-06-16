@@ -26,6 +26,9 @@ window.addEventListener( 'unhandledrejection', function (e) {
 
 const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
 
+/* 'g_shiftSwitchTimeForwardFactor' > 0 tells to delay auto-scroll steps
+ * by a constant time - a fraction of score-line length */
+const g_shiftSwitchTimeForwardFactor = 0.25;
 
 //////// Begin: prepare global data for the scroller and start it ///////////////
 
@@ -307,7 +310,8 @@ async function show_and_process_help_and_tempo_dialog()
     g_tempo = tempo;
     modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${g_tempo} BEAT(s)/SEC`;
     PlayOrder._recompute_times_in_score_stations_array(
-      g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder);
+      g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder,
+      g_shiftSwitchTimeForwardFactor);
   }
   console.log("-I- " + modeMsg);
   let statusMsg = modeMsg + "\<br\><br\>" + _status_descr(g_currStep, -1);
