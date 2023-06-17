@@ -62,7 +62,11 @@ class Dialog {
     // add keydown event listener handling all our keyboard navigation logic:
     this.dialog.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
-        if (!this.dialogSupported) e.preventDefault()
+        //Oleg: on Edge without e.preventDefault(), <Enter> key caused step-back
+        /*if (!this.dialogSupported) */e.preventDefault()
+        /* Keep the rest of the handlers from being executed
+         *   (and it prevents the event from bubbling up the DOM tree) */
+        e.stopImmediatePropagation();
         this.elements.accept.dispatchEvent(new Event('click'))
       }
       if (this.settings.supportCancel &&
