@@ -610,8 +610,11 @@ function scroll_schedule(currDelaySec, descr)
   }
 
   console.log(`-I- Scheduling wait for ${currDelaySec} second(s) at ${descr}`);
+
+  const stepMsg = `... Just scrolled to step ${g_currStep} ...`;
   g_nextTimerIntervalId = setTimeout(scroll_perform_one_step,
-                                      currDelaySec * 1000/*msec*/, g_currStep);
+                                     currDelaySec * 1000/*msec*/, g_currStep,
+                                     stepMsg);
 }
 
 
@@ -632,11 +635,12 @@ function messge_onKeyPress(event)
 //////////////////////////////////////////////////
 /* Immediately scrolls to the current-step position;
  * afterwards - if in auto-scroll mode - starts timer to requested interval. */
-function scroll_perform_one_step(stepNum)
+function scroll_perform_one_step(stepNum, msgForTimedAlert="")
 {
 ////throw new Error("OK_TMP: test UI event handlers and auto-scroll");
+  const stationsDataLines = filter_positions(g_scoreStations);
   if ( !g_stepManual && !g_scrollIsOn )  { return }
-  if ( (stepNum < 0) || (stepNum >= filter_positions(g_scoreStations).length) )  {
+  if ( (stepNum < 0) || (stepNum >= stationsDataLines.length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
     //sticky_alert(`Step ${stepNum}:\n stop scrolling`, _g_htmlStatusBoxId);
     sticky_alert(_status_descr(stepNum, -1), _g_htmlStatusBoxId);
@@ -645,17 +649,25 @@ function scroll_perform_one_step(stepNum)
   }
   //  {tag:"line-001-Begin", pageId: "pg01:01, origImgPageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec"}
   // note, in 'g_scoreStations' pageId is occurence-id
-  const rec = filter_positions(g_scoreStations)[stepNum];
+  const rec = stationsDataLines[stepNum];
   const targetPos = convert_y_img_to_window(rec.pageId, rec.y);
 
   console.log(`-I- Scroll to ${rec.pageId}:${targetPos} for step ${stepNum}`);
   // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
   g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
-  // TODO: include step time in auto mode
+  // include step time in auto mode
   sticky_alert(_status_descr(stepNum, (!g_stepManual)? rec.timeSec : -1), 
                _g_htmlStatusBoxId);
-  
+  if ( msgForTimedAlert != "" )  {
+    /* Show step-alert during the beginning of the new step
+     * for a fraction of its duration. Location - at the bottom of the score.
+     * The assumption: the bottom line was played, then it jumped to the top. */
+    const minStepAlertSec = 1;
+    const nextStepTimeSec = (stepNum < (stationsDataLines.length-1))?
+        stationsDataLines[stepNum+1].timeSec : minStepAlertSec;
+    timed_alert(msgForTimedAlert, Math.max(nextStepTimeSec/3, minStepAlertSec));
+  }
   if ( !g_stepManual )  {
 ////scroll_abort(); // OK_TMP
     g_currStep = stepNum + 1;
