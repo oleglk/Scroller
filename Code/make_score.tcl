@@ -49,6 +49,16 @@ proc read_image_pixels_into_array {imgPath {loud 1}}  {
 }
 
 
+# "#00A1B2" => {0 161 178}.  On error returns 0
+proc decode_rgb {pixelStr}  {
+  if { 0 == [regexp -nocase                                               \
+               {#([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])}  \
+               $pixelStr all hR hG hB] }  {
+    return  0
+  }
+  scan  "$hR $hG $hB"  {%x %x %x}  dR dG dB
+  return  [list $dR $dG $dB]
+}
 
 ################################################################################
 # proc read_pixels_in_chunks {imgPath {priErr 1}}  {
