@@ -218,21 +218,26 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     console.log(`Assembled score-stations-array with ${scoreStationsArray.length} station(s) for ${this.linePlayOrder.length} played line(s) with station-step ${numLinesInStep}`);
 
     PlayOrder._recompute_times_in_score_stations_array(
-      scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder);
+      scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder,
+    this.scoreDataLines);
     return  scoreStationsArray;
   }
   
 
-  // Adjusts times in 'scoreStationsArray' (in place) according to 'this.tempo'
+  /* Adjusts times in 'scoreStationsArray' (in place) according to 'this.tempo'.
+   * If 'scoreStationsPositionMarkersArray' given, fills it with arrays of
+   * per-second position-marker (xInWin, yInWin) pairs. */
   static _recompute_times_in_score_stations_array(scoreStationsArray, tempo,
-                                              numLinesInStep, linePlayOrderArray)
+                         numLinesInStep, linePlayOrderArray, scoreDataLinesArray,
+                         scoreStationsPositionMarkersArray=null)
   {
     // linePlayOrderArray = {pageId:STR, lineIdx:INT, timeBeat:FLOAT}
     // scoreStationsArray = {tag:STR, pageId:STR=occID, origImgPageId:STR, lineOnPageIdx:INT, x:INT, y:INT, timeSec:FLOAT}
     // each score station corresponds to 'numLinesInStep' played lines
+    // scoreDataLinesArray = {pageId:STR, lineIdx:INT, yOnPage:INT, timeBeat:FLOAT}
 
     let scoreStationsData = filter_positions(scoreStationsArray);
-    // 'scoreStationsData' references original data ines in 'scoreStationsArray'
+    // 'scoreStationsData' references original data lines in 'scoreStationsArray'
     
     let iStation = -1;
     let totalTimeSec = 0;
@@ -245,18 +250,44 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       if ( i2 >= linePlayOrderArray.length )
         i2 = linePlayOrderArray.length - 1;
       let timeInStationBeat = 0;
+      let markerXY = [];
       for ( let j = i1;  j < i2;  j += 1 )  { 
         const playedLine = linePlayOrderArray[j];
+        const scoreline = scoreDataLinesArray.find( (element, index, array) =>
+                            (element.pageId == playedLine.pageId) &&
+                            (element.lineIdx == playedLine.lineIdx) );
+        if ( scoreline === undefined )
+          throw new Error(`-E- Missing score line record for page '${playedLine.pageId}' line ${playedLine.lineIdx}`);
+        let stationRec = scoreStationsData[iStation];
         timeInStationBeat += playedLine.timeBeat;
+        for ( let t = 0;  t < playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {
+          let relTime = (t * tempo / 60.0) / playedLine.timeBeat;
+          let winY = convert_y_img_to_window(stationRec.pageId,
+                                             scoreline.yOnPage)
+          markerXY.push( (Math.max(relTime*100, 100), winY) );
+        }
       }
       const timeInStationSec = timeInStationBeat * 60.0 / tempo;
-      scoreStationsData[iStation].timeSec = timeInStationSec;
-      console.log(`-D- Lines #${i1}...#${i2-1} scoreStationsData[${iStation}].timeSec = ${scoreStationsData[iStation].timeSec} (=${timeInStationSec} for ${timeInStationBeat} beat(s))`);
+      stationRec.timeSec = timeInStationSec;
+      console.log(`-D- Lines #${i1}...#${i2-1} scoreStationsData[${iStation}].timeSec = ${stationRec.timeSec} (=${timeInStationSec} for ${timeInStationBeat} beat(s))`);
       totalTimeSec += timeInStationSec;
     }
     console.log(`-I- Done computing score station duration(s) in ${scoreStationsData.length} station(s) for tempo of ${tempo} beats/sec. Total playing time is ${totalTimeSec} second(s)`);
     return;
   }
+
+
+  // static _compute_progress_marker_xy_in_score_station(elapsedTimeInStationSec,
+  //                        scoreStationsArray, numLinesInStep, linePlayOrderArray)
+  // {
+  //   // linePlayOrderArray = {pageId:STR, lineIdx:INT, timeBeat:FLOAT}
+  //   // scoreStationsArray = {tag:STR, pageId:STR=occID, origImgPageId:STR, lineOnPageIdx:INT, x:INT, y:INT, timeSec:FLOAT}
+  //   // each score station corresponds to 'numLinesInStep' played lines
+
+  //   let scoreStationsData = filter_positions(scoreStationsArray);
+  //   // 'scoreStationsData' references original data lines in 'scoreStationsArray'
+    
+  // }
   
   
   // Returns 'ScorePageOccurence' or null on error
