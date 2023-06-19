@@ -525,16 +525,12 @@ function sticky_alert(msg, htmlDivElementId)
 /*******************************************************************************
  * Automatically closing solid-color-shape mark.
  ******************************************************************************/
-function timed_overlay(color, fromLeftPrc, fromTopPrc, durationSec)
+function timed_marker(color, fromLeftPx, fromTopPx, durationSec)
 {
-  if ( (fromLeftPrc < 0) || (fromLeftPrc > 100) ||
-       (fromTopPrc < 0) || (fromTopPrc > 100) )   {
-    throw new Error(`Invalid position-mark coordinates (${fromLeftPrc}%, ${fromTopPrc}%)`);
-  }
   var el = document.createElement("div");
   el.id = "SCROLLER-POSITION-MARK";
-  el.setAttribute("style", `position:fixed;top:${fromTopPrc}%;left:${fromLeftPrc}%;background-color:${color};`);
-  el.innerHTML = ":<br/>:<br/>";
+  el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:${fromLeftPx}px;background-color:white;color:${color};`);
+  el.innerHTML = "::<br/>::<br/>::<br/>";
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
 }
