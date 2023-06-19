@@ -523,6 +523,24 @@ function sticky_alert(msg, htmlDivElementId)
 
 
 /*******************************************************************************
+ * Automatically closing solid-color-shape mark.
+ ******************************************************************************/
+function timed_overlay(color, fromLeftPrc, fromTopPrc, durationSec)
+{
+  if ( (fromLeftPrc < 0) || (fromLeftPrc > 100) ||
+       (fromTopPrc < 0) || (fromTopPrc > 100) )   {
+    throw new Error(`Invalid position-mark coordinates (${fromLeftPrc}%, ${fromTopPrc}%)`);
+  }
+  var el = document.createElement("div");
+  el.id = "SCROLLER-POSITION-MARK";
+  el.setAttribute("style", `position:fixed;top:${fromTopPrc}%;left:${fromLeftPrc}%;background-color:${color};`);
+  el.innerHTML = ":<br/>:<br/>";
+  setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
+  document.body.appendChild(el);
+}
+
+
+/*******************************************************************************
  * Removes duplicates and sorts the array
  * (from:  https://www.tutorialspoint.com/unique-sort-removing-duplicates-and-sorting-an-array-in-javascript)
  ^ Example: const uniq_sort([1, 1, 1, 3, 2, 2, 8, 3, 4],  (a, b) => a - b);
