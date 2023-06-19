@@ -525,6 +525,7 @@ function sticky_alert(msg, htmlDivElementId)
 /*******************************************************************************
  * Automatically closing solid-color-shape mark.
  ******************************************************************************/
+//TODO: fromLeftPrc, fromTopPx
 function timed_marker(color, fromLeftPx, fromTopPx, durationSec)
 {
   var el = document.createElement("div");
