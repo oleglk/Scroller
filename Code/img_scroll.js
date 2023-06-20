@@ -24,7 +24,10 @@ window.addEventListener( 'unhandledrejection', function (e) {
 ////throw new Error("OK_TMP: Test global error handler");
 
 
+//////// Begin: scroller application configuration stuff ///////////////////////
 const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
+const g_progressShowPeriodSec = 1;
+//////// End:   scroller application configuration stuff ///////////////////////
 
 
 //////// Begin: prepare global data for the scroller and start it ///////////////
@@ -64,6 +67,7 @@ var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 
 var g_nextTimerIntervalId = 0;
 
+var g_progressTimerId = 0;
 
 //////// settings and variables for ignoring single-click upon double-click ////
 const _g_singleClickDelayMs = 400;  //
@@ -787,6 +791,25 @@ function _status_descr(stepIdx, timeInStateOrNegative)
       descr += `\<br\><br\> (duration ${timeInStateOrNegative} sec)`;
   }
   return  descr;
+}
+
+
+function _progress_timer_handler(iStation, tSec)
+{
+  if ( g_perStationScorePositionMarkers === null )
+    throw new Error("-E- Progress position markers unavailable");
+  //g_perStationScorePositionMarkers = [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
+  const nStations = g_perStationScorePositionMarkers.length;
+  if ( iStation >= nStations )
+    throw new Error(`-E- Progress position markers for score-step #${iStation} unavailable; expected 0...${nStations-1}`);
+  const allMarkers = g_perStationScorePositionMarkers[iStation];
+  // allMarkers[0]:0sec, allMarkers[1]:1sec, etc.
+  if ( (tSec < 0 ) || (tSec >= allMarkers.length) )
+    throw new Error(`-E- Progress position marker for score-step #${iStation} at ${tSec} [sec] unavailable; expected 0..${allMarkers.length-1}`);
+  [xInWinPrc, pageOccId, yOnPage] = allMarkers[tSec];
+  const fromTopPx = convert_y_img_to_window(pageOccId, yOnPage);
+  timed_marker("red", xInWinPrc, fromTopPx, g_progressShowPeriodSec);
+  TODO: if not at end, schedule next indication
 }
 
 
