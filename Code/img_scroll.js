@@ -32,6 +32,8 @@ const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one ste
 // (the global collections to be filled must be declared on the top level)
 var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
 var g_imgPageOccurences = null; // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
+
+// 'g_perStationScorePositionMarkers' serves for play-progress indication in auto-scroll mode
 var g_perStationScorePositionMarkers = null;  // [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
 
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,

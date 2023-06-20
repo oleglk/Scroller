@@ -74,8 +74,9 @@ class PlayOrder
     //scoreStations = {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
     this.scoreStations = null;
 
-    //perStationScorePositionMarkers = [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
-    // == array of per-station arrays of per-second position-marker triples
+    /*perStationScorePositionMarkers = [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
+     * == array of per-station arrays of per-second position-marker triples
+     * (serves for play-progress indication in auto-scroll mode) */
     this.perStationScorePositionMarkers = null;
     
     this._process_inputs();
@@ -270,13 +271,13 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
           throw new Error(`-E- Missing score line record for page '${playedLine.pageId}' line ${playedLine.lineIdx}`);
         timeInStationBeat += playedLine.timeBeat;
         if ( perStationScorePositionMarkersArray !== null )  {
-          for ( let t = 0;  t < playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {
+          for ( let t = 0;  t <= playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {
             let relTime = (t * tempo / 60.0) / playedLine.timeBeat;
             /* at this time in-window Y-coordinates unavailable - store local Y,
              * then use convert_y_img_to_window() when rendering markers */
             // let winY = convert_y_img_to_window(stationRec.pageId/*==occId*/,
             //                                    scoreline.yOnPage)
-            markerXY.push( [Math.max(relTime*100, 100),
+            markerXY.push( [Math.min(relTime*100, 100),
                             stationRec.pageId/*==occId*/, scoreline.yOnPage] );
           }
         }
