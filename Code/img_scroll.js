@@ -32,6 +32,8 @@ const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one ste
 // (the global collections to be filled must be declared on the top level)
 var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
 var g_imgPageOccurences = null; // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
+var g_perStationScorePositionMarkers = null;  // [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
+
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
                           g_scoreLines, g_linePlayOrder, g_numLinesInStep);
 // at this stage 'g_scoreStations' is built, but times reflect default tempo
@@ -166,6 +168,11 @@ function arrange_score_global_data(scoreName, pageImgPathsMap,
   // ... the copy will be 2-level deep - fine for the task
   g_scoreStations = plo.scoreStations.map(a => {return {...a}});
 
+  // true deep-copy - [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
+  // (at this time 'g_perStationScorePositionMarkers' built for default tempo)
+  g_perStationScorePositionMarkers = JSON.parse(
+                         JSON.stringify( plo.perStationScorePositionMarkers ));
+
   // ... the copy will be 2-level deep - fine for the task
   g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
 }
@@ -294,6 +301,7 @@ async function show_and_process_help_and_tempo_dialog()
   if ( (tempoStr == "") || (tempoStr == "0") )  {
     g_stepManual = true;
     g_tempo = 0;
+    g_perStationScorePositionMarkers = null; //manual mode - cannot show progress
     modeMsg = "MANUAL-STEP MODE SELECTED";
   } else  {
     const tempo = Number(tempoStr);
@@ -306,8 +314,12 @@ async function show_and_process_help_and_tempo_dialog()
     g_stepManual = false;
     g_tempo = tempo;
     modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${g_tempo} BEAT(s)/SEC`;
-    PlayOrder._recompute_times_in_score_stations_array(
-      g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder);
+    // auto mode can show progress, build 'g_perStationScorePositionMarkers'
+    const tmp_scoreDataLines = filter_and_massage_positions(g_scoreLines);
+    g_perStationScorePositionMarkers = [];  // prepare for completely new values
+    PlayOrder.recompute_times_in_score_stations_array(
+      g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder,
+      tmp_scoreDataLines, g_perStationScorePositionMarkers);
   }
   console.log("-I- " + modeMsg);
   let statusMsg = modeMsg + "\<br\><br\>" + _status_descr(g_currStep, -1);

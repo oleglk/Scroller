@@ -73,6 +73,10 @@ class PlayOrder
 
     //scoreStations = {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
     this.scoreStations = null;
+
+    //perStationScorePositionMarkers = [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
+    // == array of per-station arrays of per-second position-marker triples
+    this.perStationScorePositionMarkers = null;
     
     this._process_inputs();
   }
@@ -103,8 +107,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     this._name_image_page_occurences();
 
-    this.scoreStations = this.build_score_stations_array_for_page_occurences(
-                                                            this.numLinesInStep);
+    [this.scoreStations, this.perStationScorePositionMarkers] =
+      this.build_score_stations_array_for_page_occurences(this.numLinesInStep);
     if ( this.scoreStations == null )  { return  false; }  // error printed
     return  true;
   }
@@ -152,8 +156,11 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
   }
   
   
-  /* Builds and returns array of score-stations
-   * that refer to play-order page occurences instead of original page images.
+  /* Builds and returns array of 2 arrays:
+   *   (1)  array of score-stations
+   *   (2)  per-station array of arrays of per-second position-marker triples
+   *                       ( position-marker == (xInWinPrc, occId, yOnPage) )
+   * Score-stations refer to play-order page occurences, not original page images
    * For each line computes time in seconds based on specified time in beats.
    * 'numLinesInStep' - how many lines to jump in one step.
    * On error returns null */
@@ -217,19 +224,21 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     console.log(`Assembled score-stations-array with ${scoreStationsArray.length} station(s) for ${this.linePlayOrder.length} played line(s) with station-step ${numLinesInStep}`);
 
-    PlayOrder._recompute_times_in_score_stations_array(
+    let scoreStationsPositionMarkersArray = []; //will be built for default tempo
+    PlayOrder.recompute_times_in_score_stations_array(
       scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder,
-    this.scoreDataLines);
-    return  scoreStationsArray;
+      this.scoreDataLines, scoreStationsPositionMarkersArray);
+    return  [scoreStationsArray, scoreStationsPositionMarkersArray];
   }
   
 
   /* Adjusts times in 'scoreStationsArray' (in place) according to 'this.tempo'.
-   * If 'scoreStationsPositionMarkersArray' given, fills it with arrays of
-   * per-second position-marker (xInWin, yInWin) pairs. */
-  static _recompute_times_in_score_stations_array(scoreStationsArray, tempo,
+   * If 'perStationScorePositionMarkersArray' given, appends to it arrays of
+   * per-second position-marker (xInWinPrc, occId, yOnPage) triples.
+   * (Note, it made static to enable being called when tempo changes) */
+  static recompute_times_in_score_stations_array(scoreStationsArray, tempo,
                          numLinesInStep, linePlayOrderArray, scoreDataLinesArray,
-                         scoreStationsPositionMarkersArray=null)
+                         perStationScorePositionMarkersArray=null)
   {
     // linePlayOrderArray = {pageId:STR, lineIdx:INT, timeBeat:FLOAT}
     // scoreStationsArray = {tag:STR, pageId:STR=occID, origImgPageId:STR, lineOnPageIdx:INT, x:INT, y:INT, timeSec:FLOAT}
@@ -246,11 +255,12 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     for ( let i1 = 0;  i1 < linePlayOrderArray.length;
           i1 += numLinesInStep )   {  // 'i1' = idx of station's first line
       iStation += 1;
+      let stationRec = scoreStationsData[iStation];
       let i2 = i1 + numLinesInStep;    // 'i2' = idx of station's last  line
       if ( i2 >= linePlayOrderArray.length )
         i2 = linePlayOrderArray.length - 1;
       let timeInStationBeat = 0;
-      let markerXY = [];
+      let markerXY = [];  // for marker positions within all lines in the station
       for ( let j = i1;  j < i2;  j += 1 )  { 
         const playedLine = linePlayOrderArray[j];
         const scoreline = scoreDataLinesArray.find( (element, index, array) =>
@@ -258,15 +268,21 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                             (element.lineIdx == playedLine.lineIdx) );
         if ( scoreline === undefined )
           throw new Error(`-E- Missing score line record for page '${playedLine.pageId}' line ${playedLine.lineIdx}`);
-        let stationRec = scoreStationsData[iStation];
         timeInStationBeat += playedLine.timeBeat;
-        for ( let t = 0;  t < playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {
-          let relTime = (t * tempo / 60.0) / playedLine.timeBeat;
-          let winY = convert_y_img_to_window(stationRec.pageId,
-                                             scoreline.yOnPage)
-          markerXY.push( (Math.max(relTime*100, 100), winY) );
+        if ( perStationScorePositionMarkersArray !== null )  {
+          for ( let t = 0;  t < playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {
+            let relTime = (t * tempo / 60.0) / playedLine.timeBeat;
+            /* at this time in-window Y-coordinates unavailable - store local Y,
+             * then use convert_y_img_to_window() when rendering markers */
+            // let winY = convert_y_img_to_window(stationRec.pageId/*==occId*/,
+            //                                    scoreline.yOnPage)
+            markerXY.push( [Math.max(relTime*100, 100),
+                            stationRec.pageId/*==occId*/, scoreline.yOnPage] );
+          }
         }
       }
+      if ( perStationScorePositionMarkersArray !== null )
+        perStationScorePositionMarkersArray.push(markerXY);//all lines in station
       const timeInStationSec = timeInStationBeat * 60.0 / tempo;
       stationRec.timeSec = timeInStationSec;
       console.log(`-D- Lines #${i1}...#${i2-1} scoreStationsData[${iStation}].timeSec = ${stationRec.timeSec} (=${timeInStationSec} for ${timeInStationBeat} beat(s))`);
