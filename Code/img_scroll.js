@@ -65,9 +65,12 @@ var g_scrollIsOn = false;
 
 var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
 
-var g_nextTimerIntervalId = 0;
 
+//////// Begin: global timer IDs ///////////////////////////////////////////////
+var g_nextTimerIntervalId = 0;
 var g_progressTimerId = 0;
+//////// End:   global timer IDs ///////////////////////////////////////////////
+
 
 //////// settings and variables for ignoring single-click upon double-click ////
 const _g_singleClickDelayMs = 400;  //
@@ -394,6 +397,10 @@ function scroll_stop_handler(event)
 
   if ( !g_scrollIsOn )  { return }  // double-stop - silently ignore
   if ( g_currStep > 0 ) { g_currStep -= 1 }   // it was already advanced
+
+  if ( g_progressTimerId != 0 )
+    clearTimeout(g_progressTimerId);  // kill old progress-indicator timer if any
+
   rec = filter_positions(g_scoreStations)[g_currStep];
   winY = get_scroll_current_y();
   msg = `STOP/PAUSE SCROLLING AT STEP ${rec.tag}::${one_position_toString(g_currStep, rec)};  POSITION ${winY}`;
@@ -633,6 +640,17 @@ function scroll_schedule(currDelaySec, descr)
   g_nextTimerIntervalId = setTimeout(scroll_perform_one_step,
                                      currDelaySec * 1000/*msec*/, g_currStep,
                                      stepMsg);
+  
+  if ( g_perStationScorePositionMarkers !== null )  {
+    console.log(`-I- Scheduling progress indication every ${g_progressShowPeriodSec} second(s) for step ${g_currStep}`);
+    if ( g_currStep >= filter_positions(g_scoreStations).length )
+      throw new Error(`-E- Step number ${g_currStep} too big`);
+      
+    //const periodMsec = g_progressShowPeriodSec * 1000;
+    g_progressTimerId = setTimeout(
+      _progress_timer_handler, 0/*start indication immediately*/,
+      g_currStep, 0/*1st indication for current step*/ );
+  }
 }
 
 
@@ -794,22 +812,28 @@ function _status_descr(stepIdx, timeInStateOrNegative)
 }
 
 
-function _progress_timer_handler(iStation, tSec)
+function _progress_timer_handler(iStation, tSecFromStationBegin)
 {
+  console.log(`-D- Called _progress_timer_handler(${iStation}, ${tSecFromStationBegin})`);
   if ( g_perStationScorePositionMarkers === null )
     throw new Error("-E- Progress position markers unavailable");
-  //g_perStationScorePositionMarkers = [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
-  const nStations = g_perStationScorePositionMarkers.length;
-  if ( iStation >= nStations )
+  //g_perStationScorePositionMarkers[i] = [..., [xInWinPrc, occId, yOnPage], ...]
+  const nPositions = g_perStationScorePositionMarkers.length;
+  if ( iStation >= filter_positions(g_scoreStations).length )
     throw new Error(`-E- Progress position markers for score-step #${iStation} unavailable; expected 0...${nStations-1}`);
-  const allMarkers = g_perStationScorePositionMarkers[iStation];
+  const allMarkers = g_perStationScorePositionMarkers[iStation];  // one per sec
   // allMarkers[0]:0sec, allMarkers[1]:1sec, etc.
-  if ( (tSec < 0 ) || (tSec >= allMarkers.length) )
-    throw new Error(`-E- Progress position marker for score-step #${iStation} at ${tSec} [sec] unavailable; expected 0..${allMarkers.length-1}`);
-  [xInWinPrc, pageOccId, yOnPage] = allMarkers[tSec];
+  if ( (tSecFromStationBegin < 0 ) ||
+       (tSecFromStationBegin >= allMarkers.length) )
+    throw new Error(`-E- Progress position marker for score-step #${iStation} at ${tSecFromStationBegin} [sec] unavailable; expected 0..${allMarkers.length-1}`);
+  [xInWinPrc, pageOccId, yOnPage] = allMarkers[tSecFromStationBegin];
   const fromTopPx = convert_y_img_to_window(pageOccId, yOnPage);
   timed_marker("red", xInWinPrc, fromTopPx, g_progressShowPeriodSec);
-  TODO: if not at end, schedule next indication
+  // if not at end, schedule next indication
+  if ( tSecFromStationBegin < (allMarkers.length-1) )
+    g_progressTimerId = setTimeout(
+      _progress_timer_handler, g_progressShowPeriodSec * 1000/*msec*/,
+      iStation, tSecFromStationBegin + g_progressShowPeriodSec) ;
 }
 
 
