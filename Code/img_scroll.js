@@ -35,6 +35,7 @@ const g_progressShowPeriodSec = 1;
 // (the global collections to be filled must be declared on the top level)
 var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
 var g_imgPageOccurences = null; // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
+var g_playedLinePageOccurences = null;  // (index in 'linePlayOrder') => occId
 
 // 'g_perStationScorePositionMarkers' serves for play-progress indication in auto-scroll mode
 var g_perStationScorePositionMarkers = null;  // [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
@@ -177,6 +178,9 @@ function arrange_score_global_data(scoreName, pageImgPathsMap,
   // ... the copy will be 2-level deep - fine for the task
   g_scoreStations = plo.scoreStations.map(a => {return {...a}});
 
+  // ... the copy will be 1-level deep - fine for the task
+  g_playedLinePageOccurences = [...plo.playedLinePageOccurences];
+  
   // true deep-copy - [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
   // (at this time 'g_perStationScorePositionMarkers' built for default tempo)
   g_perStationScorePositionMarkers = JSON.parse(
@@ -327,8 +331,9 @@ async function show_and_process_help_and_tempo_dialog()
     const tmp_scoreDataLines = filter_and_massage_positions(g_scoreLines);
     g_perStationScorePositionMarkers = [];  // prepare for completely new values
     PlayOrder.recompute_times_in_score_stations_array(
-      g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder,
-      tmp_scoreDataLines, g_perStationScorePositionMarkers);
+                   g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder,
+                   tmp_scoreDataLines, g_playedLinePageOccurences,
+                   g_perStationScorePositionMarkers);
   }
   console.log("-I- " + modeMsg);
   let statusMsg = modeMsg + "\<br\><br\>" + _status_descr(g_currStep, -1);
@@ -634,22 +639,23 @@ function scroll_schedule(currDelaySec, descr)
     return;
   }
 
+  // note, 'g_currStep' is already advanced!!!
   console.log(`-I- Scheduling wait for ${currDelaySec} second(s) at ${descr}`);
 
   const stepMsg = `... Just scrolled to step ${g_currStep} ...`;
   g_nextTimerIntervalId = setTimeout(scroll_perform_one_step,
                                      currDelaySec * 1000/*msec*/, g_currStep,
                                      stepMsg);
-  
+
+  // scheduled scroll to step #j, meanwhile step #j-1 is progressing
   if ( g_perStationScorePositionMarkers !== null )  {
-    console.log(`-I- Scheduling progress indication every ${g_progressShowPeriodSec} second(s) for step ${g_currStep}`);
-    if ( g_currStep >= filter_positions(g_scoreStations).length )
+    console.log(`-I- Scheduling progress indication every ${g_progressShowPeriodSec} second(s) for step ${g_currStep-1}`);
+    if ( (g_currStep-1) >= filter_positions(g_scoreStations).length )
       throw new Error(`-E- Step number ${g_currStep} too big`);
-      
     //const periodMsec = g_progressShowPeriodSec * 1000;
     g_progressTimerId = setTimeout(
       _progress_timer_handler, 0/*start indication immediately*/,
-      g_currStep, 0/*1st indication for current step*/ );
+      g_currStep-1, 0/*1st indication for current step*/ );
   }
 }
 
@@ -814,7 +820,6 @@ function _status_descr(stepIdx, timeInStateOrNegative)
 
 function _progress_timer_handler(iStation, tSecFromStationBegin)
 {
-  console.log(`-D- Called _progress_timer_handler(${iStation}, ${tSecFromStationBegin})`);
   if ( g_perStationScorePositionMarkers === null )
     throw new Error("-E- Progress position markers unavailable");
   //g_perStationScorePositionMarkers[i] = [..., [xInWinPrc, occId, yOnPage], ...]
@@ -828,9 +833,10 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
     throw new Error(`-E- Progress position marker for score-step #${iStation} at ${tSecFromStationBegin} [sec] unavailable; expected 0..${allMarkers.length-1}`);
   [xInWinPrc, pageOccId, yOnPage] = allMarkers[tSecFromStationBegin];
   const fromTopPx = convert_y_img_to_window(pageOccId, yOnPage);
+  console.log(`-D- Called _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) => X=${xInWinPrc}%, pageOccId='${pageOccId}', Y=${yOnPage}:${fromTopPx}`);
   timed_marker("red", xInWinPrc, fromTopPx, g_progressShowPeriodSec);
   // if not at end, schedule next indication
-  if ( tSecFromStationBegin < (allMarkers.length-1) )
+  if ( tSecFromStationBegin < (allMarkers.length - g_progressShowPeriodSec) )
     g_progressTimerId = setTimeout(
       _progress_timer_handler, g_progressShowPeriodSec * 1000/*msec*/,
       iStation, tSecFromStationBegin + g_progressShowPeriodSec) ;

@@ -71,6 +71,9 @@ class PlayOrder
     //imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     this.imgPageOccurences = null;
 
+    //playedLinePageOccurences = (index in 'linePlayOrder') => occId
+    this.playedLinePageOccurences = null;
+
     //scoreStations = {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
     this.scoreStations = null;
 
@@ -108,6 +111,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     this._name_image_page_occurences();
 
+    this.playedLinePageOccurences = this._find_played_lines_page_occurences();
+    
     [this.scoreStations, this.perStationScorePositionMarkers] =
       this.build_score_stations_array_for_page_occurences(this.numLinesInStep);
     if ( this.scoreStations == null )  { return  false; }  // error printed
@@ -172,6 +177,9 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     if ( this.imgPageOccurences == null ) {
       throw new Error("Array of image-page occurences isn't built yet");
     }
+    if ( this.playedLinePageOccurences == null ) {
+      throw new Error("Array of played-lines' image-page occurences isn't built yet");
+    }
     
     // imgPageOccurences = {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
     // scoreDataLines = {pageId:STR, lineIdx:INT, yOnPage:INT, timeBeat:FLOAT}
@@ -180,20 +188,9 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     // scoreStations = {tag:STR, pageId:STR=occID, origImgPageId:STR, [lineOnPageIdx:INT], x:INT, y:INT, timeSec:FLOAT}
     // (e.g, a record in 'scoreStations' extended with 'origImgPageId' field)
 
-    let playedLinePageOccurences = [];  // (index in 'linePlayOrder') => occId
-    /* assume page-occurences array is correct => we traverse it sequentially
+    /* this.playedLinePageOccurences  == (index in 'linePlayOrder') => occId
      * => {... firstLine: 0, lastLine: 4, ...} means we played lines 0,1,2,3,4 */
-    this.imgPageOccurences.forEach( occ => {
-      for ( let j = occ.firstLine;  j <= occ.lastLine;  j += 1 )  {
-        playedLinePageOccurences.push(occ.occId);
-      }
-    });
-    if ( playedLinePageOccurences.length != this.linePlayOrder.length )  {
-      err = `-E- Mismatch in number of lines between occurences (${playedLinePageOccurences.length}) and play-order (${this.linePlayOrder.length}).`
-      console.log(err);  console.trace();  alert(err);
-      return  null;
-    }
-    
+
     let scoreStationsArray = [];
     ////for ( const [i, playedLine] of this.linePlayOrder.entries() )  {}
     // TODO: any precautions to ensure last line(s) are visible in the last step?
@@ -210,7 +207,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       let stepTag = "step:" + zero_pad(scoreStationsArray.length, 2);
       
       let station = { tag:           stepTag,
-                      pageId:        playedLinePageOccurences[i],
+                      pageId:        this.playedLinePageOccurences[i],
                       origImgPageId: playedLine.pageId,
                       lineOnPageIdx: playedLine.lineIdx,
                       x:             0,
@@ -228,8 +225,32 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     let scoreStationsPositionMarkersArray = []; //will be built for default tempo
     PlayOrder.recompute_times_in_score_stations_array(
       scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder,
-      this.scoreDataLines, scoreStationsPositionMarkersArray);
+      this.scoreDataLines, this.playedLinePageOccurences,
+      scoreStationsPositionMarkersArray);
     return  [scoreStationsArray, scoreStationsPositionMarkersArray];
+  }
+
+
+  /* Builds and returns array of occurence-Ids
+   * for correponding (by index) lines in line play order ('this.linePlayOrder')
+   * Assumes existence of 'this.imgPageOccurences'. */
+  _find_played_lines_page_occurences()
+  {
+    if ( this.imgPageOccurences === null )
+      throw new Error("-E- Image-page-occurence-s array isn't built yet");
+    let playedLinePageOccurences = [];  // (index in 'linePlayOrder') => occId
+    /* assume page-occurences array is correct => we traverse it sequentially
+     * => {... firstLine: 0, lastLine: 4, ...} means we played lines 0,1,2,3,4 */
+    this.imgPageOccurences.forEach( occ => {
+      for ( let j = occ.firstLine;  j <= occ.lastLine;  j += 1 )  {
+        playedLinePageOccurences.push(occ.occId);
+      }
+    });
+    if ( playedLinePageOccurences.length != this.linePlayOrder.length )  {
+      err = `-E- Mismatch in number of lines between occurences (${playedLinePageOccurences.length}) and play-order (${this.linePlayOrder.length}).`
+      throw new Error(err);
+    }
+    return  playedLinePageOccurences;
   }
   
 
@@ -238,8 +259,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
    * per-second position-marker (xInWinPrc, occId, yOnPage) triples.
    * (Note, it made static to enable being called when tempo changes) */
   static recompute_times_in_score_stations_array(scoreStationsArray, tempo,
-                         numLinesInStep, linePlayOrderArray, scoreDataLinesArray,
-                         perStationScorePositionMarkersArray=null)
+         numLinesInStep, linePlayOrderArray, scoreDataLinesArray,
+         playedLinePageOccurencesArray, perStationScorePositionMarkersArray=null)
   {
     // linePlayOrderArray = {pageId:STR, lineIdx:INT, timeBeat:FLOAT}
     // scoreStationsArray = {tag:STR, pageId:STR=occID, origImgPageId:STR, lineOnPageIdx:INT, x:INT, y:INT, timeSec:FLOAT}
@@ -278,7 +299,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
             // let winY = convert_y_img_to_window(stationRec.pageId/*==occId*/,
             //                                    scoreline.yOnPage)
             markerXY.push( [Math.min(relTime*100, 100),
-                            stationRec.pageId/*==occId*/, scoreline.yOnPage] );
+                            playedLinePageOccurencesArray[j]/*==occId-for-line*/,
+                            scoreline.yOnPage] );
           }
         }
       }
