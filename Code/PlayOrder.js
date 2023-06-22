@@ -290,6 +290,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                             (element.lineIdx == playedLine.lineIdx) );
         if ( scoreline === undefined )
           throw new Error(`-E- Missing score line record for page '${playedLine.pageId}' line ${playedLine.lineIdx}`);
+        const lineHeight = (g_pageLineHeights !== null)? // use if already built
+              g_pageLineHeights.get(scoreline.pageId/*orig img*/) : 0;
         timeInStationBeat += playedLine.timeBeat;
         if ( perStationScorePositionMarkersArray !== null )  {
           for ( let t = 0;  t <= playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {
@@ -300,7 +302,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
             //                                    scoreline.yOnPage)
             markerXY.push( [Math.min(relTime*100, 100),
                             playedLinePageOccurencesArray[j]/*==occId-for-line*/,
-                            scoreline.yOnPage] );
+                            scoreline.yOnPage + 0.4*lineHeight] );
           }
         }
       }

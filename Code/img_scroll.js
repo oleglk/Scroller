@@ -39,6 +39,7 @@ var g_playedLinePageOccurences = null;  // (index in 'linePlayOrder') => occId
 
 // 'g_perStationScorePositionMarkers' serves for play-progress indication in auto-scroll mode
 var g_perStationScorePositionMarkers = null;  // [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
+var g_pageLineHeights = null;  // image/pageId :: estimated-line-height
 
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
                           g_scoreLines, g_linePlayOrder, g_numLinesInStep);
@@ -188,6 +189,10 @@ function arrange_score_global_data(scoreName, pageImgPathsMap,
 
   // ... the copy will be 2-level deep - fine for the task
   g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
+
+  // Map is deep-cloned
+  g_pageLineHeights = new Map(
+    JSON.parse(JSON.stringify([...plo.pageLineHeights])));
 }
 
 
@@ -649,6 +654,8 @@ function scroll_schedule(currDelaySec, descr)
 
   // scheduled scroll to step #j, meanwhile step #j-1 is progressing
   if ( g_perStationScorePositionMarkers !== null )  {
+    if ( g_progressTimerId != 0 )
+      clearTimeout(g_progressTimerId); //kill old progress-indicator timer if any
     console.log(`-I- Scheduling progress indication every ${g_progressShowPeriodSec} second(s) for step ${g_currStep-1}`);
     if ( (g_currStep-1) >= filter_positions(g_scoreStations).length )
       throw new Error(`-E- Step number ${g_currStep} too big`);
@@ -687,14 +694,6 @@ function scroll_perform_one_step(stepNum, msgForTimedAlert="")
     //sticky_alert(`Step ${stepNum}:\n stop scrolling`, _g_htmlStatusBoxId);
     sticky_alert(_status_descr(stepNum, -1), _g_htmlStatusBoxId);
     scroll_abort();
-    // // further scroll stopped, meanwhile the last step is progressing
-    // if ( (stepNum == stationsDataLines.length) &&
-    //      (g_perStationScorePositionMarkers !== null) )  {
-    //   console.log(`-I- Scheduling progress indication every ${g_progressShowPeriodSec} second(s) for the last step (${stepNum})`);
-    //   g_progressTimerId = setTimeout(
-    //     _progress_timer_handler, 0/*start indication immediately*/,
-    //     stepNum-1/*the last step*/, 0/*1st indication for current step*/ );
-    // }
     return  0;
   }
   //  {tag:"line-001-Begin", pageId: "pg01:01, origImgPageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec"}
