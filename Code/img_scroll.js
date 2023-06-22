@@ -687,6 +687,14 @@ function scroll_perform_one_step(stepNum, msgForTimedAlert="")
     //sticky_alert(`Step ${stepNum}:\n stop scrolling`, _g_htmlStatusBoxId);
     sticky_alert(_status_descr(stepNum, -1), _g_htmlStatusBoxId);
     scroll_abort();
+    // // further scroll stopped, meanwhile the last step is progressing
+    // if ( (stepNum == stationsDataLines.length) &&
+    //      (g_perStationScorePositionMarkers !== null) )  {
+    //   console.log(`-I- Scheduling progress indication every ${g_progressShowPeriodSec} second(s) for the last step (${stepNum})`);
+    //   g_progressTimerId = setTimeout(
+    //     _progress_timer_handler, 0/*start indication immediately*/,
+    //     stepNum-1/*the last step*/, 0/*1st indication for current step*/ );
+    // }
     return  0;
   }
   //  {tag:"line-001-Begin", pageId: "pg01:01, origImgPageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec"}
@@ -823,8 +831,8 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
   if ( g_perStationScorePositionMarkers === null )
     throw new Error("-E- Progress position markers unavailable");
   //g_perStationScorePositionMarkers[i] = [..., [xInWinPrc, occId, yOnPage], ...]
-  const nPositions = g_perStationScorePositionMarkers.length;
-  if ( iStation >= filter_positions(g_scoreStations).length )
+  const nStations = g_perStationScorePositionMarkers.length;
+  if ( iStation >= nStations/*filter_positions(g_scoreStations).length*/ )
     throw new Error(`-E- Progress position markers for score-step #${iStation} unavailable; expected 0...${nStations-1}`);
   const allMarkers = g_perStationScorePositionMarkers[iStation];  // one per sec
   // allMarkers[0]:0sec, allMarkers[1]:1sec, etc.
