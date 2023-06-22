@@ -530,7 +530,7 @@ function timed_marker(color, fromLeftPrc, fromTopPx, durationSec)
 {
   var el = document.createElement("div");
   el.id = "SCROLLER-POSITION-MARK";
-  el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:${fromLeftPrc}%;background-color:white;color:${color};`);
+  el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:${fromLeftPrc}%;background-color:lightgrey;color:${color};`);
   el.innerHTML = ":<br/>:<br/>:<br/>";
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
