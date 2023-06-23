@@ -75,6 +75,10 @@ class ScoreImgLayout
       }
     }
 
+    // append a dummy image to enable scroll beyond the versy last played line
+    draw_empty_image(this._maxWidth, 0.3*this._maxWidth, g_htmlScoreHolderId,
+                     "--- THE END ---");
+
     console.log(`-I- Success rendering ${this.imgPageOccurences.length} image-page occurence(s) at width=${this._maxWidth}`);
     return  true;
   }
@@ -188,6 +192,34 @@ async function render_img_crop_height(htmlId, url, yTop, yBottom, forcedWidth=-1
     // start loading our image
     inputImage.src = url;
   });
+}
+
+
+function draw_empty_image(width, height, htmlContainerId, textStr="")
+{
+  let canvas = document.createElement('canvas');
+  canvas.height = height;
+  canvas.width  = width;
+  let context = canvas.getContext('2d');
+  context.fillStyle   = "white";
+  context.strokeStyle = "black";
+  context.fillRect(0, 0, width, height);
+  if ( textStr != "" )  {
+    const textHeight = Math.floor( 0.6 * width / textStr.length );
+    context.font = `${textHeight}px SF Movie Poster`;
+    context.textAlign = "center";
+    context.textBaseline = "top";
+    context.strokeText(textStr, 0.5*width, 0.2*height);
+  }
+  let htmlContainer = document.getElementById(htmlContainerId);
+  if ( htmlContainer === null )  {
+    const err = `-E- Inexistent HTML container "${htmlContainerId}"`
+    console.log(err);  console.trace();  alert(err);
+    return  false;
+  }
+  htmlContainer.appendChild(canvas);
+  console.log(`-I- Success appending dummy ${width}*${height} image to "${htmlContainerId}"`);
+  return  true;
 }
 
 
