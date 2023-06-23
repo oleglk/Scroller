@@ -279,8 +279,6 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       iStation += 1;
       let stationRec = scoreStationsData[iStation];
       let i2 = i1 + numLinesInStep;    // 'i2' = idx of station's last  line
-      if ( i2 >= linePlayOrderArray.length )
-        i2 = linePlayOrderArray.length - 1;
       let timeInStationBeat = 0;
       let markerXY = [];  // for marker positions within all lines in the station
       for ( let j = i1;  j < i2;  j += 1 )  { 
@@ -290,6 +288,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                             (element.lineIdx == playedLine.lineIdx) );
         if ( scoreline === undefined )
           throw new Error(`-E- Missing score line record for page '${playedLine.pageId}' line ${playedLine.lineIdx}`);
+        console.log(`-D- Computing progress markers for line {${playedLine}}(yOnPage=${scoreline.yOnPage}) for step ${iStation}`);
         const lineHeight = (g_pageLineHeights !== null)? // use if already built
               g_pageLineHeights.get(scoreline.pageId/*orig img*/) : 0;
         timeInStationBeat += playedLine.timeBeat;
