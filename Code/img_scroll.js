@@ -27,6 +27,7 @@ window.addEventListener( 'unhandledrejection', function (e) {
 //////// Begin: scroller application configuration stuff ///////////////////////
 const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
 const g_progressShowPeriodSec = 1;
+const g_progressBar_numCellsForMinFullTime = 3;
 //////// End:   scroller application configuration stuff ///////////////////////
 
 
@@ -40,6 +41,10 @@ var g_playedLinePageOccurences = null;  // (index in 'linePlayOrder') => occId
 // 'g_perStationScorePositionMarkers' serves for play-progress indication in auto-scroll mode
 var g_perStationScorePositionMarkers = null;  // [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
 var g_pageLineHeights = null;  // image/pageId :: estimated-line-height
+
+// min play duration of a line in the score - in beats
+var g_progressBar_minFullTime = -1;
+
 
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
                           g_scoreLines, g_linePlayOrder, g_numLinesInStep);
@@ -193,6 +198,9 @@ function arrange_score_global_data(scoreName, pageImgPathsMap,
   // Map is deep-cloned
   g_pageLineHeights = new Map(
     JSON.parse(JSON.stringify([...plo.pageLineHeights])));
+
+  g_progressBar_minFullTime = Math.min.apply(null,
+                        linePlayOrderArray.map(function(a){return a.timeBeat}));
 }
 
 
@@ -834,6 +842,7 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
   if ( iStation >= nStations/*filter_positions(g_scoreStations).length*/ )
     throw new Error(`-E- Progress position markers for score-step #${iStation} unavailable; expected 0...${nStations-1}`);
   const allMarkers = g_perStationScorePositionMarkers[iStation];  // one per sec
+  let timePerLine = _derive_time_per_line_from_marker_positions(iStation);
   // allMarkers[0]:0sec, allMarkers[1]:1sec, etc.
   if ( (tSecFromStationBegin < 0 ) ||
        (tSecFromStationBegin >= allMarkers.length) )
@@ -841,12 +850,41 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
   [xInWinPrc, pageOccId, yOnPage] = allMarkers[tSecFromStationBegin];
   const fromTopPx = convert_y_img_to_window(pageOccId, yOnPage);
   console.log(`-D- Called _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) => X=${xInWinPrc}%, pageOccId='${pageOccId}', Y=${yOnPage}:${fromTopPx}`);
-  timed_marker("red", xInWinPrc, fromTopPx, g_progressShowPeriodSec);
+  if ( 0 )
+    timed_marker("red", xInWinPrc, fromTopPx, g_progressShowPeriodSec);
+  else
+    timed_progress_bar("black", xInWinPrc, timePerLine.get(fromTopPx),
+                       fromTopPx, g_progressShowPeriodSec); 
+
   // if not at end, schedule next indication
   if ( tSecFromStationBegin < (allMarkers.length - g_progressShowPeriodSec) )
     g_progressTimerId = setTimeout(
       _progress_timer_handler, g_progressShowPeriodSec * 1000/*msec*/,
       iStation, tSecFromStationBegin + g_progressShowPeriodSec) ;
+}
+
+
+// Builds and returns Map of {y-in-window :: time-on-this-y}
+// TODO: memoize
+function _derive_time_per_line_from_marker_positions(iStation)
+{
+  const markers = g_perStationScorePositionMarkers[iStation];  // one per sec
+  let timePerLine = new Map();  // yOnPage :: time-on-this-y
+  let prevStartTime = 0;
+  for ( let t = 0;  t < markers.length-1;  t += 1 )  {
+    [xInWinPrc1, pageOccId1, yOnPage1] = markers[t+0];
+    [xInWinPrc2, pageOccId2, yOnPage2] = markers[t+1];
+    if ( yOnPage1 != yOnPage2 )  {  // new line starts at t+1
+      let fromTopPx = convert_y_img_to_window(pageOccId1, yOnPage1);
+      timePerLine.set( fromTopPx, (t - prevStartTime) );
+      prevStartTime = t + 1;
+    }
+  }
+  // process the last line
+  [xInWinPrcN, pageOccIdN, yOnPageN] = markers[markers.length-1];
+  let fromTopPx = convert_y_img_to_window(pageOccId1, yOnPageN);
+  timePerLine.set( fromTopPx, markers.length - prevStartTime );
+  return  timePerLine;
 }
 
 

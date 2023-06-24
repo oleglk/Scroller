@@ -525,7 +525,7 @@ function sticky_alert(msg, htmlDivElementId)
 /*******************************************************************************
  * Automatically closing solid-color-shape mark.
  ******************************************************************************/
-//TODO: fromLeftPrc, fromTopPx
+// Prints fading marker in X='fromLeftPrc'%, Y=fromTopPx
 function timed_marker(color, fromLeftPrc, fromTopPx, durationSec)
 {
   var el = document.createElement("div");
@@ -534,6 +534,44 @@ function timed_marker(color, fromLeftPrc, fromTopPx, durationSec)
   el.innerHTML = ":<br/>:<br/>:<br/>";
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
+}
+
+
+// Example: timed_progress_bar("black", 80, 10, 200, 11) 
+function timed_progress_bar(color, currTimePrc, fullTime, fromTopPx, durationSec)
+{
+  var el = document.createElement("div");
+  el.id = "SCROLLER-PROGRESS-BAR";
+  // TODO: use monospaced font for the progress-bar
+  el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:75%;background-color:lightgrey;color:${color};`);
+  const str = format_progress_bar_str(currTimePrc/100.0, fullTime,
+                g_progressBar_minFullTime, g_progressBar_numCellsForMinFullTime);
+  el.innerHTML = str;
+  setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
+  document.body.appendChild(el);
+}
+
+
+/* 
+ * Shortest: 0% == (0, 6, 6, 3) ==> ">--";    50% == (0.5, 6, 6, 3) ==> ">>-"
+ * Longer: 75% == (0.75, 120, 50, 5) ==> ">>>>>>>>>---"
+ * .....  current == 9 {(50):5 => (0.75*120):ceil((0.75*120)*(5/50))}
+ * .....  final   == 12 {(50):5 => (120):ceil((1.0*120)*(5/50))}
+ */
+function format_progress_bar_str(position_0to1,
+                                 fullTime, minFullTime, numCellsForMinFullTime)
+{
+  const emptyCh = "-";   const filledCh = ">";
+  if ( (position_0to1 < 0) || (position_0to1 > 1.0) ||
+       (fullTime < minFullTime) )
+    throw new Error(`-E- Invalid parameters for progress bar: (pos=${position_0to1}, full=${fullTime}, minFull=${minFullTime}, ...)`);
+//debugger;  // OK_TMP
+  // minFullTime - numCellsForMinFullTime
+  // fullTime    - x
+  const full = Math.ceil( 1.0* fullTime * numCellsForMinFullTime / minFullTime );
+  const curr = Math.ceil( position_0to1 * full );
+  const tmpDescr = ` :  (${curr}/${full})`
+  return  filledCh.repeat(curr) + emptyCh.repeat(full - curr) + tmpDescr;
 }
 
 
