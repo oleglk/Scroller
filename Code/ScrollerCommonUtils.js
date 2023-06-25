@@ -546,10 +546,7 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime, fromTopPx,
   // TODO: use monospaced font for the progress-bar
   el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:75%;background-color:lightgrey;color:${color};font-family:monospace;fontWeight:bold`);
   el.style.fontSize = `${g_progressBar_fontSize}px`;
-  const fullBarForCurrLine = Math.ceil(
-      1.0 * g_progressBar_numCellsForMinFullTime *
-                                   (currLineFullTime / g_minTimeInOneLineSec));
-  const str = format_progress_bar_str(currTimePrc/100.0, fullBarForCurrLine,
+  const str = format_progress_bar_str(currTimePrc/100.0, currLineFullTime,
                 g_minTimeInOneLineSec, g_progressBar_numCellsForMinFullTime);
   el.innerHTML = str;
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
