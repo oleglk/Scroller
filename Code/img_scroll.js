@@ -878,12 +878,14 @@ function _derive_time_per_line_from_marker_positions(iStation)
   const markers = g_perStationScorePositionMarkers[iStation];  // one per sec
   let timePerLine = new Map();  // yOnPage :: time-on-this-y
   let prevStartTime = 0;
+//debugger;  // OK_TMP  
   for ( let t = 0;  t < markers.length-1;  t += 1 )  {
     [xInWinPrc1, pageOccId1, yOnPage1] = markers[t+0];
     [xInWinPrc2, pageOccId2, yOnPage2] = markers[t+1];
-    if ( yOnPage1 != yOnPage2 )  {  // new line starts at t+1
+    if ( (yOnPage1 != yOnPage2) || (pageOccId1 != pageOccId2) )  {
+      // new line starts at t+1
       let fromTopPx = convert_y_img_to_window(pageOccId1, yOnPage1);
-      timePerLine.set( fromTopPx, (t - prevStartTime) );
+      timePerLine.set( fromTopPx, (t + 1 - prevStartTime) );
       prevStartTime = t + 1;
     }
   }
