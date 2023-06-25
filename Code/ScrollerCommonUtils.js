@@ -513,7 +513,7 @@ function sticky_alert(msg, htmlDivElementId)
   if ( justCreated )   {
     divEl = document.createElement("div");
     divEl.setAttribute("style", 
-          "position:fixed;top:50%;left:85%;background-color:lightgreen;");
+          "position:fixed;top:75%;left:85%;background-color:lightgreen;");
     divEl.id = htmlDivElementId;
   }
   divEl.innerHTML = msg;
@@ -544,7 +544,8 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime, fromTopPx,
   var el = document.createElement("div");
   el.id = "SCROLLER-PROGRESS-BAR";
   // TODO: use monospaced font for the progress-bar
-  el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:75%;background-color:lightgrey;color:${color};`);
+  el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:75%;background-color:lightgrey;color:${color};font-family:monospace;fontWeight:bold`);
+  el.style.fontSize = `${g_progressBar_fontSize}px`;
   const fullBarForCurrLine = Math.ceil(
       1.0 * g_progressBar_numCellsForMinFullTime *
                                    (currLineFullTime / g_minTimeInOneLineSec));
