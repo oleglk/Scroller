@@ -538,17 +538,22 @@ function timed_marker(color, fromLeftPrc, fromTopPx, durationSec)
 
 
 // Example: timed_progress_bar("black", 80, 10, 200, 11) 
-function timed_progress_bar(color, currTimePrc, fullTime, fromTopPx, durationSec)
+function timed_progress_bar(color, currTimePrc, currLineFullTime, fromTopPx,
+                            durationSec)
 {
   var el = document.createElement("div");
   el.id = "SCROLLER-PROGRESS-BAR";
   // TODO: use monospaced font for the progress-bar
   el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:75%;background-color:lightgrey;color:${color};`);
-  const str = format_progress_bar_str(currTimePrc/100.0, fullTime,
-                g_progressBar_minFullTime, g_progressBar_numCellsForMinFullTime);
+  const fullBarForCurrLine = Math.ceil(
+      1.0 * g_progressBar_numCellsForMinFullTime *
+                                   (currLineFullTime / g_minTimeInOneLineSec));
+  const str = format_progress_bar_str(currTimePrc/100.0, fullBarForCurrLine,
+                g_minTimeInOneLineSec, g_progressBar_numCellsForMinFullTime);
   el.innerHTML = str;
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
+  return  str;
 }
 
 

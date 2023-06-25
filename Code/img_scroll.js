@@ -42,8 +42,9 @@ var g_playedLinePageOccurences = null;  // (index in 'linePlayOrder') => occId
 var g_perStationScorePositionMarkers = null;  // [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
 var g_pageLineHeights = null;  // image/pageId :: estimated-line-height
 
-// min play duration of a line in the score - in beats
-var g_progressBar_minFullTime = -1;
+// min play duration of a line in the score - in beats and in seconds
+var g_minTimeInOneLineBeat = -1;
+var g_minTimeInOneLineSec = -1;
 
 
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
@@ -199,7 +200,7 @@ function arrange_score_global_data(scoreName, pageImgPathsMap,
   g_pageLineHeights = new Map(
     JSON.parse(JSON.stringify([...plo.pageLineHeights])));
 
-  g_progressBar_minFullTime = Math.min.apply(null,
+  g_minTimeInOneLineBeat = Math.min.apply(null,
                         linePlayOrderArray.map(function(a){return a.timeBeat}));
 }
 
@@ -338,7 +339,8 @@ async function show_and_process_help_and_tempo_dialog()
       return  false;
     }
     g_stepManual = false;
-    g_tempo = tempo;
+    g_tempo = tempo;  // beat/min
+    g_minTimeInOneLineSec = g_minTimeInOneLineBeat * 60.0 / g_tempo;
     modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${g_tempo} BEAT(s)/SEC`;
     // auto mode can show progress, build 'g_perStationScorePositionMarkers'
     const tmp_scoreDataLines = filter_and_massage_positions(g_scoreLines);
@@ -852,9 +854,13 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
   console.log(`-D- Called _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) => X=${xInWinPrc}%, pageOccId='${pageOccId}', Y=${yOnPage}:${fromTopPx}`);
   if ( 0 )
     timed_marker("red", xInWinPrc, fromTopPx, g_progressShowPeriodSec);
-  else
-    timed_progress_bar("black", xInWinPrc, timePerLine.get(fromTopPx),
-                       fromTopPx, g_progressShowPeriodSec); 
+  else  {
+    let currLineFullTime = timePerLine.get(fromTopPx);
+//debugger;  //OK_TMP
+    let progrStr = timed_progress_bar("black",
+               xInWinPrc, currLineFullTime, fromTopPx, g_progressShowPeriodSec);
+    console.log(`-D- _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) :: ${progrStr}`);
+  }
 
   // if not at end, schedule next indication
   if ( tSecFromStationBegin < (allMarkers.length - g_progressShowPeriodSec) )
