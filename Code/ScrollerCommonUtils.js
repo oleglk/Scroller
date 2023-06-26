@@ -99,7 +99,7 @@ function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
   if ( yTop < 0 )  {    /* TODO: raise exception */  }
   
   const winY = pageHtmlElem.offsetTop + (imgY - yTop) * pageScaleY;
-  console.log(`-D- convert_y_img_to_window(${imgHtmlPageOccId}, imgY=${imgY}): pageScaleY=${pageScaleY}, yTop=${yTop}, currScrollY=${pageHtmlElem.offsetTop} => ${winY}`);
+  //console.log(`-D- convert_y_img_to_window(${imgHtmlPageOccId}, imgY=${imgY}): pageScaleY=${pageScaleY}, yTop=${yTop}, currScrollY=${pageHtmlElem.offsetTop} => ${winY}`);
   return  Math.floor(winY);
 }
 
@@ -566,15 +566,18 @@ function format_progress_bar_str(position_0to1,
 {
   const emptyCh = "-";   const filledCh = ">";
   if ( (position_0to1 < 0) || (position_0to1 > 1.0) ||
-       (fullTime < minFullTime) )
-    throw new Error(`-E- Invalid parameters for progress bar: (pos=${position_0to1}, full=${fullTime}, minFull=${minFullTime}, ...)`);
+       (fullTime < Math.floor(minFullTime)) )
+    throw new Error(`-E- Invalid parameters for progress bar: (pos=${position_0to1}, full=${fullTime}, minFull=floor(${minFullTime}), ...)`);
 //debugger;  // OK_TMP
   // minFullTime - numCellsForMinFullTime
   // fullTime    - x
-  const full = Math.ceil( 1.0* fullTime * numCellsForMinFullTime / minFullTime );
-  const curr = Math.ceil( position_0to1 * full );
-  const tmpDescr = ` :  (${curr}/${full})`
-  return  filledCh.repeat(curr) + emptyCh.repeat(full - curr) + tmpDescr;
+  const full = Math.floor( 1.0 * fullTime *
+                           numCellsForMinFullTime / Math.floor(minFullTime) );
+  const curr = Math.floor( position_0to1 * full );
+  console.log(`format_progress_bar_str(curr=${position_0to1}=>${curr}, full=${fullTime}=>${full})    full=FLOOR( ${fullTime}*${numCellsForMinFullTime}/FLOOR(${minFullTime}) )*`);
+  const tmpDescr = ` :  (${curr}/${full})`;
+  const secDescr = ` :  (${Math.floor(position_0to1*fullTime)}/${Math.floor(fullTime)})`;
+  return  filledCh.repeat(curr) + emptyCh.repeat(full - curr) + secDescr;
 }
 
 
