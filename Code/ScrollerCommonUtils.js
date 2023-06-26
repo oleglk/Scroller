@@ -574,7 +574,7 @@ function format_progress_bar_str(position_0to1,
   const full = Math.floor( 1.0 * fullTime *
                            numCellsForMinFullTime / Math.floor(minFullTime) );
   const curr = Math.floor( position_0to1 * full );
-  console.log(`format_progress_bar_str(curr=${position_0to1}=>${curr}, full=${fullTime}=>${full})    full=FLOOR( ${fullTime}*${numCellsForMinFullTime}/FLOOR(${minFullTime}) )*`);
+  //console.log(`-D- format_progress_bar_str(curr=${position_0to1}=>${curr}, full=${fullTime}=>${full})    full=FLOOR( ${fullTime}*${numCellsForMinFullTime}/FLOOR(${minFullTime}) )*`);
   const tmpDescr = ` :  (${curr}/${full})`;
   const secDescr = ` :  (${Math.floor(position_0to1*fullTime)}/${Math.floor(fullTime)})`;
   return  filledCh.repeat(curr) + emptyCh.repeat(full - curr) + secDescr;
