@@ -203,6 +203,8 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
   g_pageLineHeights = new Map(
     JSON.parse(JSON.stringify([...plo.pageLineHeights])));
 
+  g_minLineHeight = Math.min(... g_pageLineHeights.values());
+
   g_minTimeInOneLineBeat = Math.min.apply(null,
                         linePlayOrderArray.map(function(a){return a.timeBeat}));
 }
@@ -862,7 +864,7 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
 //debugger;  //OK_TMP
     let progrStr = timed_progress_bar("black",
               xInWinPrc, currLineFullTime, fromTopPx, 1.01*g_maxScoreImageWidth,
-              g_progressShowPeriodSec);
+              g_progressShowPeriodSec, Math.floor(g_minLineHeight/5.0));
     console.log(`-D- _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) :: ${progrStr}`);
   }
 
