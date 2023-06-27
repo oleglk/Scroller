@@ -108,6 +108,14 @@ class ScoreImgLayout
                                                      this._imageDimensions))) );
     return  result;
   }
+
+
+  get_max_score_image_width()
+  {
+    if ( this._maxWidth <= 0 )
+      throw new Error("Maximal image width requested before rendering");
+    return  this._maxWidth;
+  }
 }//END_OF__class_ScoreImgLayout
 
 

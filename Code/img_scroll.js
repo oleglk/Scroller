@@ -47,6 +47,7 @@ var g_pageLineHeights = null;  // image/pageId :: estimated-line-height
 var g_minTimeInOneLineBeat = -1;
 var g_minTimeInOneLineSec = -1;
 
+var g_maxScoreImageWidth = -1;
 
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
                           g_scoreLines, g_linePlayOrder, g_numLinesInStep);
@@ -155,7 +156,7 @@ function build_help_string(showHeader, showFooter, modeManual=g_stepManual)
 
 /* Builds browser page with score images' occurences in the play order.
  * Collects score data in the expected global collections */ 
-function arrange_score_global_data(scoreName, pageImgPathsMap,
+async function arrange_score_global_data(scoreName, pageImgPathsMap,
                                    scoreLinesArray, linePlayOrderArray,
                                    numLinesInStep)
 {
@@ -181,7 +182,8 @@ function arrange_score_global_data(scoreName, pageImgPathsMap,
   let iml = new ScoreImgLayout(pageImgPathsMap,
                                plo.imgPageOccurences
                               );
-  iml.render_images();
+  await iml.render_images();  //...await completion to access image widths
+  g_maxScoreImageWidth = iml.get_max_score_image_width();
 
   // ... the copy will be 2-level deep - fine for the task
   g_scoreStations = plo.scoreStations.map(a => {return {...a}});
@@ -859,7 +861,8 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
     let currLineFullTime = timePerLine.get(fromTopPx);
 //debugger;  //OK_TMP
     let progrStr = timed_progress_bar("black",
-               xInWinPrc, currLineFullTime, fromTopPx, g_progressShowPeriodSec);
+              xInWinPrc, currLineFullTime, fromTopPx, 1.01*g_maxScoreImageWidth,
+              g_progressShowPeriodSec);
     console.log(`-D- _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) :: ${progrStr}`);
   }
 

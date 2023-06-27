@@ -538,13 +538,15 @@ function timed_marker(color, fromLeftPrc, fromTopPx, durationSec)
 
 
 // Example: timed_progress_bar("black", 80, 10, 200, 11) 
-function timed_progress_bar(color, currTimePrc, currLineFullTime, fromTopPx,
+function timed_progress_bar(color, currTimePrc, currLineFullTime,
+                            fromTopPx, fromLeftPxOrNegative,
                             durationSec)
 {
   var el = document.createElement("div");
   el.id = "SCROLLER-PROGRESS-BAR";
-  // TODO: use monospaced font for the progress-bar
-  el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:75%;background-color:lightgrey;color:${color};font-family:monospace;fontWeight:bold`);
+  const fromLeft = (fromLeftPxOrNegative >= 0)? `${fromLeftPxOrNegative}px`
+                                              : "75%";
+  el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:${fromLeft};background-color:lightgrey;color:${color};font-family:monospace;fontWeight:bold`);
   el.style.fontSize = `${g_progressBar_fontSize}px`;
   const str = format_progress_bar_str(currTimePrc/100.0, currLineFullTime,
                 g_minTimeInOneLineSec, g_progressBar_numCellsForMinFullTime);
