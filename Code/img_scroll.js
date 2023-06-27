@@ -48,6 +48,7 @@ var g_minTimeInOneLineBeat = -1;
 var g_minTimeInOneLineSec = -1;
 
 var g_maxScoreImageWidth = -1;
+var g_minLineHeight = -1;
 
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
                           g_scoreLines, g_linePlayOrder, g_numLinesInStep);
