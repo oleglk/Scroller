@@ -540,7 +540,7 @@ function timed_marker(color, fromLeftPrc, fromTopPx, durationSec)
 // Example: timed_progress_bar("black", 80, 10, 200, 11) 
 function timed_progress_bar(color, currTimePrc, currLineFullTime,
                             fromTopPx, fromLeftPxOrNegative,
-                            durationSec, fontSizeOrNegative)
+                            durationSec, fontSizeOrNegative, checkMinLine=true)
 {
   var el = document.createElement("div");
   el.id = "SCROLLER-PROGRESS-BAR";
@@ -550,7 +550,7 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime,
   el.style.fontSize = (fontSizeOrNegative > 0)? `${fontSizeOrNegative}px`
                                               : `${g_progressBar_fontSize}px`;
   const str = format_progress_bar_str(currTimePrc/100.0, currLineFullTime,
-                g_minTimeInOneLineSec, g_progressBar_numCellsForMinFullTime);
+      g_minTimeInOneLineSec, g_progressBar_numCellsForMinFullTime, checkMinLine);
   el.innerHTML = str;
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
@@ -565,11 +565,11 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime,
  * .....  final   == 12 {(50):5 => (120):ceil((1.0*120)*(5/50))}
  */
 function format_progress_bar_str(position_0to1,
-                                 fullTime, minFullTime, numCellsForMinFullTime)
+                fullTime, minFullTime, numCellsForMinFullTime, checkMinLine=true)
 {
   const emptyCh = "-";   const filledCh = ">";
   if ( (position_0to1 < 0) || (position_0to1 > 1.0) ||
-       (fullTime < Math.floor(minFullTime)) )
+       (checkMinLine && (fullTime < Math.floor(minFullTime))) )
     throw new Error(`-E- Invalid parameters for progress bar: (pos=${position_0to1}, full=${fullTime}, minFull=floor(${minFullTime}), ...)`);
 //debugger;  // OK_TMP
   // minFullTime - numCellsForMinFullTime
@@ -635,6 +635,12 @@ function alert_without_notice(message)
 //   TODO
 // }
 
+
+// const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
+// Usage: await async_sleep(1)
+async function async_sleep(delaySec)  {
+  return  new Promise((resolve) => setTimeout(resolve, delaySec*1000));
+}
 /*******************************************************************************
  ** END: common utilities                                                   **
 *******************************************************************************/

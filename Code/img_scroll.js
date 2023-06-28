@@ -368,7 +368,7 @@ async function show_and_process_help_and_tempo_dialog()
 
 
 // Automatic-scroll-mode handler of scroll-start
-function scroll_start_handler(event)
+async function scroll_start_handler(event)
 {
   event.preventDefault();
   // Unfortunately event prevention blocks timed alert
@@ -378,11 +378,23 @@ function scroll_start_handler(event)
 
   if ( g_currStep == -1 ) {
     g_currStep = 0;
+    // start delay with timed_progress_bar
+    const startDelaySec = 4;
+    timed_progress_bar("black",
+         5/*%*/, startDelaySec, g_minLineHeight, 1.01*g_maxScoreImageWidth,
+         1/*period (sec)*/, Math.floor(g_minLineHeight), /*checkMinLine=*/false);
+    await async_sleep(startDelaySec + 0.5);
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
   } else if ( g_scrollIsOn == true )  {
     g_currStep = 0;
+    // start delay with timed_progress_bar
+    const startDelaySec = 4;
+    timed_progress_bar("black",
+         5/*%*/, startDelaySec, g_minLineHeight, 1.01*g_maxScoreImageWidth,
+         1/*period (sec)*/, Math.floor(g_minLineHeight), /*checkMinLine=*/false);
+    await async_sleep(startDelaySec + 0.5);
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
@@ -397,6 +409,12 @@ function scroll_start_handler(event)
     const newStep = find_nearest_matching_position(g_scoreStations,
                                                   currWinY, g_currStep);
     rec = filter_positions(g_scoreStations)[newStep];
+    // start delay with timed_progress_bar
+    const startDelaySec = 4;
+    timed_progress_bar("black",
+         5/*%*/, startDelaySec, g_minLineHeight, 1.01*g_maxScoreImageWidth,
+         1/*period (sec)*/, Math.floor(g_minLineHeight), /*checkMinLine=*/false);
+    await async_sleep(startDelaySec + 0.5);
     msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
     console.log(msg);
     g_currStep = newStep;
@@ -406,6 +424,12 @@ function scroll_start_handler(event)
   }
   g_scrollIsOn = true;
   rec = filter_positions(g_scoreStations)[g_currStep];
+  // // start delay with timed_progress_bar
+  // const startDelaySec = 4;
+  // timed_progress_bar("black",
+  //        5/*%*/, startDelaySec, g_minLineHeight, 1.01*g_maxScoreImageWidth,
+  //        1/*period (sec)*/, Math.floor(g_minLineHeight), /*checkMinLine=*/false);
+  // await async_sleep(startDelaySec + 0.5);
   scroll_perform_one_step(g_currStep);
 }
 /* To facilitate passing parameters to event handlers, use an anonymous function
