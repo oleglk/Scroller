@@ -370,6 +370,7 @@ async function show_and_process_help_and_tempo_dialog()
 // Automatic-scroll-mode handler of scroll-start
 async function scroll_start_handler(event)
 {
+  let countDownMsg = "";
   event.preventDefault();
   // Unfortunately event prevention blocks timed alert
   //~ /* Keep the rest of the handlers from being executed
@@ -379,52 +380,44 @@ async function scroll_start_handler(event)
   if ( !g_stepManual && g_scrollIsOn ) { return }//double-start - silently ignore
   if ( g_currStep == -1 ) {
     g_currStep = 0;
-    // start delay with countdown display
-    await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
-                              "Second(s) left till start from top:");
+    countDownMsg = "Second(s) left till start from top:";
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
-    timed_alert(msg, 2/*sec*/);
+    //timed_alert(msg, 2/*sec*/);
   } else if ( g_scrollIsOn == true )  {
     g_currStep = 0;
-    // start delay with countdown display
-    await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
-                              "Second(s) left till start from top:");
+    countDownMsg = "Second(s) left till start from top:";
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
-    timed_alert(msg, 2/*sec*/);
+    //timed_alert(msg, 2/*sec*/);
   } else if ( g_currStep  >= filter_positions(g_scoreStations).length )  {
     g_currStep = 0;
-    // start delay with countdown display
-    await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
-                              "Second(s) left till restart from top:");
+    countDownMsg = "Second(s) left till restart from top:";
     msg = `RESTART SCROLLING FROM THE TOP`;
     console.log(msg);
-    timed_alert(msg, 2/*sec*/);
+    //timed_alert(msg, 2/*sec*/);
   } else  {  // g_scrollIsOn == false
     // check if manually scrolled while being paused
     const currWinY = get_scroll_current_y();
     const newStep = find_nearest_matching_position(g_scoreStations,
                                                   currWinY, g_currStep);
     rec = filter_positions(g_scoreStations)[newStep];
-    // start delay with countdown display
-    await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
-                          `Second(s) left till resume from step ${g_currStep}:`);
+    countDownMsg = `Second(s) left till resume from step ${g_currStep}:`;
     msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
     console.log(msg);
     g_currStep = newStep;
-    timed_alert(msg, 2/*sec*/);
+    //timed_alert(msg, 2/*sec*/);
     // it immediately scrolls, since the step is already advanced
     // TODO: is the above OK?
   }
   g_scrollIsOn = true;
   rec = filter_positions(g_scoreStations)[g_currStep];
-  // // start delay with timed_progress_bar
-  // const startDelaySec = 4;
-  // timed_progress_bar("black",
-  //        5/*%*/, startDelaySec, g_minLineHeight, 1.01*g_maxScoreImageWidth,
-  //        1/*period (sec)*/, Math.floor(g_minLineHeight), /*checkMinLine=*/false);
-  // await async_sleep(startDelaySec + 0.5);
+
+  // start delay with countdown display
+  await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
+                                  countDownMsg);
+  timed_alert(msg, 2/*sec*/);
+
   scroll_perform_one_step(g_currStep);
 }
 /* To facilitate passing parameters to event handlers, use an anonymous function
