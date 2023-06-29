@@ -376,6 +376,7 @@ async function scroll_start_handler(event)
   //~ *   (and it prevents the event from bubbling up the DOM tree) */
   //~ event.stopImmediatePropagation();
 
+  if ( !g_stepManual && g_scrollIsOn ) { return }//double-start - silently ignore
   if ( g_currStep == -1 ) {
     g_currStep = 0;
     // start delay with countdown display
