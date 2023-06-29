@@ -391,11 +391,15 @@ async function scroll_start_handler(event)
     console.log(msg);
     //timed_alert(msg, 2/*sec*/);
   } else if ( g_currStep  >= filter_positions(g_scoreStations).length )  {
-    g_currStep = 0;
-    countDownMsg = "Second(s) left till restart from top:";
-    msg = `RESTART SCROLLING FROM THE TOP`;
+    msg = "Already beyound the end"
     console.log(msg);
-    //timed_alert(msg, 2/*sec*/);
+    timed_alert(msg, 2/*sec*/);
+    return;  // essentially ignored
+    //~ g_currStep = 0;
+    //~ countDownMsg = "Second(s) left till restart from top:";
+    //~ msg = `RESTART SCROLLING FROM THE TOP`;
+    //~ console.log(msg);
+    //~ //timed_alert(msg, 2/*sec*/);
   } else  {  // g_scrollIsOn == false
     // check if manually scrolled while being paused
     const currWinY = get_scroll_current_y();
