@@ -378,28 +378,25 @@ async function scroll_start_handler(event)
 
   if ( g_currStep == -1 ) {
     g_currStep = 0;
-    // start delay with timed_progress_bar
-    const startDelaySec = 4;
-    timed_progress_bar("black",
-         5/*%*/, startDelaySec, g_minLineHeight, 1.01*g_maxScoreImageWidth,
-         1/*period (sec)*/, Math.floor(g_minLineHeight), /*checkMinLine=*/false);
-    await async_sleep(startDelaySec + 0.5);
+    // start delay with countdown display
+    await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
+                              "Second(s) left till start from top:");
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
   } else if ( g_scrollIsOn == true )  {
     g_currStep = 0;
-    // start delay with timed_progress_bar
-    const startDelaySec = 4;
-    timed_progress_bar("black",
-         5/*%*/, startDelaySec, g_minLineHeight, 1.01*g_maxScoreImageWidth,
-         1/*period (sec)*/, Math.floor(g_minLineHeight), /*checkMinLine=*/false);
-    await async_sleep(startDelaySec + 0.5);
+    // start delay with countdown display
+    await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
+                              "Second(s) left till start from top:");
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
   } else if ( g_currStep  >= filter_positions(g_scoreStations).length )  {
     g_currStep = 0;
+    // start delay with countdown display
+    await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
+                              "Second(s) left till restart from top:");
     msg = `RESTART SCROLLING FROM THE TOP`;
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
@@ -409,12 +406,9 @@ async function scroll_start_handler(event)
     const newStep = find_nearest_matching_position(g_scoreStations,
                                                   currWinY, g_currStep);
     rec = filter_positions(g_scoreStations)[newStep];
-    // start delay with timed_progress_bar
-    const startDelaySec = 4;
-    timed_progress_bar("black",
-         5/*%*/, startDelaySec, g_minLineHeight, 1.01*g_maxScoreImageWidth,
-         1/*period (sec)*/, Math.floor(g_minLineHeight), /*checkMinLine=*/false);
-    await async_sleep(startDelaySec + 0.5);
+    // start delay with countdown display
+    await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
+                          `Second(s) left till resume from step ${g_currStep}:`);
     msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
     console.log(msg);
     g_currStep = newStep;

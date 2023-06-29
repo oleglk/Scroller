@@ -540,7 +540,7 @@ function timed_marker(color, fromLeftPrc, fromTopPx, durationSec)
 // Example: timed_progress_bar("black", 80, 10, 200, 11) 
 function timed_progress_bar(color, currTimePrc, currLineFullTime,
                             fromTopPx, fromLeftPxOrNegative,
-                            durationSec, fontSizeOrNegative, checkMinLine=true)
+                            durationSec, fontSizeOrNegative,)
 {
   var el = document.createElement("div");
   el.id = "SCROLLER-PROGRESS-BAR";
@@ -550,7 +550,7 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime,
   el.style.fontSize = (fontSizeOrNegative > 0)? `${fontSizeOrNegative}px`
                                               : `${g_progressBar_fontSize}px`;
   const str = format_progress_bar_str(currTimePrc/100.0, currLineFullTime,
-      g_minTimeInOneLineSec, g_progressBar_numCellsForMinFullTime, checkMinLine);
+      g_minTimeInOneLineSec, g_progressBar_numCellsForMinFullTime);
   el.innerHTML = str;
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
@@ -565,11 +565,11 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime,
  * .....  final   == 12 {(50):5 => (120):ceil((1.0*120)*(5/50))}
  */
 function format_progress_bar_str(position_0to1,
-                fullTime, minFullTime, numCellsForMinFullTime, checkMinLine=true)
+                fullTime, minFullTime, numCellsForMinFullTime)
 {
   const emptyCh = "-";   const filledCh = ">";
   if ( (position_0to1 < 0) || (position_0to1 > 1.0) ||
-       (checkMinLine && (fullTime < Math.floor(minFullTime))) )
+       (fullTime < Math.floor(minFullTime)) )
     throw new Error(`-E- Invalid parameters for progress bar: (pos=${position_0to1}, full=${fullTime}, minFull=floor(${minFullTime}), ...)`);
 //debugger;  // OK_TMP
   // minFullTime - numCellsForMinFullTime
@@ -585,6 +585,58 @@ function format_progress_bar_str(position_0to1,
   //return  filledCh.repeat(curr) + emptyCh.repeat(full - curr) +" :  "+secDescr;
   return  secDescr + " " + filledCh.repeat(curr) + emptyCh.repeat(full - curr);
 }
+
+
+// Runs and displays countdown with the caller thread waiting
+async function async_wait_with_countdown(delaySec, periodSec, headerStr)
+{
+  if ( delaySec < periodSec )
+    throw new Error(`-E- Invalid countdown with delay (${delaySec}) < period (${periodSec}`);
+  // start delay with countdown display
+  start_or_update_countdown("Second(s) left till start:", "red",
+                  delaySec, delaySec,
+                  20/*(%) fromTop...*/, "10%"/*fromLeft...*/,
+                  periodSec, Math.floor(g_minLineHeight/4)/*fontSize...*/);
+  return  async_sleep(delaySec + 0.5);
+}
+
+
+// Creates or updates countdown message
+function start_or_update_countdown(headerStr, color, timeLeftSec, initialTimeSec,
+                            fromTopPrc, fromLeftPxOrPrcStr,
+                            periodSec, fontSizeOrNegative)
+{
+  const _cntDnId = "SCROLLER-COUNTDOWN";
+  const fontSize = (fontSizeOrNegative < 0)? g_progressBar_fontSize
+        : fontSizeOrNegative;
+  let divCreatedNow = false;
+  var el = document.getElementById(_cntDnId);
+  if ( el === null )  {
+    //console.log("-D- Creating countdown HTML box");
+    divCreatedNow = true;
+    el = document.createElement("div");
+    el.id = _cntDnId;
+    el.setAttribute("style", `position:fixed;top:${fromTopPrc}%;left:${fromLeftPxOrPrcStr};background-color:lightgrey;color:${color};font-family:monospace;fontWeight:bold`);
+    el.style.fontSize = `${fontSize}px`;
+  } else {
+    //console.log("-D- Reusing pre-existent countdown HTML box");
+    divCreatedNow = false;
+  }
+  const str = `${headerStr}\<br/>==> ${String(timeLeftSec).padStart(2, '0')}`;
+  el.innerHTML = str;
+  const nextLeftSec = Math.max(timeLeftSec - periodSec, 0);
+  if ( nextLeftSec > 0 )  // next time: update time-left
+    setTimeout( start_or_update_countdown, 1000*periodSec,
+                headerStr, color,    nextLeftSec,    initialTimeSec,
+                fromTopPrc, fromLeftPxOrPrcStr,
+                periodSec, fontSize );
+  else                    // next time: delete
+    setTimeout( () => {el.parentNode.removeChild(el);}, 1000*periodSec );
+  if ( divCreatedNow )
+    document.body.appendChild(el);
+  return  str;
+}
+
 
 
 /*******************************************************************************
