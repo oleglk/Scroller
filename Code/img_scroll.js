@@ -378,17 +378,32 @@ async function scroll_start_handler(event)
   //~ event.stopImmediatePropagation();
 //debugger;  //OK_TMP
   if ( !g_stepManual && g_scrollIsOn ) { return }//double-start - silently ignore
-  if ( g_currStep == -1 ) {
+  
+  const numPositions = filter_positions(g_scoreStations).length;
+  const currWinY = get_scroll_current_y();
+  let newStep = g_currStep;  // may differ if manually scrolled while paused
+  if ( g_scrollIsOn == false )  {
+    // check if manually scrolled while being paused;  TODO: MAYBE DEACTIVATE?
+    let stepToLookAround = g_currStep;
+    if ( stepToLookAround < 0 )
+      stepToLookAround = 0;
+    else if ( stepToLookAround >= numPositions )
+      stepToLookAround = numPositions - 1;
+    newStep = find_nearest_matching_position(g_scoreStations,
+                                     currWinY, stepToLookAround);
+  }
+
+  if ( newStep == 0 /*g_currStep == -1*/ ) {
     g_currStep = 0;
     countDownMsg = "Second(s) left till start from top:";
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
-  } else if ( g_scrollIsOn == true )  {
+  } else if ( g_scrollIsOn == true /*newStep == g_currStep*/ )  { // ?what for?
     g_currStep = 0;
     countDownMsg = "Second(s) left till start from top:";
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
-  } else if ( g_currStep  >= filter_positions(g_scoreStations).length )  {
+  } else if ( newStep >= numPositions )  {
     msg = "Already beyound the end"
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
@@ -398,10 +413,7 @@ async function scroll_start_handler(event)
     //~ msg = `RESTART SCROLLING FROM THE TOP`;
     //~ console.log(msg);
   } else  {  // g_scrollIsOn == false
-    // check if manually scrolled while being paused;  TODO: MAYBE DEACTIVATE?
-    const currWinY = get_scroll_current_y();
-    const newStep = find_nearest_matching_position(g_scoreStations,
-                                                  currWinY, g_currStep);
+    // if manually scrolled while being paused, change step;  TODO: MAYBE DEACTIVATE?
     rec = filter_positions(g_scoreStations)[newStep];
     countDownMsg = `Second(s) left till resume from step ${newStep}:`;
     msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
