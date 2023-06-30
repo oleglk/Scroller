@@ -593,9 +593,8 @@ async function async_wait_with_countdown(delaySec, periodSec, headerStr)
   if ( delaySec < periodSec )
     throw new Error(`-E- Invalid countdown with delay (${delaySec}) < period (${periodSec}`);
   // start delay with countdown display
-  start_or_update_countdown("Second(s) left till start:", "red",
-                  delaySec, delaySec,
-                  20/*(%) fromTop...*/, "10%"/*fromLeft...*/,
+  start_or_update_countdown(headerStr, "black", delaySec, delaySec,
+                  20/*(%) fromTop...*/, "5%"/*fromLeft...*/,
                   periodSec, Math.floor(g_minLineHeight/4)/*fontSize...*/);
   return  async_sleep(delaySec + 0.5);
 }

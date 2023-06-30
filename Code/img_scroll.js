@@ -376,41 +376,37 @@ async function scroll_start_handler(event)
   //~ /* Keep the rest of the handlers from being executed
   //~ *   (and it prevents the event from bubbling up the DOM tree) */
   //~ event.stopImmediatePropagation();
-
+//debugger;  //OK_TMP
   if ( !g_stepManual && g_scrollIsOn ) { return }//double-start - silently ignore
   if ( g_currStep == -1 ) {
     g_currStep = 0;
     countDownMsg = "Second(s) left till start from top:";
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
-    //timed_alert(msg, 2/*sec*/);
   } else if ( g_scrollIsOn == true )  {
     g_currStep = 0;
     countDownMsg = "Second(s) left till start from top:";
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
-    //timed_alert(msg, 2/*sec*/);
   } else if ( g_currStep  >= filter_positions(g_scoreStations).length )  {
     msg = "Already beyound the end"
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
     return;  // essentially ignored
-    //~ g_currStep = 0;
+    //~ g_currStep = 0;  // automatic jump to top - DEACTIVATED
     //~ countDownMsg = "Second(s) left till restart from top:";
     //~ msg = `RESTART SCROLLING FROM THE TOP`;
     //~ console.log(msg);
-    //~ //timed_alert(msg, 2/*sec*/);
   } else  {  // g_scrollIsOn == false
-    // check if manually scrolled while being paused
+    // check if manually scrolled while being paused;  TODO: MAYBE DEACTIVATE?
     const currWinY = get_scroll_current_y();
     const newStep = find_nearest_matching_position(g_scoreStations,
                                                   currWinY, g_currStep);
     rec = filter_positions(g_scoreStations)[newStep];
-    countDownMsg = `Second(s) left till resume from step ${g_currStep}:`;
+    countDownMsg = `Second(s) left till resume from step ${newStep}:`;
     msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
     console.log(msg);
     g_currStep = newStep;
-    //timed_alert(msg, 2/*sec*/);
     // it immediately scrolls, since the step is already advanced
     // TODO: is the above OK?
   }
