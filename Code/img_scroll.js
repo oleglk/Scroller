@@ -25,7 +25,7 @@ window.addEventListener( 'unhandledrejection', function (e) {
 
 
 //////// Begin: scroller application configuration stuff ///////////////////////
-const g_numLinesInStep = 2; // HARDCODED(!) number of lines to scroll in one step
+const g_numLinesInStep = 1; // 1|2 HARDCODED(!) number of lines to scroll in one step
 const g_progressShowPeriodSec = 1;
 const g_progressBar_numCellsForMinFullTime = 3;
 const g_progressBar_fontSize = 25;

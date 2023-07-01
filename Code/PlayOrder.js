@@ -195,6 +195,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     ////for ( const [i, playedLine] of this.linePlayOrder.entries() )  {}
     // TODO: any precautions to ensure last line(s) are visible in the last step?
     for ( let i = 0;  i < this.linePlayOrder.length;  i += numLinesInStep )  {
+      let isFirst = (i == 0);
+      //let isLast  = (i == (this.linePlayOrder.length - 1));
       let playedLine = this.linePlayOrder[i];
       let scoreLine  = this.scoreDataLines.find(
         (element, index, array) => ((element.pageId  == playedLine.pageId) &&
@@ -204,14 +206,28 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
         console.log(err);  console.trace();  alert(err);
         return  null;
       }
+      // prefer scroll to the line before the one played to give spare time
+      let prevPlayedLine = (isFirst)? null : this.linePlayOrder[i-1];
+      let prevScoreLine  = (isFirst)? null : this.scoreDataLines.find(
+        (element,index,array) => ((element.pageId  == prevPlayedLine.pageId) &&
+                                  (element.lineIdx == prevPlayedLine.lineIdx)));
+      if ( !isFirst && (prevPlayedLine == undefined) )  {
+        err = `Missing score data line page:${prevPlayedLine.pageId}, local-index=${prevPlayedLine.lineIdx}`;
+        console.log(err);  console.trace();  alert(err);
+        return  null;
+      }
       let stepTag = "step:" + zero_pad(scoreStationsArray.length, 2);
-      
+      const scoreLineToScrollTo = (!isFirst)? prevScoreLine : scoreLine;
+      // TODO: from which line to take 'pageId'+'lineIdx' ???
+      // !!! TODO: special treatment to 'bottom' line if played several times!!!
+      // !!! (Example: the last line in Papirossen) !!!
+
       let station = { tag:           stepTag,
                       pageId:        this.playedLinePageOccurences[i],
                       origImgPageId: playedLine.pageId,
                       lineOnPageIdx: playedLine.lineIdx,
                       x:             0,
-                      y:             scoreLine.yOnPage,
+                      y:             scoreLineToScrollTo.yOnPage,
                       timeSec:       playedLine.timeBeat * 60.0 / this.tempo};
       scoreStationsArray.push( station );
     }
