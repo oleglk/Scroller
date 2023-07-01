@@ -217,15 +217,18 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
         return  null;
       }
       let stepTag = "step:" + zero_pad(scoreStationsArray.length, 2);
-      const scoreLineToScrollTo = (!isFirst)? prevScoreLine : scoreLine;
+      const playedLineToScrollTo = (!isFirst)? prevPlayedLine : playedLine;
+      const scoreLineToScrollTo = (!isFirst)? prevScoreLine  : scoreLine;
+      const pageOccIdToScrollTo = (!isFirst)? this.playedLinePageOccurences[i-1]
+                                            : this.playedLinePageOccurences[i];
       // TODO: from which line to take 'pageId'+'lineIdx' ???
       // !!! TODO: special treatment to 'bottom' line if played several times!!!
       // !!! (Example: the last line in Papirossen) !!!
 
       let station = { tag:           stepTag,
-                      pageId:        this.playedLinePageOccurences[i],
-                      origImgPageId: playedLine.pageId,
-                      lineOnPageIdx: playedLine.lineIdx,
+                      pageId:        pageOccIdToScrollTo,
+                      origImgPageId: playedLineToScrollTo.pageId,
+                      lineOnPageIdx: playedLineToScrollTo.lineIdx,
                       x:             0,
                       y:             scoreLineToScrollTo.yOnPage,
                       timeSec:       playedLine.timeBeat * 60.0 / this.tempo};
