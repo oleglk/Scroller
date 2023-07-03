@@ -552,9 +552,7 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime,
   const str = format_progress_bar_str(currTimePrc/100.0, currLineFullTime,
       g_minTimeInOneLineSec, PF.progressBar_numCellsForMinFullTime);
   el.innerHTML = str;
-  // whenever possible, remove progress bar before scrolling to the next station
-  let removeAfterSec = (currTimePrc < 50)? durationSec : (durationSec - 0.1);
-  setTimeout( () => {el.parentNode.removeChild(el);}, 1000*removeAfterSec );
+  setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
   return  str;
 }

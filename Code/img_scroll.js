@@ -895,14 +895,17 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
   [xInWinPrc, pageOccId, yOnPage] = allMarkers[tSecFromStationBegin];
   const fromTopPx = convert_y_img_to_window(pageOccId, yOnPage);
   console.log(`-D- Called _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) => X=${xInWinPrc}%, pageOccId='${pageOccId}', Y=${yOnPage}:${fromTopPx}`);
+  // if possible, remove progress indicator before scrolling to the next station
+  let removeAfterSec = (tSecFromStationBegin < (allMarkers.length-2))?
+                  PF.progressShowPeriodSec : (PF.progressShowPeriodSec - 0.1);
   if ( 0 )
-    timed_marker("red", xInWinPrc, fromTopPx, PF.progressShowPeriodSec);
+    timed_marker("red", xInWinPrc, fromTopPx, removeAfterSec);
   else  {
     let currLineFullTime = timePerLine.get(fromTopPx);
 //debugger;  //OK_TMP
     let progrStr = timed_progress_bar("black",
               xInWinPrc, currLineFullTime, fromTopPx, 1.01*g_maxScoreImageWidth,
-              PF.progressShowPeriodSec, Math.floor(g_minLineHeight/5.0));
+              removeAfterSec, Math.floor(g_minLineHeight/5.0));
     console.log(`-D- _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) :: ${progrStr}`);
   }
 
