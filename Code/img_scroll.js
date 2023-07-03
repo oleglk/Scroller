@@ -31,15 +31,25 @@ const g_ScrollerPreferances = {
     progressBar_numCellsForMinFullTime: 3,  // shortest progress bar (char-s)
     progressBar_fontSize: 25,
 };
-const PF = g_ScrollerPreferances;   // shprtcut to preferances
+const PF = g_ScrollerPreferances;   // shortcut to preferances
 //////// End:   scroller application configuration stuff ///////////////////////
+
+
+//////// Begin: raw inputs for a particular score //////////////////////////////
+const g_ScoreRawInputs = {
+  scoreName: g_scoreName,
+  scoreLines: g_scoreLines, /*{tag:STR, pageId:STR, x:INT, y:INT, timeBeat:FLOAT}*/
+  linePlayOrder: g_linePlayOrder, /*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
+  pageImgPathsMap: g_pageImgPathsMap, /*{pageId(STR) : path(STR)*/
+};
+const RI = g_ScoreRawInputs;   // shortcut to per-score raw inputs
+//////// End:   raw inputs for a particular score //////////////////////////////
 
 
 //////// Begin: prepare global data for the scroller and start it ///////////////
 
 // (the global collections to be filled must be declared on the top level)
 var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
-var g_imgPageOccurences = null; // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
 var g_playedLinePageOccurences = null;  // (index in 'linePlayOrder') => occId
 
 // 'g_perStationScorePositionMarkers' serves for play-progress indication in auto-scroll mode
@@ -53,8 +63,8 @@ var g_minTimeInOneLineSec = -1;
 var g_maxScoreImageWidth = -1;
 var g_minLineHeight = -1;
 
-arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
-                          g_scoreLines, g_linePlayOrder, PF.numLinesInStep);
+arrange_score_global_data(RI.scoreName, RI.pageImgPathsMap,
+                          RI.scoreLines, RI.linePlayOrder, PF.numLinesInStep);
 // at this stage 'g_scoreStations' is built, but times reflect default tempo
 
 //(meaningless - will not wait for:)  modal_alert("OK_TMP: Test modal_alert()");
@@ -231,7 +241,7 @@ async function scroll__onload(event)
   let pageName = `Scroll: ${remove_filename_extension(fileName)}`;
   document.title = pageName;
 
-  verify_score_lines_sanity(g_scoreLines);                     // aborts on error
+  verify_score_lines_sanity(RI.scoreLines);                     // aborts on error
   verify_all_image_occurences_rendering(g_imgPageOccurences);  // aborts on error
 
   //  try {
@@ -352,10 +362,10 @@ async function show_and_process_help_and_tempo_dialog()
     g_minTimeInOneLineSec = g_minTimeInOneLineBeat * 60.0 / g_tempo;
     modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${g_tempo} BEAT(s)/SEC`;
     // auto mode can show progress, build 'g_perStationScorePositionMarkers'
-    const tmp_scoreDataLines = filter_and_massage_positions(g_scoreLines);
+    const tmp_scoreDataLines = filter_and_massage_positions(RI.scoreLines);
     g_perStationScorePositionMarkers = [];  // prepare for completely new values
     PlayOrder.recompute_times_in_score_stations_array(
-                   g_scoreStations, g_tempo, PF.numLinesInStep, g_linePlayOrder,
+                   g_scoreStations, g_tempo, PF.numLinesInStep, RI.linePlayOrder,
                    tmp_scoreDataLines, g_playedLinePageOccurences,
                    g_perStationScorePositionMarkers);
   }
