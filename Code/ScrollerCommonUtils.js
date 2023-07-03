@@ -548,9 +548,9 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime,
                                               : "75%";
   el.setAttribute("style", `position:absolute;top:${fromTopPx}px;left:${fromLeft};background-color:lightgrey;color:${color};font-family:monospace;fontWeight:bold`);
   el.style.fontSize = (fontSizeOrNegative > 0)? `${fontSizeOrNegative}px`
-                                              : `${g_progressBar_fontSize}px`;
+                                              : `${PF.progressBar_fontSize}px`;
   const str = format_progress_bar_str(currTimePrc/100.0, currLineFullTime,
-      g_minTimeInOneLineSec, g_progressBar_numCellsForMinFullTime);
+      g_minTimeInOneLineSec, PF.progressBar_numCellsForMinFullTime);
   el.innerHTML = str;
   // whenever possible, remove progress bar before scrolling to the next station
   let removeAfterSec = (currTimePrc < 50)? durationSec : (durationSec - 0.1);
@@ -608,8 +608,8 @@ function start_or_update_countdown(headerStr, color, timeLeftSec, initialTimeSec
                             periodSec, fontSizeOrNegative)
 {
   const _cntDnId = "SCROLLER-COUNTDOWN";
-  const fontSize = (fontSizeOrNegative < 0)? g_progressBar_fontSize
-        : fontSizeOrNegative;
+  const fontSize = (fontSizeOrNegative < 0)? PF.progressBar_fontSize
+                                           : fontSizeOrNegative;
   let divCreatedNow = false;
   var el = document.getElementById(_cntDnId);
   if ( el === null )  {

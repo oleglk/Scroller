@@ -25,10 +25,13 @@ window.addEventListener( 'unhandledrejection', function (e) {
 
 
 //////// Begin: scroller application configuration stuff ///////////////////////
-const g_numLinesInStep = 1; // 1|2 HARDCODED(!) number of lines to scroll in one step
-const g_progressShowPeriodSec = 1;
-const g_progressBar_numCellsForMinFullTime = 3;
-const g_progressBar_fontSize = 25;
+const g_ScrollerPreferances = {
+    numLinesInStep: 1, // 1|2 HARDCODED(!) number of lines to scroll in one step
+    progressShowPeriodSec: 1,   // progress bar (or marker) update period
+    progressBar_numCellsForMinFullTime: 3,  // shortest progress bar (char-s)
+    progressBar_fontSize: 25,
+};
+const PF = g_ScrollerPreferances;   // shprtcut to preferances
 //////// End:   scroller application configuration stuff ///////////////////////
 
 
@@ -51,7 +54,7 @@ var g_maxScoreImageWidth = -1;
 var g_minLineHeight = -1;
 
 arrange_score_global_data(g_scoreName, g_pageImgPathsMap,
-                          g_scoreLines, g_linePlayOrder, g_numLinesInStep);
+                          g_scoreLines, g_linePlayOrder, PF.numLinesInStep);
 // at this stage 'g_scoreStations' is built, but times reflect default tempo
 
 //(meaningless - will not wait for:)  modal_alert("OK_TMP: Test modal_alert()");
@@ -352,7 +355,7 @@ async function show_and_process_help_and_tempo_dialog()
     const tmp_scoreDataLines = filter_and_massage_positions(g_scoreLines);
     g_perStationScorePositionMarkers = [];  // prepare for completely new values
     PlayOrder.recompute_times_in_score_stations_array(
-                   g_scoreStations, g_tempo, g_numLinesInStep, g_linePlayOrder,
+                   g_scoreStations, g_tempo, PF.numLinesInStep, g_linePlayOrder,
                    tmp_scoreDataLines, g_playedLinePageOccurences,
                    g_perStationScorePositionMarkers);
   }
@@ -696,10 +699,10 @@ function scroll_schedule(currDelaySec, descr)
   if ( g_perStationScorePositionMarkers !== null )  {
     if ( g_progressTimerId != 0 )
       clearTimeout(g_progressTimerId); //kill old progress-indicator timer if any
-    console.log(`-I- Scheduling progress indication every ${g_progressShowPeriodSec} second(s) for step ${g_currStep-1}`);
+    console.log(`-I- Scheduling progress indication every ${PF.progressShowPeriodSec} second(s) for step ${g_currStep-1}`);
     if ( (g_currStep-1) >= filter_positions(g_scoreStations).length )
       throw new Error(`-E- Step number ${g_currStep} too big`);
-    //const periodMsec = g_progressShowPeriodSec * 1000;
+    //const periodMsec = PF.progressShowPeriodSec * 1000;
     g_progressTimerId = setTimeout(
       _progress_timer_handler, 0/*start indication immediately*/,
       g_currStep-1, 0/*1st indication for current step*/ );
@@ -883,21 +886,21 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
   const fromTopPx = convert_y_img_to_window(pageOccId, yOnPage);
   console.log(`-D- Called _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) => X=${xInWinPrc}%, pageOccId='${pageOccId}', Y=${yOnPage}:${fromTopPx}`);
   if ( 0 )
-    timed_marker("red", xInWinPrc, fromTopPx, g_progressShowPeriodSec);
+    timed_marker("red", xInWinPrc, fromTopPx, PF.progressShowPeriodSec);
   else  {
     let currLineFullTime = timePerLine.get(fromTopPx);
 //debugger;  //OK_TMP
     let progrStr = timed_progress_bar("black",
               xInWinPrc, currLineFullTime, fromTopPx, 1.01*g_maxScoreImageWidth,
-              g_progressShowPeriodSec, Math.floor(g_minLineHeight/5.0));
+              PF.progressShowPeriodSec, Math.floor(g_minLineHeight/5.0));
     console.log(`-D- _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) :: ${progrStr}`);
   }
 
   // if not at end, schedule next indication
-  if ( tSecFromStationBegin < (allMarkers.length - g_progressShowPeriodSec) )
+  if ( tSecFromStationBegin < (allMarkers.length - PF.progressShowPeriodSec) )
     g_progressTimerId = setTimeout(
-      _progress_timer_handler, g_progressShowPeriodSec * 1000/*msec*/,
-      iStation, tSecFromStationBegin + g_progressShowPeriodSec) ;
+      _progress_timer_handler, PF.progressShowPeriodSec * 1000/*msec*/,
+      iStation, tSecFromStationBegin + PF.progressShowPeriodSec) ;
 }
 
 
