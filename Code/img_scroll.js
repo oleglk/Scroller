@@ -46,6 +46,29 @@ const RI = g_ScoreRawInputs;   // shortcut to per-score raw inputs
 //////// End:   raw inputs for a particular score //////////////////////////////
 
 
+//////// Begin: processed/massaged input data for a particular score ///////////
+const g_ScoreMassagedDataInputs = {
+  maxScoreImageWidth: null;
+
+  scoreStations: null;
+
+  playedLinePageOccurences: null;
+  
+  perStationScorePositionMarkers: null;
+
+  imgPageOccurences: null;
+
+  pageLineHeights: null;
+
+  minLineHeight: null;
+
+  minTimeInOneLineBeat: null;
+};
+//////// End: processed/massaged input data for a particular score ///////////
+
+
+
+
 //////// Begin: prepare global data for the scroller and start it ///////////////
 
 // (the global collections to be filled must be declared on the top level)
