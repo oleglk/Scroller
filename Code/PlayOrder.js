@@ -310,8 +310,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
         if ( scoreline === undefined )
           throw new Error(`-E- Missing score line record for page '${playedLine.pageId}' line ${playedLine.lineIdx}`);
         console.log(`-D- Computing progress markers for line {${playedLine}}(yOnPage=${scoreline.yOnPage}) for step ${iStation}`);
-        const lineHeight = (g_pageLineHeights !== null)? // use if already built
-              g_pageLineHeights.get(scoreline.pageId/*orig img*/) : 0;
+        const lineHeight = (PD.pageLineHeights !== null)? // use if already built
+              PD.pageLineHeights.get(scoreline.pageId/*orig img*/) : 0;
         timeInStationBeat += playedLine.timeBeat;
         if ( perStationScorePositionMarkersArray !== null )  {
           for ( let t = 0;  t <= playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {

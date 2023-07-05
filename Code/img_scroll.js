@@ -48,22 +48,18 @@ const RI = g_ScoreRawInputs;   // shortcut to per-score raw inputs
 
 //////// Begin: processed/massaged input data for a particular score ///////////
 const g_ScoreMassagedDataInputs = {
-  maxScoreImageWidth: null;
-
-  scoreStations: null;
-
-  playedLinePageOccurences: null;
-  
-  perStationScorePositionMarkers: null;
-
-  imgPageOccurences: null;
-
-  pageLineHeights: null;
-
-  minLineHeight: null;
-
-  minTimeInOneLineBeat: null;
+  scoreStations: null, // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
+  playedLinePageOccurences: null,  // (index in 'linePlayOrder') => occId
+  // 'perStationScorePositionMarkers' serves for play-progress indication in auto-scroll mode
+  perStationScorePositionMarkers: null,  // [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
+  pageLineHeights: null,  // image/pageId :: estimated-line-height
+  // min play duration of a line in the score - in beats and in seconds
+  minTimeInOneLineBeat: -1,
+  minTimeInOneLineSec: -1,
+  maxScoreImageWidth: -1,
+  minLineHeight: -1,
 };
+const PD = g_ScoreMassagedDataInputs;  // shortcut to per-score processed inputs
 //////// End: processed/massaged input data for a particular score ///////////
 
 
@@ -71,24 +67,10 @@ const g_ScoreMassagedDataInputs = {
 
 //////// Begin: prepare global data for the scroller and start it ///////////////
 
-// (the global collections to be filled must be declared on the top level)
-var g_scoreStations = null; // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
-var g_playedLinePageOccurences = null;  // (index in 'linePlayOrder') => occId
-
-// 'g_perStationScorePositionMarkers' serves for play-progress indication in auto-scroll mode
-var g_perStationScorePositionMarkers = null;  // [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
-var g_pageLineHeights = null;  // image/pageId :: estimated-line-height
-
-// min play duration of a line in the score - in beats and in seconds
-var g_minTimeInOneLineBeat = -1;
-var g_minTimeInOneLineSec = -1;
-
-var g_maxScoreImageWidth = -1;
-var g_minLineHeight = -1;
 
 arrange_score_global_data(RI.scoreName, RI.pageImgPathsMap,
                           RI.scoreLines, RI.linePlayOrder, PF.numLinesInStep);
-// at this stage 'g_scoreStations' is built, but times reflect default tempo
+// at this stage 'PD.scoreStations' is built, but times reflect default tempo
 
 //(meaningless - will not wait for:)  modal_alert("OK_TMP: Test modal_alert()");
 
@@ -127,7 +109,7 @@ var   _g_singleClickTimer = null;
 
 //////////////////// Assume existence of the following global variables: ////////
 // g_imgPageOccurences : array of {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
-// g_scoreStations : array of {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
+// PD.scoreStations : array of {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -155,7 +137,7 @@ register_window_event_listener("load", wrap__scroll__onload);
 
 function build_help_string(showHeader, showFooter, modeManual=g_stepManual)
 {
-  const numStations = filter_positions(g_scoreStations).length;
+  const numStations = filter_positions(PD.scoreStations).length;
   let ret = "";
   if ( showHeader ) {
     ret +=  `
@@ -220,29 +202,29 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
                                plo.imgPageOccurences
                               );
   await iml.render_images();  //...await completion to access image widths
-  g_maxScoreImageWidth = iml.get_max_score_image_width();
+  PD.maxScoreImageWidth = iml.get_max_score_image_width();
 
   // ... the copy will be 2-level deep - fine for the task
-  g_scoreStations = plo.scoreStations.map(a => {return {...a}});
+  PD.scoreStations = plo.scoreStations.map(a => {return {...a}});
 
   // ... the copy will be 1-level deep - fine for the task
-  g_playedLinePageOccurences = [...plo.playedLinePageOccurences];
+  PD.playedLinePageOccurences = [...plo.playedLinePageOccurences];
   
   // true deep-copy - [..., [..., [xInWinPrc, occId, yOnPage], ...], ...]
-  // (at this time 'g_perStationScorePositionMarkers' built for default tempo)
-  g_perStationScorePositionMarkers = JSON.parse(
+  // (at this time 'PD.perStationScorePositionMarkers' built for default tempo)
+  PD.perStationScorePositionMarkers = JSON.parse(
                          JSON.stringify( plo.perStationScorePositionMarkers ));
 
   // ... the copy will be 2-level deep - fine for the task
   g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
 
   // Map is deep-cloned
-  g_pageLineHeights = new Map(
+  PD.pageLineHeights = new Map(
     JSON.parse(JSON.stringify([...plo.pageLineHeights])));
 
-  g_minLineHeight = Math.min(... g_pageLineHeights.values());
+  PD.minLineHeight = Math.min(... PD.pageLineHeights.values());
 
-  g_minTimeInOneLineBeat = Math.min.apply(null,
+  PD.minTimeInOneLineBeat = Math.min.apply(null,
                         linePlayOrderArray.map(function(a){return a.timeBeat}));
 }
 
@@ -268,7 +250,7 @@ async function scroll__onload(event)
   verify_all_image_occurences_rendering(g_imgPageOccurences);  // aborts on error
 
   //  try {
-    const posDescrStr = positions_toString(g_scoreStations, "\n");
+    const posDescrStr = positions_toString(PD.scoreStations, "\n");
     console.log(`All score steps \n =========\n${posDescrStr}\n =========`);
   // } catch (e) {
   //   console.log(e);
@@ -299,10 +281,10 @@ async function scroll__onload(event)
   g_totalHeight = get_scroll_height();
 
   let scrollToPos = -1;
-  const numStations = filter_positions(g_scoreStations).length;
+  const numStations = filter_positions(PD.scoreStations).length;
   if ( g_currStep < 0 )  {
     // scroll to the very first ocuurence of any page
-    const firstPageOccId = filter_positions(g_scoreStations)[0].pageId;
+    const firstPageOccId = filter_positions(PD.scoreStations)[0].pageId;
     const firstPage = document.getElementById(firstPageOccId);
     scrollToPos = firstPage.offsetTop;
     //alert(`Page onload event; scroll to the first page (${firstPageOccId}) at y=${scrollToPos}`);
@@ -310,7 +292,7 @@ async function scroll__onload(event)
     g_currStep = (g_stepManual)? 0 : -1;
   } else if ( g_currStep < numStations )  {
     // scroll to step 'g_currStep'
-    const rec = filter_positions(g_scoreStations)[g_currStep];
+    const rec = filter_positions(PD.scoreStations)[g_currStep];
     scrollToPos = convert_y_img_to_window(rec.pageId, rec.y);
     console.log(`-D- Initial scroll to step ${g_currStep} at y=${scrollToPos}`);
   } else {
@@ -370,7 +352,7 @@ async function show_and_process_help_and_tempo_dialog()
   if ( (tempoStr == "") || (tempoStr == "0") )  {
     g_stepManual = true;
     g_tempo = 0;
-    g_perStationScorePositionMarkers = null; //manual mode - cannot show progress
+    PD.perStationScorePositionMarkers = null; //manual mode - cannot show progress
     modeMsg = "MANUAL-STEP MODE SELECTED";
   } else  {
     const tempo = Number(tempoStr);
@@ -382,15 +364,15 @@ async function show_and_process_help_and_tempo_dialog()
     }
     g_stepManual = false;
     g_tempo = tempo;  // beat/min
-    g_minTimeInOneLineSec = g_minTimeInOneLineBeat * 60.0 / g_tempo;
+    PD.minTimeInOneLineSec = PD.minTimeInOneLineBeat * 60.0 / g_tempo;
     modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${g_tempo} BEAT(s)/SEC`;
-    // auto mode can show progress, build 'g_perStationScorePositionMarkers'
+    // auto mode can show progress, build 'PD.perStationScorePositionMarkers'
     const tmp_scoreDataLines = filter_and_massage_positions(RI.scoreLines);
-    g_perStationScorePositionMarkers = [];  // prepare for completely new values
+    PD.perStationScorePositionMarkers = [];  // prepare for completely new values
     PlayOrder.recompute_times_in_score_stations_array(
-                   g_scoreStations, g_tempo, PF.numLinesInStep, RI.linePlayOrder,
-                   tmp_scoreDataLines, g_playedLinePageOccurences,
-                   g_perStationScorePositionMarkers);
+                   PD.scoreStations, g_tempo, PF.numLinesInStep, RI.linePlayOrder,
+                   tmp_scoreDataLines, PD.playedLinePageOccurences,
+                   PD.perStationScorePositionMarkers);
   }
   console.log("-I- " + modeMsg);
   let statusMsg = modeMsg + "\<br\><br\>" + _status_descr(g_currStep, -1);
@@ -415,7 +397,7 @@ async function scroll_start_handler(event)
 //debugger;  //OK_TMP
   if ( !g_stepManual && g_scrollIsOn ) { return }//double-start - silently ignore
   
-  const numPositions = filter_positions(g_scoreStations).length;
+  const numPositions = filter_positions(PD.scoreStations).length;
   const currWinY = get_scroll_current_y();
   let newStep = g_currStep;  // may differ if manually scrolled while paused
   if ( g_scrollIsOn == false )  {
@@ -425,7 +407,7 @@ async function scroll_start_handler(event)
       stepToLookAround = 0;
     else if ( stepToLookAround >= numPositions )
       stepToLookAround = numPositions - 1;
-    newStep = find_nearest_matching_position(g_scoreStations,
+    newStep = find_nearest_matching_position(PD.scoreStations,
                                      currWinY, stepToLookAround);
   }
 
@@ -450,7 +432,7 @@ async function scroll_start_handler(event)
     //~ console.log(msg);
   } else  {  // g_scrollIsOn == false
     // if manually scrolled while being paused, change step;  TODO: MAYBE DEACTIVATE?
-    rec = filter_positions(g_scoreStations)[newStep];
+    rec = filter_positions(PD.scoreStations)[newStep];
     countDownMsg = `Second(s) left till resume from step ${newStep}:`;
     msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
     console.log(msg);
@@ -459,7 +441,7 @@ async function scroll_start_handler(event)
     // TODO: is the above OK?
   }
   g_scrollIsOn = true;
-  rec = filter_positions(g_scoreStations)[g_currStep];
+  rec = filter_positions(PD.scoreStations)[g_currStep];
 
   // start delay with countdown display
   await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
@@ -487,7 +469,7 @@ function scroll_stop_handler(event)
   if ( g_progressTimerId != 0 )
     clearTimeout(g_progressTimerId);  // kill old progress-indicator timer if any
 
-  rec = filter_positions(g_scoreStations)[g_currStep];
+  rec = filter_positions(PD.scoreStations)[g_currStep];
   winY = get_scroll_current_y();
   msg = `STOP/PAUSE SCROLLING AT STEP ${rec.tag}::${one_position_toString(g_currStep, rec)};  POSITION ${winY}`;
   console.log(msg);
@@ -527,7 +509,7 @@ function manual_step_forth_handler(event)
   *   (and it prevents the event from bubbling up the DOM tree) */
   event.stopImmediatePropagation();
 
-  const nSteps = filter_positions(g_scoreStations).length;
+  const nSteps = filter_positions(PD.scoreStations).length;
   if ( g_currStep >= (nSteps - 1) )  {
     msg = `ALREADY AT THE END`;
     console.log(msg);
@@ -595,7 +577,7 @@ function _manual_one_step(stepIncrement)
     alert(msg);
     return
   }
-  const nSteps = filter_positions(g_scoreStations).length;
+  const nSteps = filter_positions(PD.scoreStations).length;
   if ( (g_currStep < 0) || (g_currStep >= nSteps) ) {
     msg = `-E- Invalid step ${g_currStep}; should be 0..${nSteps-1}; jump to the begining`;
     console.trace();
@@ -610,14 +592,14 @@ function _manual_one_step(stepIncrement)
   let newStep = -1; 
 ////debugger;   // OK_TMP
   if ( g_permitManualScroll && (currWinY != g_lastJumpedToWinY) )   {
-    newStep = find_nearest_matching_position(g_scoreStations,
+    newStep = find_nearest_matching_position(PD.scoreStations,
                                                 currWinY, g_currStep);
     console.log(`-I- Manual scroll to winY=${currWinY} detected`);
   } else {
     // not scrolled manually or scrolled not enough, so go one 'stepIncrement'
     newStep = g_currStep + stepIncrement; 
   }
-  rec = filter_positions(g_scoreStations)[newStep];
+  rec = filter_positions(PD.scoreStations)[newStep];
   const actionStr = (newStep == (g_currStep + stepIncrement))?
                                 ((stepIncrement < 0)? "BACK":"FORTH") : "JUMP"; 
   msg = `${actionStr} TO STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (previous step was ${g_currStep})`;
@@ -655,7 +637,7 @@ async function restart_handler(event)
       cancel:                 "Cancel",
     } );
   
-  const numStations = filter_positions(g_scoreStations).length;
+  const numStations = filter_positions(PD.scoreStations).length;
   let showStep = -1;
   if (      g_currStep <  0           )  showStep = 0;
   else if ( g_currStep >= numStations )  showStep = numStations - 1;
@@ -729,11 +711,11 @@ function scroll_schedule(currDelaySec, descr)
                                      stepMsg);
 
   // scheduled scroll to step #j, meanwhile step #j-1 is progressing
-  if ( g_perStationScorePositionMarkers !== null )  {
+  if ( PD.perStationScorePositionMarkers !== null )  {
     if ( g_progressTimerId != 0 )
       clearTimeout(g_progressTimerId); //kill old progress-indicator timer if any
     console.log(`-I- Scheduling progress indication every ${PF.progressShowPeriodSec} second(s) for step ${g_currStep-1}`);
-    if ( (g_currStep-1) >= filter_positions(g_scoreStations).length )
+    if ( (g_currStep-1) >= filter_positions(PD.scoreStations).length )
       throw new Error(`-E- Step number ${g_currStep} too big`);
     //const periodMsec = PF.progressShowPeriodSec * 1000;
     g_progressTimerId = setTimeout(
@@ -763,7 +745,7 @@ function messge_onKeyPress(event)
 function scroll_perform_one_step(stepNum, msgForTimedAlert="")
 {
 ////throw new Error("OK_TMP: test UI event handlers and auto-scroll");
-  const stationsDataLines = filter_positions(g_scoreStations);
+  const stationsDataLines = filter_positions(PD.scoreStations);
   if ( !g_stepManual && !g_scrollIsOn )  { return }
   if ( (stepNum < 0) || (stepNum >= stationsDataLines.length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
@@ -773,7 +755,7 @@ function scroll_perform_one_step(stepNum, msgForTimedAlert="")
     return  0;
   }
   //  {tag:"line-001-Begin", pageId: "pg01:01, origImgPageId:"pg01", x:0, y:656,  timeSec:g_fullLineInSec"}
-  // note, in 'g_scoreStations' pageId is occurence-id
+  // note, in 'PD.scoreStations' pageId is occurence-id
   const rec = stationsDataLines[stepNum];
   const targetPos = convert_y_img_to_window(rec.pageId, rec.y);
 
@@ -882,7 +864,7 @@ async function modal_alert(msg)
 
 function _status_descr(stepIdx, timeInStateOrNegative)
 {
-  const numSteps = filter_positions(g_scoreStations).length;
+  const numSteps = filter_positions(PD.scoreStations).length;
   let showStep = -1;
   if (      stepIdx <  0           )  showStep = 0;
   else if ( stepIdx >= numSteps    )  showStep = numSteps - 1;
@@ -903,13 +885,13 @@ function _status_descr(stepIdx, timeInStateOrNegative)
 
 function _progress_timer_handler(iStation, tSecFromStationBegin)
 {
-  if ( g_perStationScorePositionMarkers === null )
+  if ( PD.perStationScorePositionMarkers === null )
     throw new Error("-E- Progress position markers unavailable");
-  //g_perStationScorePositionMarkers[i] = [..., [xInWinPrc, occId, yOnPage], ...]
-  const nStations = g_perStationScorePositionMarkers.length;
-  if ( iStation >= nStations/*filter_positions(g_scoreStations).length*/ )
+  //PD.perStationScorePositionMarkers[i] = [..., [xInWinPrc, occId, yOnPage], ...]
+  const nStations = PD.perStationScorePositionMarkers.length;
+  if ( iStation >= nStations/*filter_positions(PD.scoreStations).length*/ )
     throw new Error(`-E- Progress position markers for score-step #${iStation} unavailable; expected 0...${nStations-1}`);
-  const allMarkers = g_perStationScorePositionMarkers[iStation];  // one per sec
+  const allMarkers = PD.perStationScorePositionMarkers[iStation];  // one per sec
   let timePerLine = _derive_time_per_line_from_marker_positions(iStation);
   // allMarkers[0]:0sec, allMarkers[1]:1sec, etc.
   if ( (tSecFromStationBegin < 0 ) ||
@@ -927,8 +909,8 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
     let currLineFullTime = timePerLine.get(fromTopPx);
 //debugger;  //OK_TMP
     let progrStr = timed_progress_bar("black",
-              xInWinPrc, currLineFullTime, fromTopPx, 1.01*g_maxScoreImageWidth,
-              removeAfterSec, Math.floor(g_minLineHeight/5.0));
+              xInWinPrc, currLineFullTime, fromTopPx, 1.01*PD.maxScoreImageWidth,
+              removeAfterSec, Math.floor(PD.minLineHeight/5.0));
     console.log(`-D- _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) :: ${progrStr}`);
   }
 
@@ -944,7 +926,7 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
 // TODO: memoize
 function _derive_time_per_line_from_marker_positions(iStation)
 {
-  const markers = g_perStationScorePositionMarkers[iStation];  // one per sec
+  const markers = PD.perStationScorePositionMarkers[iStation];  // one per sec
   let timePerLine = new Map();  // yOnPage :: time-on-this-y
   let prevStartTime = 0;
 //debugger;  // OK_TMP  

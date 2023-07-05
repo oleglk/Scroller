@@ -550,7 +550,7 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime,
   el.style.fontSize = (fontSizeOrNegative > 0)? `${fontSizeOrNegative}px`
                                               : `${PF.progressBar_fontSize}px`;
   const str = format_progress_bar_str(currTimePrc/100.0, currLineFullTime,
-      g_minTimeInOneLineSec, PF.progressBar_numCellsForMinFullTime);
+      PD.minTimeInOneLineSec, PF.progressBar_numCellsForMinFullTime);
   el.innerHTML = str;
   setTimeout( () => {el.parentNode.removeChild(el);}, 1000*durationSec );
   document.body.appendChild(el);
@@ -595,7 +595,7 @@ async function async_wait_with_countdown(delaySec, periodSec, headerStr)
   // start delay with countdown display
   start_or_update_countdown(headerStr, "black", delaySec, delaySec,
                   20/*(%) fromTop...*/, "5%"/*fromLeft...*/,
-                  periodSec, Math.floor(g_minLineHeight/4)/*fontSize...*/);
+                  periodSec, Math.floor(PD.minLineHeight/4)/*fontSize...*/);
   return  async_sleep(delaySec + 0.5);
 }
 
