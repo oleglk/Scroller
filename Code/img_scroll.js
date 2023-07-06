@@ -26,10 +26,17 @@ window.addEventListener( 'unhandledrejection', function (e) {
 
 //////// Begin: scroller application configuration stuff ///////////////////////
 const g_ScrollerPreferances = {
-    numLinesInStep: 1, // 1|2 HARDCODED(!) number of lines to scroll in one step
-    progressShowPeriodSec: 1,   // progress bar (or marker) update period
-    progressBar_numCellsForMinFullTime: 3,  // shortest progress bar (char-s)
-    progressBar_fontSize: 25,
+  numLinesInStep: 1, // 1|2 HARDCODED(!) number of lines to scroll in one step
+  progressShowPeriodSec: 1,   // progress bar (or marker) update period
+  progressBar_numCellsForMinFullTime: 3,  // shortest progress bar (char-s)
+  progressBar_fontSize: 25,
+  /* Manual Scroll    == compute next position based on current scroll.
+   * No Manual Scroll == compute next position based on current step, ignore scroll position.
+   * (Do not confuse "Manual Scroll" with "Manual Step".)
+   * Disclaimer: manual scroll isn't properly debugged. */
+  permitManualScroll: false,  // 
+  ///
+  _singleClickDelayMs: 400,  // to ignore single-click upon double-click
 };
 const PF = g_ScrollerPreferances;   // shortcut to preferances
 //////// End:   scroller application configuration stuff ///////////////////////
@@ -48,6 +55,7 @@ const RI = g_ScoreRawInputs;   // shortcut to per-score raw inputs
 
 //////// Begin: processed/massaged input data for a particular score ///////////
 const g_ScoreMassagedDataInputs = {
+  imgPageOccurences: null, // [{occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}]
   scoreStations: null, // [{tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}]
   playedLinePageOccurences: null,  // (index in 'linePlayOrder') => occId
   // 'perStationScorePositionMarkers' serves for play-progress indication in auto-scroll mode
@@ -63,6 +71,25 @@ const PD = g_ScoreMassagedDataInputs;  // shortcut to per-score processed inputs
 //////// End: processed/massaged input data for a particular score ///////////
 
 
+//////// Begin: runtime/state variables of the current session /////////////////
+const g_RunTimeState = {
+  helpAndTempoDialog: null,
+  stepManual: true,         // false: auto-scroll, true: manual-stepping
+  totalHeight: -1,          // for document scroll height
+  currStep: -1,             // pos in score; same as station; -1 == not started
+  scrollIsOn: false,        // whether auto-croll is currently running
+  lastJumpedToWinY: -1,     // will track scroll-Y positions
+  _clickCount: 0,           // for ignoring single-click upon double-click
+  /////// Begin: global timer IDs ///////////////////////////////////////////////
+  _singleClickTimer: null,  // for ignoring single-click upon double-click
+  nextTimerIntervalId: 0,
+  progressTimerId: 0,
+  ////// End:   global timer IDs ///////////////////////////////////////////////
+};
+const RT = g_RunTimeState;  // shortcut to runtime/state
+//////// End: runtime/state variables of the current session /////////////////
+
+
 
 
 //////// Begin: prepare global data for the scroller and start it ///////////////
@@ -76,39 +103,11 @@ arrange_score_global_data(RI.scoreName, RI.pageImgPathsMap,
 
 //(does not work) import Dialog from './ModalDialog.js';
 
-let g_helpAndTempoDialog = null;
 const _g_htmlStatusBoxId = "SCROLLER-STATUS_BOX";
 
-/* Manual Scroll    == compute next position based on current scroll.
- * No Manual Scroll == compute next position based on current step, ignore scroll position.
- * (Do not confuse "Manual Scroll" with "Manual Step".)
- * Disclaimer: manual scroll isn't properly debugged. */
-const g_permitManualScroll = false;  // 
-
-
-var g_stepManual = true;  // false = auto-scroll, true = manual-stepping
-
-var g_totalHeight = -1; // for document scroll height
-var g_currStep = -1;  // not started
-var g_scrollIsOn = false;
-
-var g_lastJumpedToWinY = -1;  // will track scroll-Y positions
-
-
-//////// Begin: global timer IDs ///////////////////////////////////////////////
-var g_nextTimerIntervalId = 0;
-var g_progressTimerId = 0;
-//////// End:   global timer IDs ///////////////////////////////////////////////
-
-
-//////// settings and variables for ignoring single-click upon double-click ////
-const _g_singleClickDelayMs = 400;  //
-var   _g_clickCount = 0;  // for ignoring single-click upon double-click
-var   _g_singleClickTimer = null;
-/////////////////////////////////////////////////////////////////////////////////
 
 //////////////////// Assume existence of the following global variables: ////////
-// g_imgPageOccurences : array of {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
+// PD.imgPageOccurences : array of {occId:STR, pageId:STR, firstLine:INT, lastLine:INT, yTop:INT, yBottom:INT}
 // PD.scoreStations : array of {tag:STR, pageId:STR=occID, [origImgPageId:STR], x:INT, y:INT, timeSec:FLOAT}
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -135,7 +134,7 @@ register_window_event_listener("load", wrap__scroll__onload);
 
 ////////// Utilities ///////////////////////////////////////////////////////////
 
-function build_help_string(showHeader, showFooter, modeManual=g_stepManual)
+function build_help_string(showHeader, showFooter, modeManual=RT.stepManual)
 {
   const numStations = filter_positions(PD.scoreStations).length;
   let ret = "";
@@ -163,9 +162,9 @@ function build_help_string(showHeader, showFooter, modeManual=g_stepManual)
   if ( showFooter )  {
     ret += "\n\n========================================";
     let showStep = -1;
-    if (      g_currStep <  0           )  showStep = 0;
-    else if ( g_currStep >= numStations )  showStep = numStations - 1;
-    else                                   showStep = g_currStep;
+    if (      RT.currStep <  0           )  showStep = 0;
+    else if ( RT.currStep >= numStations )  showStep = numStations - 1;
+    else                                   showStep = RT.currStep;
     ret += `
 > > > > CURRENT STEP is ${showStep} out of 0...${numStations-1} < < < <`;
   }
@@ -216,7 +215,7 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
                          JSON.stringify( plo.perStationScorePositionMarkers ));
 
   // ... the copy will be 2-level deep - fine for the task
-  g_imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
+  PD.imgPageOccurences = plo.imgPageOccurences.map(a => {return {...a}});
 
   // Map is deep-cloned
   PD.pageLineHeights = new Map(
@@ -229,7 +228,7 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
 }
 
 
-// Initiates scrolling operation starting from the current step 'g_currStep'
+// Initiates scrolling operation starting from the current step 'RT.currStep'
 // Scrolls to line-01
 async function scroll__onload(event)
 {
@@ -247,7 +246,7 @@ async function scroll__onload(event)
   document.title = pageName;
 
   verify_score_lines_sanity(RI.scoreLines);                     // aborts on error
-  verify_all_image_occurences_rendering(g_imgPageOccurences);  // aborts on error
+  verify_all_image_occurences_rendering(PD.imgPageOccurences);  // aborts on error
 
   //  try {
     const posDescrStr = positions_toString(PD.scoreStations, "\n");
@@ -263,7 +262,7 @@ async function scroll__onload(event)
 
   // Assign event handlers according to the operation mode
   // To facilitate passing parameters to event handlers, use an anonymous function
-  if ( !g_stepManual )  {
+  if ( !RT.stepManual )  {
     register_window_event_listener( "click",
                                     wrap__scroll_stop_handler);
     register_window_event_listener( "contextmenu",
@@ -278,35 +277,35 @@ async function scroll__onload(event)
   register_window_event_listener(   "dblclick",
                                     wrap__restart_handler);
   
-  g_totalHeight = get_scroll_height();
+  RT.totalHeight = get_scroll_height();
 
   let scrollToPos = -1;
   const numStations = filter_positions(PD.scoreStations).length;
-  if ( g_currStep < 0 )  {
+  if ( RT.currStep < 0 )  {
     // scroll to the very first ocuurence of any page
     const firstPageOccId = filter_positions(PD.scoreStations)[0].pageId;
     const firstPage = document.getElementById(firstPageOccId);
     scrollToPos = firstPage.offsetTop;
     //alert(`Page onload event; scroll to the first page (${firstPageOccId}) at y=${scrollToPos}`);
     console.log(`-D- Initial scroll to the first page (${firstPageOccId}) at y=${scrollToPos}`);
-    g_currStep = (g_stepManual)? 0 : -1;
-  } else if ( g_currStep < numStations )  {
-    // scroll to step 'g_currStep'
-    const rec = filter_positions(PD.scoreStations)[g_currStep];
+    RT.currStep = (RT.stepManual)? 0 : -1;
+  } else if ( RT.currStep < numStations )  {
+    // scroll to step 'RT.currStep'
+    const rec = filter_positions(PD.scoreStations)[RT.currStep];
     scrollToPos = convert_y_img_to_window(rec.pageId, rec.y);
-    console.log(`-D- Initial scroll to step ${g_currStep} at y=${scrollToPos}`);
+    console.log(`-D- Initial scroll to step ${RT.currStep} at y=${scrollToPos}`);
   } else {
     // already after the end - tell not to scroll
-    scrollToPos = g_lastJumpedToWinY = get_scroll_current_y();
+    scrollToPos = RT.lastJumpedToWinY = get_scroll_current_y();
     console.log(`-D- Initial scroll rejected - already at the bottom - y=${scrollToPos}`);
-    g_currStep = numStations - 1;
+    RT.currStep = numStations - 1;
   }
-  if ( scrollToPos != g_lastJumpedToWinY )  {
+  if ( scrollToPos != RT.lastJumpedToWinY )  {
     // window.scrollTo({ top: scrollToPos, behavior: 'smooth'});
     window.scrollTo(0, scrollToPos);
-    g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'scrollToPos' ?
+    RT.lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'scrollToPos' ?
   }
-  g_scrollIsOn = false;
+  RT.scrollIsOn = false;
 }
 // wrapper had to be moved to the top - before the 1st use
 
@@ -321,12 +320,12 @@ async function scroll__onload(event)
  * Returns true on success, false on error */
 async function show_and_process_help_and_tempo_dialog()
 {
-  let defaultTempo = (g_stepManual)? 0 : g_tempo;
+  let defaultTempo = (RT.stepManual)? 0 : g_tempo;
   let helpStr = build_help_string(1,0, 1, 1) + "\n" + build_help_string(0,1, 0) +
       `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
 
   // build the prompt-dialog so that it cannot be canceled
-  g_helpAndTempoDialog = new Dialog(
+  RT.helpAndTempoDialog = new Dialog(
     {
       eventsToBlockWhileOpen: ['click', 'contextmenu', 'dblclick'],
       supportCancel:          false,
@@ -336,7 +335,7 @@ async function show_and_process_help_and_tempo_dialog()
   window.addEventListener("keydown", _confirm_escape_handler);
 
   ////////const tempoStr = window.prompt( helpStr, defaultTempo);
-  const res = await g_helpAndTempoDialog.prompt( helpStr, defaultTempo );
+  const res = await RT.helpAndTempoDialog.prompt( helpStr, defaultTempo );
 
   window.removeEventListener("keydown", _confirm_escape_handler);
 
@@ -350,7 +349,7 @@ async function show_and_process_help_and_tempo_dialog()
   let tempoStr = ('prompt' in formData)? formData.prompt : "MISSING";
   let modeMsg = "UNDEF"
   if ( (tempoStr == "") || (tempoStr == "0") )  {
-    g_stepManual = true;
+    RT.stepManual = true;
     g_tempo = 0;
     PD.perStationScorePositionMarkers = null; //manual mode - cannot show progress
     modeMsg = "MANUAL-STEP MODE SELECTED";
@@ -362,7 +361,7 @@ async function show_and_process_help_and_tempo_dialog()
       console.log("-E- " + err);      alert(err);
       return  false;
     }
-    g_stepManual = false;
+    RT.stepManual = false;
     g_tempo = tempo;  // beat/min
     PD.minTimeInOneLineSec = PD.minTimeInOneLineBeat * 60.0 / g_tempo;
     modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${g_tempo} BEAT(s)/SEC`;
@@ -375,11 +374,11 @@ async function show_and_process_help_and_tempo_dialog()
                    PD.perStationScorePositionMarkers);
   }
   console.log("-I- " + modeMsg);
-  let statusMsg = modeMsg + "\<br\><br\>" + _status_descr(g_currStep, -1);
+  let statusMsg = modeMsg + "\<br\><br\>" + _status_descr(RT.currStep, -1);
   sticky_alert(statusMsg, _g_htmlStatusBoxId);
   timed_alert(modeMsg +
-              ((g_stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
-              (g_stepManual)? 1.5 : 5);
+              ((RT.stepManual)? "" : "\<br\><br\>RIGHT-CLICK TO START SCROLLING"),
+              (RT.stepManual)? 1.5 : 5);
 
   return  true;
 }
@@ -395,14 +394,14 @@ async function scroll_start_handler(event)
   //~ *   (and it prevents the event from bubbling up the DOM tree) */
   //~ event.stopImmediatePropagation();
 //debugger;  //OK_TMP
-  if ( !g_stepManual && g_scrollIsOn ) { return }//double-start - silently ignore
+  if ( !RT.stepManual && RT.scrollIsOn ) { return }//double-start - silently ignore
   
   const numPositions = filter_positions(PD.scoreStations).length;
   const currWinY = get_scroll_current_y();
-  let newStep = g_currStep;  // may differ if manually scrolled while paused
-  if ( g_scrollIsOn == false )  {
+  let newStep = RT.currStep;  // may differ if manually scrolled while paused
+  if ( RT.scrollIsOn == false )  {
     // check if manually scrolled while being paused;  TODO: MAYBE DEACTIVATE?
-    let stepToLookAround = g_currStep;
+    let stepToLookAround = RT.currStep;
     if ( stepToLookAround < 0 )
       stepToLookAround = 0;
     else if ( stepToLookAround >= numPositions )
@@ -411,13 +410,13 @@ async function scroll_start_handler(event)
                                      currWinY, stepToLookAround);
   }
 
-  if ( newStep == 0 /*g_currStep == -1*/ ) {
-    g_currStep = 0;
+  if ( newStep == 0 /*RT.currStep == -1*/ ) {
+    RT.currStep = 0;
     countDownMsg = "Second(s) left till start from top:";
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
-  } else if ( g_scrollIsOn == true /*newStep == g_currStep*/ )  { // ?what for?
-    g_currStep = 0;
+  } else if ( RT.scrollIsOn == true /*newStep == RT.currStep*/ )  { // ?what for?
+    RT.currStep = 0;
     countDownMsg = "Second(s) left till start from top:";
     msg = `START SCROLLING FROM THE TOP`;
     console.log(msg);
@@ -426,29 +425,29 @@ async function scroll_start_handler(event)
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
     return;  // essentially ignored
-    //~ g_currStep = 0;  // automatic jump to top - DEACTIVATED
+    //~ RT.currStep = 0;  // automatic jump to top - DEACTIVATED
     //~ countDownMsg = "Second(s) left till restart from top:";
     //~ msg = `RESTART SCROLLING FROM THE TOP`;
     //~ console.log(msg);
-  } else  {  // g_scrollIsOn == false
+  } else  {  // RT.scrollIsOn == false
     // if manually scrolled while being paused, change step;  TODO: MAYBE DEACTIVATE?
     rec = filter_positions(PD.scoreStations)[newStep];
     countDownMsg = `Second(s) left till resume from step ${newStep}:`;
-    msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${g_currStep})`;
+    msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${RT.currStep})`;
     console.log(msg);
-    g_currStep = newStep;
+    RT.currStep = newStep;
     // it immediately scrolls, since the step is already advanced
     // TODO: is the above OK?
   }
-  g_scrollIsOn = true;
-  rec = filter_positions(PD.scoreStations)[g_currStep];
+  RT.scrollIsOn = true;
+  rec = filter_positions(PD.scoreStations)[RT.currStep];
 
   // start delay with countdown display
   await async_wait_with_countdown(4/*start delay (sec)*/,  1/*period (sec)*/,
                                   countDownMsg);
   timed_alert(msg, 2/*sec*/);
 
-  scroll_perform_one_step(g_currStep);
+  scroll_perform_one_step(RT.currStep);
 }
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
@@ -463,15 +462,15 @@ function scroll_stop_handler(event)
   *   (and it prevents the event from bubbling up the DOM tree) */
   //event.stopImmediatePropagation();  // crucial because of alert inside handler!
 
-  if ( !g_scrollIsOn )  { return }  // double-stop - silently ignore
-  if ( g_currStep > 0 ) { g_currStep -= 1 }   // it was already advanced
+  if ( !RT.scrollIsOn )  { return }  // double-stop - silently ignore
+  if ( RT.currStep > 0 ) { RT.currStep -= 1 }   // it was already advanced
 
-  if ( g_progressTimerId != 0 )
-    clearTimeout(g_progressTimerId);  // kill old progress-indicator timer if any
+  if ( RT.progressTimerId != 0 )
+    clearTimeout(RT.progressTimerId);  // kill old progress-indicator timer if any
 
-  rec = filter_positions(PD.scoreStations)[g_currStep];
+  rec = filter_positions(PD.scoreStations)[RT.currStep];
   winY = get_scroll_current_y();
-  msg = `STOP/PAUSE SCROLLING AT STEP ${rec.tag}::${one_position_toString(g_currStep, rec)};  POSITION ${winY}`;
+  msg = `STOP/PAUSE SCROLLING AT STEP ${rec.tag}::${one_position_toString(RT.currStep, rec)};  POSITION ${winY}`;
   console.log(msg);
   alert(msg);
   scroll_abort();
@@ -482,17 +481,17 @@ function scroll_stop_handler(event)
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__scroll_stop_handler  = (event) => {
   event.preventDefault();
-  _g_clickCount++;
-  if (_g_clickCount === 1) {
-    _g_singleClickTimer = setTimeout(
+  RT._clickCount++;
+  if (RT._clickCount === 1) {
+    RT._singleClickTimer = setTimeout(
       function() {
-        _g_clickCount = 0;    scroll_stop_handler(event);
-      }, _g_singleClickDelayMs );
-    //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) ENGAGED`);
-  } else if (_g_clickCount === 2) {
-    clearTimeout(_g_singleClickTimer);
-    //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (stop)`);
-    _g_clickCount = 0;
+        RT._clickCount = 0;    scroll_stop_handler(event);
+      }, PF._singleClickDelayMs );
+    //console.log(`-D- RT._singleClickTimer(${RT._singleClickTimer}) ENGAGED`);
+  } else if (RT._clickCount === 2) {
+    clearTimeout(RT._singleClickTimer);
+    //console.log(`-D- RT._singleClickTimer(${RT._singleClickTimer}) CLEARED (stop)`);
+    RT._clickCount = 0;
     console.log("-D- Ignoring 2nd single-click");;
   }
   
@@ -510,7 +509,7 @@ function manual_step_forth_handler(event)
   event.stopImmediatePropagation();
 
   const nSteps = filter_positions(PD.scoreStations).length;
-  if ( g_currStep >= (nSteps - 1) )  {
+  if ( RT.currStep >= (nSteps - 1) )  {
     msg = `ALREADY AT THE END`;
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
@@ -535,7 +534,7 @@ function manual_step_back_handler(event)
   *   (and it prevents the event from bubbling up the DOM tree) */
   event.stopImmediatePropagation();
 
-  if ( g_currStep == 0 )  {
+  if ( RT.currStep == 0 )  {
     msg = `ALREADY AT THE BEGINNING`;
     console.log(msg);
     timed_alert(msg, 2/*sec*/);
@@ -549,18 +548,18 @@ function manual_step_back_handler(event)
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__manual_step_back_handler  = (event) => {
   event.preventDefault();
-  _g_clickCount++;
-  if (_g_clickCount === 1) {
-    _g_singleClickTimer = setTimeout(
+  RT._clickCount++;
+  if (RT._clickCount === 1) {
+    RT._singleClickTimer = setTimeout(
       function() {
-        _g_clickCount = 0;    manual_step_back_handler(event);
-      }, _g_singleClickDelayMs );
+        RT._clickCount = 0;    manual_step_back_handler(event);
+      }, PF._singleClickDelayMs );
     //console.trace();  // OK_TMP
-    //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) ENGAGED`);
-  } else if (_g_clickCount === 2) {
-    clearTimeout(_g_singleClickTimer);
-    //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (back)`);
-    _g_clickCount = 0;
+    //console.log(`-D- RT._singleClickTimer(${RT._singleClickTimer}) ENGAGED`);
+  } else if (RT._clickCount === 2) {
+    clearTimeout(RT._singleClickTimer);
+    //console.log(`-D- RT._singleClickTimer(${RT._singleClickTimer}) CLEARED (back)`);
+    RT._clickCount = 0;
     console.log("-D- Ignoring 2nd single-click");;
   }
   
@@ -578,12 +577,12 @@ function _manual_one_step(stepIncrement)
     return
   }
   const nSteps = filter_positions(PD.scoreStations).length;
-  if ( (g_currStep < 0) || (g_currStep >= nSteps) ) {
-    msg = `-E- Invalid step ${g_currStep}; should be 0..${nSteps-1}; jump to the begining`;
+  if ( (RT.currStep < 0) || (RT.currStep >= nSteps) ) {
+    msg = `-E- Invalid step ${RT.currStep}; should be 0..${nSteps-1}; jump to the begining`;
     console.trace();
     console.log(msg);
     alert(msg);
-    g_currStep = 0;
+    RT.currStep = 0;
     return;
   }
 
@@ -591,23 +590,23 @@ function _manual_one_step(stepIncrement)
   const currWinY = get_scroll_current_y();
   let newStep = -1; 
 ////debugger;   // OK_TMP
-  if ( g_permitManualScroll && (currWinY != g_lastJumpedToWinY) )   {
+  if ( PF.permitManualScroll && (currWinY != RT.lastJumpedToWinY) )   {
     newStep = find_nearest_matching_position(PD.scoreStations,
-                                                currWinY, g_currStep);
+                                                currWinY, RT.currStep);
     console.log(`-I- Manual scroll to winY=${currWinY} detected`);
   } else {
     // not scrolled manually or scrolled not enough, so go one 'stepIncrement'
-    newStep = g_currStep + stepIncrement; 
+    newStep = RT.currStep + stepIncrement; 
   }
   rec = filter_positions(PD.scoreStations)[newStep];
-  const actionStr = (newStep == (g_currStep + stepIncrement))?
+  const actionStr = (newStep == (RT.currStep + stepIncrement))?
                                 ((stepIncrement < 0)? "BACK":"FORTH") : "JUMP"; 
-  msg = `${actionStr} TO STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (previous step was ${g_currStep})`;
+  msg = `${actionStr} TO STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (previous step was ${RT.currStep})`;
   console.log(msg);
-  g_currStep = newStep;
+  RT.currStep = newStep;
   timed_alert(msg, 1/*sec*/);
   // in manual-step mode it should scroll immediately
-  scroll_perform_one_step(g_currStep);
+  scroll_perform_one_step(RT.currStep);
 }
 
 
@@ -616,7 +615,7 @@ async function restart_handler(event)
   // restart with confirmation in auto mode would require pause scrolling
   //    though (at least on Linux) double-click is hidden
   //    by modal stop-scrolling confirmation dialog
-  if ( !g_stepManual && g_scrollIsOn )  {
+  if ( !RT.stepManual && RT.scrollIsOn )  {
     msg = "-W- RESTART REQUESTS IGNORED UNTIL AUTO-SCROLL IS STOPPED";
     console.log(msg);
     timed_alert(msg, 1/*sec*/);
@@ -639,9 +638,9 @@ async function restart_handler(event)
   
   const numStations = filter_positions(PD.scoreStations).length;
   let showStep = -1;
-  if (      g_currStep <  0           )  showStep = 0;
-  else if ( g_currStep >= numStations )  showStep = numStations - 1;
-  else                                   showStep = g_currStep;
+  if (      RT.currStep <  0           )  showStep = 0;
+  else if ( RT.currStep >= numStations )  showStep = numStations - 1;
+  else                                   showStep = RT.currStep;
   
   const restartStr = `
 Press <OK> to re-select operation mode, <Cancel> to continue...
@@ -663,15 +662,15 @@ Press <OK> to re-select operation mode, <Cancel> to continue...
   register_specified_window_event_listeners(copyOfRegistry);
 
   //debugger;  // OK_TMP
-  clearTimeout(_g_singleClickTimer);// prevent delayed firing of single-click
-  //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (after-restart)`);
+  clearTimeout(RT._singleClickTimer);// prevent delayed firing of single-click
+  //console.log(`-D- RT._singleClickTimer(${RT._singleClickTimer}) CLEARED (after-restart)`);
 
   // 'res' is 'false' upon cancel or 'true' upon accept
   if ( res == true )  {
-    console.log(`Restart-from-step-${g_currStep} is confirmed`);
+    console.log(`Restart-from-step-${RT.currStep} is confirmed`);
     wrap__scroll__onload(event/*TODO: maybe extract onload worker function*/);
   } else {
-    console.log(`Restart-from-step-${g_currStep} is canceled; continuing`);
+    console.log(`Restart-from-step-${RT.currStep} is canceled; continuing`);
     timed_alert("... continuing ...", 3/*sec*/);
     return  false;
   }
@@ -688,8 +687,8 @@ Press <OK> to re-select operation mode, <Cancel> to continue...
 /* To facilitate passing parameters to event handlers, use an anonymous function
  * Wrap it by named wrapper to allow storing the handler for future removal */
 const wrap__restart_handler  = (event) => {
-  clearTimeout(_g_singleClickTimer);// prevent delayed firing of single-click
-  //console.log(`-D- _g_singleClickTimer(${_g_singleClickTimer}) CLEARED (before-restart)`);
+  clearTimeout(RT._singleClickTimer);// prevent delayed firing of single-click
+  //console.log(`-D- RT._singleClickTimer(${RT._singleClickTimer}) CLEARED (before-restart)`);
   restart_handler(event)
 }
 ///////////// End of handler functions ////////////////////////////////////////
@@ -697,39 +696,39 @@ const wrap__restart_handler  = (event) => {
 
 function scroll_schedule(currDelaySec, descr)
 {
-  if ( g_stepManual )  {
+  if ( RT.stepManual )  {
     console.log("-W- scroll_schedule() ignored in manual-step mode");
     return;
   }
 
-  // note, 'g_currStep' is already advanced!!!
+  // note, 'RT.currStep' is already advanced!!!
   console.log(`-I- Scheduling wait for ${currDelaySec} second(s) at ${descr}`);
 
-  const stepMsg = `... Just scrolled to step ${g_currStep} ...`;
-  g_nextTimerIntervalId = setTimeout(scroll_perform_one_step,
-                                     currDelaySec * 1000/*msec*/, g_currStep,
+  const stepMsg = `... Just scrolled to step ${RT.currStep} ...`;
+  RT.nextTimerIntervalId = setTimeout(scroll_perform_one_step,
+                                     currDelaySec * 1000/*msec*/, RT.currStep,
                                      stepMsg);
 
   // scheduled scroll to step #j, meanwhile step #j-1 is progressing
   if ( PD.perStationScorePositionMarkers !== null )  {
-    if ( g_progressTimerId != 0 )
-      clearTimeout(g_progressTimerId); //kill old progress-indicator timer if any
-    console.log(`-I- Scheduling progress indication every ${PF.progressShowPeriodSec} second(s) for step ${g_currStep-1}`);
-    if ( (g_currStep-1) >= filter_positions(PD.scoreStations).length )
-      throw new Error(`-E- Step number ${g_currStep} too big`);
+    if ( RT.progressTimerId != 0 )
+      clearTimeout(RT.progressTimerId); //kill old progress-indicator timer if any
+    console.log(`-I- Scheduling progress indication every ${PF.progressShowPeriodSec} second(s) for step ${RT.currStep-1}`);
+    if ( (RT.currStep-1) >= filter_positions(PD.scoreStations).length )
+      throw new Error(`-E- Step number ${RT.currStep} too big`);
     //const periodMsec = PF.progressShowPeriodSec * 1000;
-    g_progressTimerId = setTimeout(
+    RT.progressTimerId = setTimeout(
       _progress_timer_handler, 0/*start indication immediately*/,
-      g_currStep-1, 0/*1st indication for current step*/ );
+      RT.currStep-1, 0/*1st indication for current step*/ );
   }
 }
 
 
 function scroll_abort()
 {
-  g_scrollIsOn = false;
-  clearInterval(g_nextTimerIntervalId);
-  g_nextTimerIntervalId = 0;
+  RT.scrollIsOn = false;
+  clearInterval(RT.nextTimerIntervalId);
+  RT.nextTimerIntervalId = 0;
 }
 
 
@@ -746,7 +745,7 @@ function scroll_perform_one_step(stepNum, msgForTimedAlert="")
 {
 ////throw new Error("OK_TMP: test UI event handlers and auto-scroll");
   const stationsDataLines = filter_positions(PD.scoreStations);
-  if ( !g_stepManual && !g_scrollIsOn )  { return }
+  if ( !RT.stepManual && !RT.scrollIsOn )  { return }
   if ( (stepNum < 0) || (stepNum >= stationsDataLines.length) )  {
     console.log(`-I- At step number ${stepNum}; stop scrolling`);
     //sticky_alert(`Step ${stepNum}:\n stop scrolling`, _g_htmlStatusBoxId);
@@ -762,9 +761,9 @@ function scroll_perform_one_step(stepNum, msgForTimedAlert="")
   console.log(`-I- Scroll to ${rec.pageId}:${targetPos} for step ${stepNum}`);
   // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
-  g_lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
+  RT.lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'targetPos' ?
   // include step time in auto mode
-  sticky_alert(_status_descr(stepNum, (!g_stepManual)? rec.timeSec : -1), 
+  sticky_alert(_status_descr(stepNum, (!RT.stepManual)? rec.timeSec : -1), 
                _g_htmlStatusBoxId);
   if ( msgForTimedAlert != "" )  {
     /* Show step-alert during the beginning of the new step
@@ -775,9 +774,9 @@ function scroll_perform_one_step(stepNum, msgForTimedAlert="")
         stationsDataLines[stepNum+1].timeSec : minStepAlertSec;
     timed_alert(msgForTimedAlert, Math.max(nextStepTimeSec/3, minStepAlertSec));
   }
-  if ( !g_stepManual )  {
+  if ( !RT.stepManual )  {
 ////scroll_abort(); // OK_TMP
-    g_currStep = stepNum + 1;
+    RT.currStep = stepNum + 1;
     // the next line causes async wait
     scroll_schedule(rec.timeSec, rec.tag);
   }
@@ -873,7 +872,7 @@ function _status_descr(stepIdx, timeInStateOrNegative)
   let descr = "";
   let stepStr = `Step ${showStep} out of 0...${numSteps-1}`;
   if ( (stepIdx < 0) || (stepIdx >= numSteps) ) {
-    descr = stepStr + ((!g_stepManual)? ":\<br\><br\>  scrolling stopped" : "");
+    descr = stepStr + ((!RT.stepManual)? ":\<br\><br\>  scrolling stopped" : "");
   } else {
     descr = stepStr;
     if ( timeInStateOrNegative >= 0 )
@@ -916,7 +915,7 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
 
   // if not at end, schedule next indication
   if ( tSecFromStationBegin < (allMarkers.length - PF.progressShowPeriodSec) )
-    g_progressTimerId = setTimeout(
+    RT.progressTimerId = setTimeout(
       _progress_timer_handler, PF.progressShowPeriodSec * 1000/*msec*/,
       iStation, tSecFromStationBegin + PF.progressShowPeriodSec) ;
 }

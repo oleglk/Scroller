@@ -92,9 +92,9 @@ function get_scroll_current_y()
 function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageOccId);
   // page occurences preserve scales of the original images
-  const pageScaleY = get_image_occurence_scale_y(g_imgPageOccurences,
+  const pageScaleY = get_image_occurence_scale_y(PD.imgPageOccurences,
                                                  imgHtmlPageOccId);
-  const yTop = read_image_occurence_yTop(g_imgPageOccurences,
+  const yTop = read_image_occurence_yTop(PD.imgPageOccurences,
                                          imgHtmlPageOccId, /*alertErr=*/true);
   if ( yTop < 0 )  {    /* TODO: raise exception */  }
   
@@ -108,9 +108,9 @@ function convert_y_img_to_window(imgHtmlPageOccId, imgY) {
 function convert_y_window_to_img(imgHtmlPageOccId, winY) {
   const pageHtmlElem = document.getElementById(imgHtmlPageId);
   // page occurences preserve scales of the original images
-  const pageScaleY = get_image_occurence_scale_y(g_imgPageOccurences,
+  const pageScaleY = get_image_occurence_scale_y(PD.imgPageOccurences,
                                                  imgHtmlPageOccId);
-  const yTop = read_image_occurence_yTop(g_imgPageOccurences,
+  const yTop = read_image_occurence_yTop(PD.imgPageOccurences,
                                          imgHtmlPageOccId, /*alertErr=*/true);
   if ( yTop < 0 )  {    /* TODO: raise exception */  }
   
