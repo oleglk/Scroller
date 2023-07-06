@@ -48,6 +48,7 @@ const g_ScoreRawInputs = {
   scoreLines: g_scoreLines, /*{tag:STR, pageId:STR, x:INT, y:INT, timeBeat:FLOAT}*/
   linePlayOrder: g_linePlayOrder, /*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
   pageImgPathsMap: g_pageImgPathsMap, /*{pageId(STR) : path(STR)*/
+  defaultTempo: g_tempo, /*beat/min - specified in the score file*/
 };
 const RI = g_ScoreRawInputs;   // shortcut to per-score raw inputs
 //////// End:   raw inputs for a particular score //////////////////////////////
@@ -74,6 +75,7 @@ const PD = g_ScoreMassagedDataInputs;  // shortcut to per-score processed inputs
 //////// Begin: runtime/state variables of the current session /////////////////
 const g_RunTimeState = {
   helpAndTempoDialog: null,
+  tempo: RI.defaultTempo,   // beat/min; default specified in the score file*
   stepManual: true,         // false: auto-scroll, true: manual-stepping
   totalHeight: -1,          // for document scroll height
   currStep: -1,             // pos in score; same as station; -1 == not started
@@ -186,7 +188,7 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
   //    imagePathsMap, /*{pageId(STR) : path(STR)*/
   //    numLinesInStep  /*INT*/ 
   let plo = new PlayOrder(scoreName,
-                          g_tempo,
+                          RT.tempo,
                           scoreLinesArray,
                           linePlayOrderArray,
                           pageImgPathsMap,
@@ -236,7 +238,7 @@ async function scroll__onload(event)
   *   (and it prevents the event from bubbling up the DOM tree) */
   event.stopImmediatePropagation(); // crucial because of prompt inside handler!
   
-  // Unregister main events to prevent interference with help/tempo.mode dialog
+  // Unregister main events to prevent interference with help/tempo/mode dialog
   ["click", "contextmenu", "dblclick"].forEach(
         evType => unregister_window_event_listener( evType ));
   
@@ -320,7 +322,7 @@ async function scroll__onload(event)
  * Returns true on success, false on error */
 async function show_and_process_help_and_tempo_dialog()
 {
-  let defaultTempo = (RT.stepManual)? 0 : g_tempo;
+  let defaultTempo = (RT.stepManual)? 0 : RT.tempo;
   let helpStr = build_help_string(1,0, 1, 1) + "\n" + build_help_string(0,1, 0) +
       `\n\nPlease enter beats/sec; 0 or empty mean manual-step mode`;
 
@@ -350,26 +352,26 @@ async function show_and_process_help_and_tempo_dialog()
   let modeMsg = "UNDEF"
   if ( (tempoStr == "") || (tempoStr == "0") )  {
     RT.stepManual = true;
-    g_tempo = 0;
+    RT.tempo = 0;
     PD.perStationScorePositionMarkers = null; //manual mode - cannot show progress
     modeMsg = "MANUAL-STEP MODE SELECTED";
   } else  {
     const tempo = Number(tempoStr);
     // check validity of 'tempo
     if ( isNaN(tempo) || (tempo < 0) )  {
-      err = `Invalid tempo "${tempoStr}"; should be a positive number (beats/sec) or zero`;
+      err = `Invalid tempo "${tempoStr}"; should be a positive number (beats/min) or zero`;
       console.log("-E- " + err);      alert(err);
       return  false;
     }
     RT.stepManual = false;
-    g_tempo = tempo;  // beat/min
-    PD.minTimeInOneLineSec = PD.minTimeInOneLineBeat * 60.0 / g_tempo;
-    modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${g_tempo} BEAT(s)/SEC`;
+    RT.tempo = tempo;  // beat/min
+    PD.minTimeInOneLineSec = PD.minTimeInOneLineBeat * 60.0 / RT.tempo;
+    modeMsg = `AUTO-SCROLL MODE SELECTED.\<br\> TEMPO IS ${RT.tempo} BEAT(s)/MIN`;
     // auto mode can show progress, build 'PD.perStationScorePositionMarkers'
     const tmp_scoreDataLines = filter_and_massage_positions(RI.scoreLines);
     PD.perStationScorePositionMarkers = [];  // prepare for completely new values
     PlayOrder.recompute_times_in_score_stations_array(
-                   PD.scoreStations, g_tempo, PF.numLinesInStep, RI.linePlayOrder,
+                   PD.scoreStations, RT.tempo, PF.numLinesInStep, RI.linePlayOrder,
                    tmp_scoreDataLines, PD.playedLinePageOccurences,
                    PD.perStationScorePositionMarkers);
   }
