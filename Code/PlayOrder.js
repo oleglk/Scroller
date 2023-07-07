@@ -243,11 +243,13 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
 
     console.log(`Assembled score-stations-array with ${scoreStationsArray.length} station(s) for ${this.linePlayOrder.length} played line(s) with station-step ${numLinesInStep}`);
 
-    let scoreStationsPositionMarkersArray = []; //will be built for default tempo
-    PlayOrder.recompute_times_in_score_stations_array(
-      scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder,
-      this.scoreDataLines, this.playedLinePageOccurences,
-      scoreStationsPositionMarkersArray);
+    let scoreStationsPositionMarkersArray = []; // will be for default tempo
+    if ( this.tempo > 0 )   {   // auto-scroll mode; compute time-in-station
+      PlayOrder.recompute_times_in_score_stations_array(
+        scoreStationsArray, this.tempo, this.numLinesInStep, this.linePlayOrder,
+        this.scoreDataLines, this.playedLinePageOccurences,
+        scoreStationsPositionMarkersArray);
+    }
     return  [scoreStationsArray, scoreStationsPositionMarkersArray];
   }
 
@@ -287,6 +289,8 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     // scoreStationsArray = {tag:STR, pageId:STR=occID, origImgPageId:STR, lineOnPageIdx:INT, x:INT, y:INT, timeSec:FLOAT}
     // each score station corresponds to 'numLinesInStep' played lines
     // scoreDataLinesArray = {pageId:STR, lineIdx:INT, yOnPage:INT, timeBeat:FLOAT}
+    if ( tempo == 0 )
+      throw new Error(`-E- Time-in-station computation requested in manual-step mode`);
 
     let scoreStationsData = filter_positions(scoreStationsArray);
     // 'scoreStationsData' references original data lines in 'scoreStationsArray'
@@ -309,11 +313,11 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
                             (element.lineIdx == playedLine.lineIdx) );
         if ( scoreline === undefined )
           throw new Error(`-E- Missing score line record for page '${playedLine.pageId}' line ${playedLine.lineIdx}`);
-        console.log(`-D- Computing progress markers for line {${playedLine}}(yOnPage=${scoreline.yOnPage}) for step ${iStation}`);
         const lineHeight = (PD.pageLineHeights !== null)? // use if already built
               PD.pageLineHeights.get(scoreline.pageId/*orig img*/) : 0;
         timeInStationBeat += playedLine.timeBeat;
         if ( perStationScorePositionMarkersArray !== null )  {
+          console.log(`-D- Computing progress markers for line {${playedLine}}(yOnPage=${scoreline.yOnPage}) for step ${iStation}`);
           for ( let t = 0;  t <= playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {
             let relTime = (t * tempo / 60.0) / playedLine.timeBeat;
             /* at this time in-window Y-coordinates unavailable - store local Y,

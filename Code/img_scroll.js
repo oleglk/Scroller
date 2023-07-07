@@ -48,7 +48,7 @@ const g_ScoreRawInputs = {
   scoreLines: g_scoreLines, /*{tag:STR, pageId:STR, x:INT, y:INT, timeBeat:FLOAT}*/
   linePlayOrder: g_linePlayOrder, /*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
   pageImgPathsMap: g_pageImgPathsMap, /*{pageId(STR) : path(STR)*/
-  defaultTempo: g_tempo, /*beat/min - specified in the score file*/
+  defaultTempo:  (typeof g_tempo !== 'undefined')? g_tempo : 0, /*beat/min - specified in the score file*/
 };
 const RI = g_ScoreRawInputs;   // shortcut to per-score raw inputs
 //////// End:   raw inputs for a particular score //////////////////////////////
@@ -76,7 +76,7 @@ const PD = g_ScoreMassagedDataInputs;  // shortcut to per-score processed inputs
 const g_RunTimeState = {
   helpAndTempoDialog: null,
   tempo: RI.defaultTempo,   // beat/min; default specified in the score file*
-  stepManual: true,         // false: auto-scroll, true: manual-stepping
+  stepManual: (RI.defaultTempo > 0)? false/*auto-scroll*/ : true/*manual-step*/,
   totalHeight: -1,          // for document scroll height
   currStep: -1,             // pos in score; same as station; -1 == not started
   scrollIsOn: false,        // whether auto-croll is currently running
@@ -350,12 +350,12 @@ async function show_and_process_help_and_tempo_dialog()
   //debugger;  // OK_TMP
   let tempoStr = ('prompt' in formData)? formData.prompt : "MISSING";
   let modeMsg = "UNDEF"
-  if ( (tempoStr == "") || (tempoStr == "0") )  {
+  if ( (tempoStr == "") || (tempoStr == "0") )  {   // manual-step
     RT.stepManual = true;
     RT.tempo = 0;
     PD.perStationScorePositionMarkers = null; //manual mode - cannot show progress
     modeMsg = "MANUAL-STEP MODE SELECTED";
-  } else  {
+  } else  {                                         // auto-scroll
     const tempo = Number(tempoStr);
     // check validity of 'tempo
     if ( isNaN(tempo) || (tempo < 0) )  {
