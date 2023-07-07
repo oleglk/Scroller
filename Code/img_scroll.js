@@ -903,7 +903,10 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
   console.log(`-D- Called _progress_timer_handler(${iStation}, ${tSecFromStationBegin}) => X=${xInWinPrc}%, pageOccId='${pageOccId}', Y=${yOnPage}:${fromTopPx}`);
   // if possible, remove progress indicator before scrolling to the next station
   let removeAfterSec = (tSecFromStationBegin < (allMarkers.length-2))?
-                  PF.progressShowPeriodSec : (PF.progressShowPeriodSec - 0.1);
+                  PF.progressShowPeriodSec :
+                        (tSecFromStationBegin < (allMarkers.length-1))?
+                                         0.95*PF.progressShowPeriodSec :
+                                         0.40*PF.progressShowPeriodSec;
   if ( 0 )
     timed_marker("red", xInWinPrc, fromTopPx, removeAfterSec);
   else  {
