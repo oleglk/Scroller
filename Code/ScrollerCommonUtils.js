@@ -579,8 +579,8 @@ function format_progress_bar_str(position_0to1,
   const curr = Math.floor( position_0to1 * full );
   //console.log(`-D- format_progress_bar_str(curr=${position_0to1}=>${curr}, full=${fullTime}=>${full})    full=FLOOR( ${fullTime}*${numCellsForMinFullTime}/FLOOR(${minFullTime}) )*`);
   const tmpDescr = `(${curr}/${full})`;
-  const currSecStr = String(Math.floor(position_0to1*fullTime)).padStart(2, '0');
-  const fullSecStr = String(Math.floor(fullTime)).padStart(2, '0');
+  const currSecStr = String(Math.round(position_0to1*fullTime)).padStart(2, '0');
+  const fullSecStr = String(Math.round(fullTime)).padStart(2, '0');
   const secDescr = `${currSecStr}/${fullSecStr}`;
   //return  filledCh.repeat(curr) + emptyCh.repeat(full - curr) +" :  "+secDescr;
   return  secDescr + " " + filledCh.repeat(curr) + emptyCh.repeat(full - curr);

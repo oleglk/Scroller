@@ -318,7 +318,9 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
         timeInStationBeat += playedLine.timeBeat;
         if ( perStationScorePositionMarkersArray !== null )  {
           console.log(`-D- Computing progress markers for line {${playedLine}}(yOnPage=${scoreline.yOnPage}) for step ${iStation}`);
-          for ( let t = 0;  t <= playedLine.timeBeat * 60.0 / tempo;  t += 1 )  {
+          // note, -0.7 to ensure deleting the last progress marker before scroll
+          let lastMarkerAtSec = playedLine.timeBeat * 60.0 / tempo - 0.7;
+          for ( let t = 0;  t <= lastMarkerAtSec;  t += 1 )  {
             let relTime = (t * tempo / 60.0) / playedLine.timeBeat;
             /* at this time in-window Y-coordinates unavailable - store local Y,
              * then use convert_y_img_to_window() when rendering markers */

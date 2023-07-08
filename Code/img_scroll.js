@@ -468,7 +468,7 @@ function scroll_stop_handler(event)
   if ( RT.currStep > 0 ) { RT.currStep -= 1 }   // it was already advanced
 
   if ( RT.progressTimerId != 0 )
-    clearTimeout(RT.progressTimerId);  // kill old progress-indicator timer if any
+    clearTimeout(RT.progressTimerId); // kill old progress-indicator timer if any
 
   rec = filter_positions(PD.scoreStations)[RT.currStep];
   winY = get_scroll_current_y();
@@ -714,7 +714,7 @@ function scroll_schedule(currDelaySec, descr)
   // scheduled scroll to step #j, meanwhile step #j-1 is progressing
   if ( PD.perStationScorePositionMarkers !== null )  {
     if ( RT.progressTimerId != 0 )
-      clearTimeout(RT.progressTimerId); //kill old progress-indicator timer if any
+      clearTimeout(RT.progressTimerId);//kill old progress-indicator timer if any
     console.log(`-I- Scheduling progress indication every ${PF.progressShowPeriodSec} second(s) for step ${RT.currStep-1}`);
     if ( (RT.currStep-1) >= filter_positions(PD.scoreStations).length )
       throw new Error(`-E- Step number ${RT.currStep} too big`);
@@ -760,6 +760,8 @@ function scroll_perform_one_step(stepNum, msgForTimedAlert="")
   const rec = stationsDataLines[stepNum];
   const targetPos = convert_y_img_to_window(rec.pageId, rec.y);
 
+  if ( RT.progressTimerId != 0 )
+    clearTimeout(RT.progressTimerId); // kill old progress-indicator timer if any
   console.log(`-I- Scroll to ${rec.pageId}:${targetPos} for step ${stepNum}`);
   // (scrolls absolute pixels) window.scrollTo({ top: targetPos, behavior: 'smooth'});
   window.scrollTo(rec.x/*TODO:calc*/, targetPos);
@@ -906,7 +908,7 @@ function _progress_timer_handler(iStation, tSecFromStationBegin)
                   PF.progressShowPeriodSec :
                         (tSecFromStationBegin < (allMarkers.length-1))?
                                          0.95*PF.progressShowPeriodSec :
-                                         0.40*PF.progressShowPeriodSec;
+                                         0.80*PF.progressShowPeriodSec;
   if ( 0 )
     timed_marker("red", xInWinPrc, fromTopPx, removeAfterSec);
   else  {
