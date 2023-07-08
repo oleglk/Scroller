@@ -30,6 +30,7 @@ const g_ScrollerPreferances = {
   progressShowPeriodSec: 1,   // progress bar (or marker) update period
   progressBar_numCellsForMinFullTime: 3,  // shortest progress bar (char-s)
   progressBar_fontSize: 25,
+  progressBar_countDown: true,
   /* Manual Scroll    == compute next position based on current scroll.
    * No Manual Scroll == compute next position based on current step, ignore scroll position.
    * (Do not confuse "Manual Scroll" with "Manual Step".)
