@@ -88,6 +88,7 @@ const g_RunTimeState = {
   nextTimerIntervalId: 0,
   progressTimerId: 0,
   ////// End:   global timer IDs ///////////////////////////////////////////////
+  pageLoadedNow: true,     // to detect load/refresh
 };
 const RT = g_RunTimeState;  // shortcut to runtime/state
 //////// End: runtime/state variables of the current session /////////////////
@@ -303,12 +304,15 @@ async function scroll__onload(event)
     console.log(`-D- Initial scroll rejected - already at the bottom - y=${scrollToPos}`);
     RT.currStep = numStations - 1;
   }
-  if ( scrollToPos != RT.lastJumpedToWinY )  {
+  if ( (scrollToPos != RT.lastJumpedToWinY) &&
+       (PF.permitManualScroll || RT.pageLoadedNow) ) {
     // window.scrollTo({ top: scrollToPos, behavior: 'smooth'});
     window.scrollTo(0, scrollToPos);
     RT.lastJumpedToWinY = get_scroll_current_y();  // ? or maybe 'scrollToPos' ?
   }
+  
   RT.scrollIsOn = false;
+  RT.pageLoadedNow = false;  // onload() ran at least once
 }
 // wrapper had to be moved to the top - before the 1st use
 
@@ -402,8 +406,10 @@ async function scroll_start_handler(event)
   const numPositions = filter_positions(PD.scoreStations).length;
   const currWinY = get_scroll_current_y();
   let newStep = RT.currStep;  // may differ if manually scrolled while paused
-  if ( RT.scrollIsOn == false )  {
-    // check if manually scrolled while being paused;  TODO: MAYBE DEACTIVATE?
+  if ( (RT.permitManualScroll || (newStep < 0)) && (RT.scrollIsOn == false) )  {
+    /* align with actual scroll position if:
+     * - either manual-scroll permitted AND manually scrolled while being paused
+     * - or position should be initialized now */
     let stepToLookAround = RT.currStep;
     if ( stepToLookAround < 0 )
       stepToLookAround = 0;
