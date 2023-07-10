@@ -17,7 +17,7 @@ package require Tk
 
 # Reads data from 'imgPath' and puts it into 'listOfPixels'
 #                                       as list of lists - rows * columns.
-# On success returns 1, on error returns 0.
+# On success returns list {width height}, on error returns 0.
 # (Don't cause printing of returned value on the screen - the console gets stuck)
 proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
   upvar $listOfPixels pixels
@@ -47,7 +47,7 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
       puts "-I- Success reading image '$imgPath' into array of [llength $pixels]*[llength [lindex $pixels 0]]"
     }
   }
-  return  1
+  return  [list [llength $pixels]  [llength [lindex $pixels 0]]]
 }
 
 
