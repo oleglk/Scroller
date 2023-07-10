@@ -17,7 +17,8 @@ package require Tk
 
 # Reads data from 'imgPath' and puts it into 'listOfPixels'
 #                                       as list of lists - rows * columns.
-# On success returns list {width height}, on error returns 0.
+# (First index is row, second index is column)
+# On success returns list {height width}, on error returns 0.
 # (Don't cause printing of returned value on the screen - the console gets stuck)
 proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
   upvar $listOfPixels pixels
@@ -48,6 +49,41 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
     }
   }
   return  [list [llength $pixels]  [llength [lindex $pixels 0]]]
+}
+
+
+# Returns (list) 'width' * list-of-y1,y2 -
+#  - per-column list of {upper lower} coordinates of spans of required color
+proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
+                                                   {ignoreUpToXY 0}}  {
+  set width [llength [lindex $matrixOfPixels 0]]
+  set height [llength $matrixOfPixels]
+  set spans [list]
+  for {set col 0}  {$col < $width}  {inctr col 1}  {
+    set oneColSpans [list]
+    set spanTop -1;  # == outside of any span
+    set column [lindex $matrixOfPixels $col];  # a shortcut
+    for {set row 0}  {$row < $height}  {incr row 1}  {
+      if { ($col < $ignoreUpToXY) && ($row < $ignoreUpToXY) }  { continue }
+      set rgbValStr [lindex $column $row]
+      #lassign [decode_rgb $rgbValStr] rV gV bV
+      set equ [equ_rgb [decode_rgb $rgbValStr]  $reqRgbList]
+      if { $equ && ($spanTop < 0) }  { ;  # new span started
+        set spanTop $row
+      }
+      elseif { !$equ && ($spanTop >= 0) }  { ;  # old span ended
+        lappend oneColSpans [list $spanTop [expr $row-1]]
+        set spanTop -1;  # prepare for the next span
+      }
+    }
+    if { $spanTop >= 0 }  { ;  # last span ends at the bottom
+      lappend oneColSpans [list $spanTop [expr $height-1]]
+      set spanTop -1;  # just cleanup
+    }
+    if { 0 != [llength $oneColSpans] }  {
+      # TODO: append
+    }
+  }
 }
 
 
