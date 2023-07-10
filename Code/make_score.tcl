@@ -15,10 +15,12 @@ set SCRIPT_DIR [file normalize [file dirname [info script]]]
 
 package require Tk
 
-# Reads data from 'imgPath' and returns it as list of lists - rows * columns.
-# On error returns 0
+# Reads data from 'imgPath' and puts it into 'listOfPixels'
+#                                       as list of lists - rows * columns.
+# On success returns 1, on error returns 0.
 # (Don't cause printing of returned value on the screen - the console gets stuck)
-proc read_image_pixels_into_array {imgPath {loud 1}}  {
+proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
+  upvar $listOfPixels pixels
   if { ![file exists $imgPath] }  {
     if { $loud == 1 }  {
       puts "-E- Inexistent input file '$imgPath'"
@@ -26,7 +28,7 @@ proc read_image_pixels_into_array {imgPath {loud 1}}  {
     return  0
   }
   set tclExecResult [catch {
-    set imgH [image create photo -file Scores/INP/Papirossen.gif]
+    set imgH [image create photo -file $imgPath -width $maxWidth]
     set wd [image width $imgH];  set ht [image height $imgH]
     set pixels [$imgH data];  # returns list of lists - rows * columns
   } execResult]
@@ -45,7 +47,7 @@ proc read_image_pixels_into_array {imgPath {loud 1}}  {
       puts "-I- Success reading image '$imgPath' into array of [llength $pixels]*[llength [lindex $pixels 0]]"
     }
   }
-  return  $pixels
+  return  1
 }
 
 
