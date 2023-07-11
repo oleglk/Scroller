@@ -15,6 +15,15 @@ set SCRIPT_DIR [file normalize [file dirname [info script]]]
 
 package require Tk
 
+# In order to speed-up reading pixel colors from files,
+# we allocate extra matrix columns; values there aren't valid RGB colors
+proc IS_REAL_PIXEL_VALUE {rgbList}  {
+  if { 3 != [llength $rgbList] }  { return 0 }
+  return  1
+}
+
+
+
 # Reads data from 'imgPath' and puts it into 'listOfPixels'
 #                                       as list of lists - rows * columns.
 # (First index is row, second index is column)
@@ -23,10 +32,8 @@ package require Tk
 proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
   upvar $listOfPixels pixels
   if { ![file exists $imgPath] }  {
-    if { $loud == 1 }  {
-      puts "-E- Inexistent input file '$imgPath'"
-    }
-    return  0
+    set err "-E- Inexistent input file '$imgPath'"
+    error $err
   }
   set tclExecResult [catch {
     set imgH [image create photo -file $imgPath -width $maxWidth]
@@ -35,8 +42,8 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
   } execResult]
   if { $tclExecResult != 0 } {
     if { $loud == 1 }  {
-      puts "-E- $execResult!"
-      puts "-E- Cannot get pixel data of '$imgPath'"
+      set err "-E- Cannot get pixel data of '$imgPath' ($execResult)"
+      error $err
     }
     return  0
   }
@@ -52,38 +59,120 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
 }
 
 
-# Returns (list) 'width' * list-of-y1,y2 -
-#  - per-column list of {upper lower} coordinates of spans of required color
+# Returns list of pairs {y1 y2} -
+#  - each pair is {upper lower} coordinates of spans of required color
 proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
                                                    {ignoreUpToXY 0}}  {
   set width [llength [lindex $matrixOfPixels 0]]
   set height [llength $matrixOfPixels]
+  set rgbDescr [format "rgb(%02X%02X%02X)" {*}$reqRgbList]
+  puts "-I- Begin searching for spans of $rgbDescr in $width*$height image"
+
   set spans [list]
-  for {set col 0}  {$col < $width}  {inctr col 1}  {
-    set oneColSpans [list]
-    set spanTop -1;  # == outside of any span
-    set column [lindex $matrixOfPixels $col];  # a shortcut
-    for {set row 0}  {$row < $height}  {incr row 1}  {
+  set spanTop -1;  # == outside of any span
+  for {set row 0}  {$row < $height}  {incr row 1}  {
+    # look for at least one pixel of ~ given color in the row (all its columns)
+    set foundInCol -1;  # in which column the matching color found in current row
+    for {set col 0}  {$col < $width}  {incr col 1}  {
       if { ($col < $ignoreUpToXY) && ($row < $ignoreUpToXY) }  { continue }
-      set rgbValStr [lindex $column $row]
-      #lassign [decode_rgb $rgbValStr] rV gV bV
-      set equ [equ_rgb [decode_rgb $rgbValStr]  $reqRgbList]
-      if { $equ && ($spanTop < 0) }  { ;  # new span started
-        set spanTop $row
+      set rgbValStr [elem_list2d $matrixOfPixels $row $col]
+      set rgbList [decode_rgb $rgbValStr]
+      if { ![IS_REAL_PIXEL_VALUE $rgbList] }  { continue }; #ignore extra columns
+      set equ [equ_rgb $rgbList $reqRgbList]
+      if { $equ }  {
+        puts "-D- Matched ($rgbValStr) at row=$row, col=$col"
+        set foundInCol $col
+        if { $spanTop < 0 }  { ;  # new span started
+          set spanTop $row
+          puts "-D- Span #[llength $spans] begins at $row; (column: $col)"
+        }
+        break;  # at least one pixel matches == we are inside some span
       }
-      elseif { !$equ && ($spanTop >= 0) }  { ;  # old span ended
-        lappend oneColSpans [list $spanTop [expr $row-1]]
-        set spanTop -1;  # prepare for the next span
-      }
+    };#__ end of cycle over columns in one row
+    # if no pixel matched our color in the whole row == we are outside any span
+    if { ($spanTop >= 0) && ($foundInCol < 0) }  { ;  # old span ended
+      puts "-D- Span #[llength $spans] ends at [expr $row-1]"
+      lappend spans [list $spanTop [expr $row-1]]
+      set spanTop -1;  # prepare for the next span
     }
-    if { $spanTop >= 0 }  { ;  # last span ends at the bottom
-      lappend oneColSpans [list $spanTop [expr $height-1]]
-      set spanTop -1;  # just cleanup
-    }
-    if { 0 != [llength $oneColSpans] }  {
-      # TODO: append
+  };#__ end of cycle over rows
+  # process the last span in case it reached the bottom row
+  if { $spanTop >= 0 }  { ;  # last span ends at the bottom
+    puts "-D- Span #[llength $spans] ends at [expr $height-1]"
+    lappend spans [list $spanTop [expr $height-1]]
+    set spanTop -1;  # just cleanup
+  }
+  if { [llength $spans] > 0 }  {
+    puts "-I- Found [llength $spans] span(s) of $rgbDescr - between Y=[lindex [lindex $spans 0] 0] and Y=[lindex [lindex $spans end] 1]"
+  } else {
+    puts "-W- Found no span(s) of $rgbDescr"
+  }
+  return  $spans
+}
+
+
+# # Returns (list) 'width' * list-of-y1,y2 -
+# #  - per-column list of {upper lower} coordinates of spans of required color
+# proc ABANDONED__find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
+#                                                    {ignoreUpToXY 0}}  {
+#   set width [llength [lindex $matrixOfPixels 0]]
+#   set height [llength $matrixOfPixels]
+#   set spans [list]
+#   for {set col 0}  {$col < $width}  {inctr col 1}  {
+#     set oneColSpans [list]
+#     set spanTop -1;  # == outside of any span
+#     set column [lindex $matrixOfPixels $col];  # a shortcut
+#     for {set row 0}  {$row < $height}  {incr row 1}  {
+#       if { ($col < $ignoreUpToXY) && ($row < $ignoreUpToXY) }  { continue }
+#       set rgbValStr [lindex $column $row]
+#       #lassign [decode_rgb $rgbValStr] rV gV bV
+#       set equ [equ_rgb [decode_rgb $rgbValStr]  $reqRgbList]
+#       if { $equ && ($spanTop < 0) }  { ;  # new span started
+#         set spanTop $row
+#       }
+#       elseif { !$equ && ($spanTop >= 0) }  { ;  # old span ended
+#         lappend oneColSpans [list $spanTop [expr $row-1]]
+#         set spanTop -1;  # prepare for the next span
+#       }
+#     }
+#     if { $spanTop >= 0 }  { ;  # last span ends at the bottom
+#       lappend oneColSpans [list $spanTop [expr $height-1]]
+#       set spanTop -1;  # just cleanup
+#     }
+#     if { 0 != [llength $oneColSpans] }  {
+#       # TODO: append
+#     }
+#   }
+# }
+
+
+# Returns 1 if the two (rgb) colors are _nearly_ equal, otherwise returns 0
+proc equ_rgb {rgbList1 rgbList2}  {
+  #### puts "@@@@ {$rgbList1} {$rgbList2}"
+  set thresholdPrc 1.0;  # relDiffPrc(250, 255) == 0.9900990099009901
+  set bigDiff 0
+  for {set c 0}  {$c < 3}  {incr c 1}  {
+    set v1 [lindex $rgbList1 $c];    set v2 [lindex $rgbList2 $c]
+    if { ($v1 == 0) && ($v2 == 0) }  { continue }
+    set relDiffPrc [expr {(($v1 == 0) && ($v2 == 0))? 0.0
+                          : [expr {100.0 * abs($v1 - $v2) / ($v1 + $v2)}] }]
+    if { $relDiffPrc >= $thresholdPrc }  {
+      set bigDiff 1
     }
   }
+  return  [expr {$bigDiff == 0}]
+}
+
+
+
+proc elem_list2d {listOfLists row col}  {
+  set width [llength [lindex $listOfLists 0]]
+  set height [llength $listOfLists]
+  if { ($row < 0) || ($row >= $height) || ($col < 0) || ($col >= $width) }  {
+    set err "-E- Invalid pixel index ($row $col); should be (0..[expr $row-1], 0..[expr $col-1])"
+    error $err
+  }
+  return  [lindex [lindex $listOfLists $row] $col]
 }
 
 
@@ -131,3 +220,9 @@ proc decode_rgb {pixelStr}  {
 #   # return  $pixels
 #   return  buf
 # }
+
+
+##### Complete example: #########################################################
+## read_image_pixels_into_array  Scores/Marked/Papirossen_mk.gif  2000  pixels
+## set spans [find_vertical_spans_of_color_in_pixel_matrix $pixels {0xFF 0xFF 0x00} 30]
+  
