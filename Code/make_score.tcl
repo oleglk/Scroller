@@ -63,8 +63,11 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
 # Workarounds use of excessive-width buffers for reading images.
 # Finds where on x-axis the actual pixel data ends
 ## TODO: could optimize with kind-of binary search
+### Example:
+### proc _is_real_pixel {rgbList}  { lassign $rgbList r g b;  return (($r>0)||($g>0)||($b>0)) }
+### detect_true_image_dimensions pixelMatrix wd ht _is_real_pixel "image"
 proc detect_true_image_dimensions {matrixOfPixelsRef width height \
-                                     {descrForLog ""}}  {
+                                     isRealPixelCB {descrForLog ""}}  {
   upvar $matrixOfPixelsRef pixels
   upvar $width             wd
   upvar $height            ht
@@ -77,7 +80,7 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
     for {set x [expr $fullWidth-1]}  {$x >= 0}  {incr x -1}  {
       set rgbValStr [elem_list2d $pixels $y $x]
       set rgbList [decode_rgb $rgbValStr]
-      if { [IS_REAL_PIXEL_VALUE $rgbList] }  {
+      if { [$isRealPixelCB $rgbList] }  {
         lappend sampledWidths [expr $x + 1]
         LOG_MSG "-D- Width at Y=$y: [expr $x + 1] (val = '$rgbValStr'=={$rgbList}"
         break
@@ -148,6 +151,26 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
   }
   return  $spans
 }
+
+
+############### Begin: score printing stuff #####################################
+
+## Sample output
+# var g_scoreLines = [
+#   {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,  timeBeat:11},
+#   {tag:"line-012-Begin", pageId:"pg01", x:0, y:288,  timeBeat:11},
+#   ...
+#   {tag:"line-034-Begin", pageId:"pg03", x:0, y:661,  timeBeat:11},
+#   {tag:"Control-Bottom", pageId:"pg01", x:0, y:1080, timeBeat:0},  
+#   {tag:"Control-Height", pageId:"pg01", x:0, y:1130, timeBeat:0},  
+#   {tag:"Control-Bottom", pageId:"pg02", x:0, y:1053, timeBeat:0},  
+#   {tag:"Control-Height", pageId:"pg02", x:0, y:1130, timeBeat:0},  
+#   {tag:"Control-Bottom", pageId:"pg03", x:0, y:914,  timeBeat:0},  
+#   {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeBeat:0},  
+# ];
+##proc pri_score__one_img_scoreLines {imgPath }
+############### End:   score printing stuff #####################################
+
 
 
 # # Returns (list) 'width' * list-of-y1,y2 -
