@@ -64,7 +64,7 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
 # Finds where on x-axis the actual pixel data ends
 ## TODO: could optimize with kind-of binary search
 ### Example:
-### proc _is_real_pixel {rgbList}  { lassign $rgbList r g b;  return (($r>0)||($g>0)||($b>0)) }
+### proc _is_real_pixel {rgbList}  { lassign $rgbList r g b;  return [expr ($r>0)||($g>0)||($b>0)] }
 ### detect_true_image_dimensions pixelMatrix wd ht _is_real_pixel "image"
 proc detect_true_image_dimensions {matrixOfPixelsRef width height \
                                      isRealPixelCB {descrForLog ""}}  {
@@ -155,6 +155,24 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
 
 ############### Begin: score printing stuff #####################################
 
+proc init_score_data_dict {scoreName imgPathsOrdered}  {
+  set scoreData [dict create]
+  dict set scoreData  Name  $scoreName
+  dict set scoreData  NumPages  [llength $imgPathsOrdered]
+  dict set scoreData  PageImgPaths $imgPathsOrdered
+  set pageIds [list]
+  set pageNames [list]
+  for {set i 0}  {$i < [llength $imgPathsOrdered]}  {incr i 1}  {
+    set imgPath [lindex $imgPathsOrdered $i]
+    lappend pageNames [file tail $imgPath]
+    set pageId [format "pg%02d" $i]
+    lappend pageIds $pageId
+  }
+  dict set scoreData  PageImgNames $pageNames
+  dict set scoreData  PageIds $pageIds
+}
+
+
 ## Sample output
 # var g_scoreLines = [
 #   {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,  timeBeat:11},
@@ -168,7 +186,8 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
 #   {tag:"Control-Bottom", pageId:"pg03", x:0, y:914,  timeBeat:0},  
 #   {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeBeat:0},  
 # ];
-##proc pri_score__one_img_scoreLines {imgPath }
+proc format_score__one_img_scoreLines {scoreDict pageNum lineBounds defaultTimeBeat}  {
+}
 ############### End:   score printing stuff #####################################
 
 
