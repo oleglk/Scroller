@@ -22,6 +22,7 @@ proc IS_REAL_PIXEL_VALUE {rgbList}  {
   return  1
 }
 
+proc LOG_MSG {msg}  { puts "$msg" }  ;  # TODO: logging
 
 
 # Reads data from 'imgPath' and puts it into 'listOfPixels'
@@ -50,12 +51,50 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
 
   if { $loud == 1 }  {
     if { [llength $pixels] == 0 }  {
-      puts "-W- Image '$imgPath' has no pixels"
+      LOG_MSG "-W- Image '$imgPath' has no pixels"
     } else {
-      puts "-I- Success reading image '$imgPath' into array of [llength $pixels]*[llength [lindex $pixels 0]]"
+      LOG_MSG "-I- Success reading image '$imgPath' into array of [llength $pixels]*[llength [lindex $pixels 0]]"
     }
   }
   return  [list [llength $pixels]  [llength [lindex $pixels 0]]]
+}
+
+
+# Workarounds use of excessive-width buffers for reading images.
+# Finds where on x-axis the actual pixel data ends
+## TODO: could optimize with kind-of binary search
+proc detect_true_image_dimensions {matrixOfPixelsRef width height \
+                                     {descrForLog ""}}  {
+  upvar $matrixOfPixelsRef pixels
+  upvar $width             wd
+  upvar $height            ht
+  set N_SAMPLES 10;  # how many rows to check
+  set fullWidth [llength [lindex $pixels 0]]
+  set ht [llength $pixels]
+  set sampledWidths [list]
+  set step [expr {int(floor($ht / $N_SAMPLES))}]
+  for {set y 0}  {$y < $ht}  {incr y $step}  {
+    for {set x [expr $fullWidth-1]}  {$x >= 0}  {incr x -1}  {
+      set rgbValStr [elem_list2d $pixels $y $x]
+      set rgbList [decode_rgb $rgbValStr]
+      if { [IS_REAL_PIXEL_VALUE $rgbList] }  {
+        lappend sampledWidths [expr $x + 1]
+        LOG_MSG "-D- Width at Y=$y: [expr $x + 1] (val = '$rgbValStr'=={$rgbList}"
+        break
+      }
+    }
+  }
+  set firstSample [lindex $sampledWidths 0]
+  set mismatchIdx [lsearch -not -integer -exact  $sampledWidths $firstSample]
+  set wd [expr {($mismatchIdx < 0)? $firstSample : $fullWidth}]
+  if { $descrForLog != "" }  {
+    LOG_MSG "-I- Actual size of $descrForLog is $wd*$ht (full: $fullWidth*$ht)"
+    if { $mismatchIdx > 0 }  {
+      set mismatchY [expr $mismatchIdx * $step]
+      LOG_MSG "-W- Widths differ in $descrForLog between: line-0 ($firstSample) and line-$mismatchY ([lindex $sampledWidths $mismatchIdx])"
+    }
+  }
+  return  [expr {$mismatchIdx < 0}]
 }
 
 
@@ -66,7 +105,7 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
   set width [llength [lindex $matrixOfPixels 0]]
   set height [llength $matrixOfPixels]
   set rgbDescr [format "rgb(%02X%02X%02X)" {*}$reqRgbList]
-  puts "-I- Begin searching for spans of $rgbDescr in $width*$height image"
+  LOG_MSG "-I- Begin searching for spans of $rgbDescr in $width*$height image"
 
   set spans [list]
   set spanTop -1;  # == outside of any span
@@ -80,32 +119,32 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
       if { ![IS_REAL_PIXEL_VALUE $rgbList] }  { continue }; #ignore extra columns
       set equ [equ_rgb $rgbList $reqRgbList]
       if { $equ }  {
-        puts "-D- Matched ($rgbValStr) at row=$row, col=$col"
+        LOG_MSG "-D- Matched ($rgbValStr) at row=$row, col=$col"
         set foundInCol $col
         if { $spanTop < 0 }  { ;  # new span started
           set spanTop $row
-          puts "-D- Span #[llength $spans] begins at $row; (column: $col)"
+          LOG_MSG "-D- Span #[llength $spans] begins at $row; (column: $col)"
         }
         break;  # at least one pixel matches == we are inside some span
       }
     };#__ end of cycle over columns in one row
     # if no pixel matched our color in the whole row == we are outside any span
     if { ($spanTop >= 0) && ($foundInCol < 0) }  { ;  # old span ended
-      puts "-D- Span #[llength $spans] ends at [expr $row-1]"
+      LOG_MSG "-D- Span #[llength $spans] ends at [expr $row-1]"
       lappend spans [list $spanTop [expr $row-1]]
       set spanTop -1;  # prepare for the next span
     }
   };#__ end of cycle over rows
   # process the last span in case it reached the bottom row
   if { $spanTop >= 0 }  { ;  # last span ends at the bottom
-    puts "-D- Span #[llength $spans] ends at [expr $height-1]"
+    LOG_MSG "-D- Span #[llength $spans] ends at [expr $height-1]"
     lappend spans [list $spanTop [expr $height-1]]
     set spanTop -1;  # just cleanup
   }
   if { [llength $spans] > 0 }  {
-    puts "-I- Found [llength $spans] span(s) of $rgbDescr - between Y=[lindex [lindex $spans 0] 0] and Y=[lindex [lindex $spans end] 1]"
+    LOG_MSG "-I- Found [llength $spans] span(s) of $rgbDescr - between Y=[lindex [lindex $spans 0] 0] and Y=[lindex [lindex $spans end] 1]"
   } else {
-    puts "-W- Found no span(s) of $rgbDescr"
+    LOG_MSG "-W- Found no span(s) of $rgbDescr"
   }
   return  $spans
 }
@@ -148,7 +187,7 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
 
 # Returns 1 if the two (rgb) colors are _nearly_ equal, otherwise returns 0
 proc equ_rgb {rgbList1 rgbList2}  {
-  #### puts "@@@@ {$rgbList1} {$rgbList2}"
+  #### LOG_MSG "@@@@ {$rgbList1} {$rgbList2}"
   set thresholdPrc 1.0;  # relDiffPrc(250, 255) == 0.9900990099009901
   set bigDiff 0
   for {set c 0}  {$c < 3}  {incr c 1}  {
@@ -169,7 +208,7 @@ proc elem_list2d {listOfLists row col}  {
   set width [llength [lindex $listOfLists 0]]
   set height [llength $listOfLists]
   if { ($row < 0) || ($row >= $height) || ($col < 0) || ($col >= $width) }  {
-    set err "-E- Invalid pixel index ($row $col); should be (0..[expr $row-1], 0..[expr $col-1])"
+    set err "-E- Invalid pixel index ($row $col); should be (0..[expr $height-1], 0..[expr $width-1])"
     error $err
   }
   return  [lindex [lindex $listOfLists $row] $col]
