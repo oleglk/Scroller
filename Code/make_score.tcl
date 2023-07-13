@@ -153,23 +153,34 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
 }
 
 
-############### Begin: score printing stuff #####################################
+############### Begin: score printing stuff ####################################
+proc format__page_id {iPage}  {
+  return  [format "pg%02d" [expr {$i + 1}]]
+}
 
-proc init_score_data_dict {scoreName imgPathsOrdered}  {
+
+proc format__dataline_tag {iPage iLine}  {
+  return  [format "line-%02d%02d-Begin" [expr {$iPage + 1}] [expr {$iLine + 1}]]
+}
+
+
+proc init_score_data_dict {scoreName imgPathsOrdered defaultTimeBeat}  {
   set scoreData [dict create]
-  dict set scoreData  Name  $scoreName
-  dict set scoreData  NumPages  [llength $imgPathsOrdered]
-  dict set scoreData  PageImgPaths $imgPathsOrdered
+  dict set scoreData  Name            $scoreName
+  dict set scoreData  NumPages        [llength $imgPathsOrdered]
+  dict set scoreData  PageImgPathList $imgPathsOrdered
+  dict set scoreData  DefaultTimeBeat defaultTimeBeat;  # default beats per line
   set pageIds [list]
   set pageNames [list]
   for {set i 0}  {$i < [llength $imgPathsOrdered]}  {incr i 1}  {
     set imgPath [lindex $imgPathsOrdered $i]
     lappend pageNames [file tail $imgPath]
-    set pageId [format "pg%02d" $i]
+    set pageId  [format__page_id $i]
     lappend pageIds $pageId
+    dict set scoreData  PageIdToImgName $pageId [file tail $imgPath]
   }
-  dict set scoreData  PageImgNames $pageNames
-  dict set scoreData  PageIds $pageIds
+  dict set scoreData  PageImgNameList $pageNames
+  dict set scoreData  PageIdList $pageIds
 }
 
 
@@ -186,7 +197,34 @@ proc init_score_data_dict {scoreName imgPathsOrdered}  {
 #   {tag:"Control-Bottom", pageId:"pg03", x:0, y:914,  timeBeat:0},  
 #   {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeBeat:0},  
 # ];
-proc format_score__one_img_scoreLines {scoreDict pageNum lineBounds defaultTimeBeat}  {
+# Fills with kists of formatted text:
+# 'scoreDict::ScoreDataLines::pageId' and 'scoreDict::ScoreControlLines::pageId'
+# 'pageLineBounds' is a list of line-delimeters' {min max}Y-coordinates
+proc format_score__one_page_scoreLines {scoreDict iPage pageLineBounds
+                                        pageWidth pageHeight}  {
+  set maxPageIdx [expr [dict get scoreData NumPages] - 1]
+  if { ($iPage < 0) || ($iPage > $maxPageIdx) }  {
+    error "-E- Invalid page index $iPage; should be 0...$maxPageIdx"
+  }
+  #set pageId  [format__page_id $iPage]
+  # generate data lines
+  set dataLines [list]
+  set numLines [llength $pageLineBounds] - 1;  # top for each + bottom for last
+  for {set iL 0}  {$iL < $numLines}  {incr iL 1}  {
+    lassign [lindex $pageLineBounds $iL]  y1 y2
+    set y [expr {int($y1 + 0.1*($y2 - $y1))}]
+    set str [format "{tag:\"%s\", pageId:\"%s\", x:0, y:%d,  timeBeat:%d},"   \
+              [format__dataline_tag $iPage $iLine]  [format__page_id $iPage]  \
+              $y  $timeBeat]
+    lappend dataLines $str
+  }
+  # generate control lines
+  set ctrlLines [list]
+  # TODO: implement
+  
+  dict set scoreData  ScoreDataLines    $pageId $dataLines
+  dict set scoreData  ScoreControlLines $pageId $dataLines
+  LOG_MSG "-I- Generated [llength $dataLines] data-line(s) and [llength $ctrlLines] control-line(s) for page '$pageId'"
 }
 ############### End:   score printing stuff #####################################
 
