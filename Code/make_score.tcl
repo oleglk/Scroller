@@ -88,6 +88,7 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
         break
       }
     }
+    # fine search (-1 increments)
     for {set x $xRough}  {$x >= 0}  {incr x -1}  {
       set rgbValStr [elem_list2d $pixels $y $x]
       set rgbList [decode_rgb $rgbValStr]
@@ -98,17 +99,15 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
       }
     }
   }
-  set firstSample [lindex $sampledWidths 0]
-  set mismatchIdx [lsearch -not -integer -exact  $sampledWidths $firstSample]
-  set wd [expr {($mismatchIdx < 0)? $firstSample : $fullWidth}]
+  # find the max of sampled width
+  set wd [lindex $sampledWidths 0]
+  foreach s $sampledWidths  {
+    if { $s > $wd }  { set wd $s }
+  }
   if { $descrForLog != "" }  {
     LOG_MSG "-I- Actual size of $descrForLog is $wd*$ht (full: $fullWidth*$ht)"
-    if { $mismatchIdx > 0 }  {
-      set mismatchY [expr $mismatchIdx * $step]
-      LOG_MSG "-W- Widths differ in $descrForLog between: line-0 ($firstSample) and line-$mismatchY ([lindex $sampledWidths $mismatchIdx])"
-    }
   }
-  return  [expr {$mismatchIdx < 0}]
+  return  1
 }
 
 
