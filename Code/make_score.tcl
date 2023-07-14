@@ -25,6 +25,53 @@ proc IS_REAL_PIXEL_VALUE {rgbList}  {
 proc LOG_MSG {msg}  { puts "$msg" }  ;  # TODO: logging
 
 
+set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
+set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
+set DEFAuLT_COLOR_SAMPLE_SIZE 30
+
+
+################ The "main" ####################################################
+## Example 1:  make_score_file  "Papirossen"  [list "Scores/Marked/Papirossen_mk.gif"]
+proc make_score_file {name imgPathList}  {
+  global scoreDict;  # OK_TMP
+  set imgPathsOrdered $imgPathList;  # TODO: [sort_score_pages $imgPathList]
+  set scoreDict [init_score_data_dict $name $imgPathsOrdered \
+                                      $::DEFAULT_TIME_BEAT]
+  # prepare data for all pages
+  foreach pg [dict get $scoreDict PageIdList]  {
+    set imgName [dict get $scoreDict  PageIdToImgName   $pg]
+    set imgPath [dict get $scoreDict  PageIdToImgPath   $pg]
+    set iPage   [dict get $scoreDict  PageIdToPageIndex $pg]
+    LOG_MSG "-I- Begin processing score page '$pg', path: '$imgPath'"
+    set htwd [read_image_pixels_into_array  $imgPath  2000  pixels]
+    lassign $htwd height width
+    # TODO: pass matrix by refernce
+    set pageLineBounds [find_vertical_spans_of_color_in_pixel_matrix $pixels \
+                        $::DEFAuLT_MARKER_RGB $::DEFAuLT_COLOR_SAMPLE_SIZE]
+    format_score__one_page_scoreLines  scoreDict  $iPage  $pageLineBounds  \
+                                       $width $height
+    LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
+  }
+  # Print the arrays
+  puts "\n\n"
+  foreach pg [dict get $scoreDict PageIdList]  {
+    puts "// Score data lines for page '$pg'"
+    foreach sl [dict get $scoreDict ScoreDataLines $pg]  {
+      puts "$sl"
+    }
+  }
+  foreach pg [dict get $scoreDict PageIdList]  {
+    puts "// Score control lines for page '$pg'"
+    foreach sl [dict get $scoreDict ScoreControlLines $pg]  {
+      puts "$sl"
+    }
+  }
+
+};#__END_OF__make_score_file
+################################################################################
+
+
+
 # Reads data from 'imgPath' and puts it into 'listOfPixels'
 #                                       as list of lists - rows * columns.
 # (First index is row, second index is column)
@@ -188,10 +235,12 @@ proc init_score_data_dict {scoreName imgPathsOrdered defaultTimeBeat}  {
     lappend pageNames [file tail $imgPath]
     set pageId  [format__page_id $i]
     lappend pageIds $pageId
-    dict set scoreData  PageIdToImgName $pageId [file tail $imgPath]
+    dict set scoreData  PageIdToPageIndex $pageId $i
+    dict set scoreData  PageIdToImgName   $pageId [file tail $imgPath]
+    dict set scoreData  PageIdToImgPath   $pageId $imgPath
   }
   dict set scoreData  PageImgNameList $pageNames
-  dict set scoreData  PageIdList $pageIds
+  dict set scoreData  PageIdList      $pageIds
 }
 
 
@@ -335,8 +384,8 @@ proc example_01 {}  {
   set NAME "Papirossen"
   set _imgPathsList [list "Scores/Marked/Papirossen_mk.gif"]
   set SCORE_IMG_PATH [lindex $_imgPathsList 0]
-  set wdht [read_image_pixels_into_array  $SCORE_IMG_PATH  2000  _pixels]
-  lassign $wdht _height _width
+  set htwd [read_image_pixels_into_array  $SCORE_IMG_PATH  2000  _pixels]
+  lassign $htwd _height _width
   set _pageLineBounds [find_vertical_spans_of_color_in_pixel_matrix $_pixels \
                         {0xFF 0xFF 0x00} 30]
   set _scoreDict [init_score_data_dict $NAME $_imgPathsList 3]
