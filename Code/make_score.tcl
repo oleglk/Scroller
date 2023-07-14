@@ -115,8 +115,9 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
 #  - each pair is {upper lower} coordinates of spans of required color
 proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
                                                    {ignoreUpToXY 0}}  {
-  set width [llength [lindex $matrixOfPixels 0]]
-  set height [llength $matrixOfPixels]
+  # set width [llength [lindex $matrixOfPixels 0]]
+  # set height [llength $matrixOfPixels]
+  detect_true_image_dimensions matrixOfPixels width height _is_real_pixel ""
   set rgbDescr [format "rgb(%02X%02X%02X)" {*}$reqRgbList]
   LOG_MSG "-I- Begin searching for spans of $rgbDescr in $width*$height image"
 
@@ -326,39 +327,6 @@ proc decode_rgb {pixelStr}  {
   return  [list $dR $dG $dB]
 }
 
-################################################################################
-# proc read_pixels_in_chunks {imgPath {priErr 1}}  {
-#   if { ![file exists $imgPath] }  {
-#     ok_err_msg "-E- Inexistent input file '$imgPath'"
-#     return  0
-#   }
-#   ## read data with 'convert <PATH> txt:-'
-#   ####### TODO: resolve $::IMCONVERT vs {$::IMCONVERT}
-#   set imCmd [format {|%s  %s -quiet txt:-} \
-#                       $::IMCONVERT $imgPath]
-#   set tclExecResult [catch {
-#     # Open a pipe to the program
-#     #   set io [open "|identify -format \"%w %h\" $fullPath" r]
-#     set io [eval [list open $imCmd r]]
-#     set buf [read $io];	# Get the full reply
-#     close $io
-#   } execResult]
-#   if { $tclExecResult != 0 } {
-#     if { $priErr == 1 }  {
-#       ok_err_msg "$execResult!"
-#       ok_err_msg "Cannot get pixel data of '$imgPath'"
-#     }
-#     return  0
-#   }
-#   # # split into list with element per a pixel
-#   # set asOneLine [join $buf " "];  # data read into arbitrary chunks
-#   # set pixels [regexp -all -inline \
-#   #       {\d+,\d+:\s+\([0-9.,]+\)\s+#[0-9A-F]+\s+gray\([0-9.]+%?\)} \
-#   #       $asOneLine]
-
-#   # return  $pixels
-#   return  buf
-# }
 
 
 ##### Complete example: #########################################################
