@@ -30,6 +30,7 @@ proc LOG_MSG {msg}  { puts "$msg" }  ;  # TODO: logging
 # (First index is row, second index is column)
 # On success returns list {height width}, on error returns 0.
 # (Don't cause printing of returned value on the screen - the console gets stuck)
+## Example:  read_image_pixels_into_array Scores/Marked/Papirossen_mk.gif 2000 pixels
 proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
   upvar $listOfPixels pixels
   if { ![file exists $imgPath] }  {
@@ -65,19 +66,29 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
 ## TODO: could optimize with kind-of binary search
 ### Example:
 ### proc _is_real_pixel {rgbList}  { lassign $rgbList r g b;  return [expr ($r>0)||($g>0)||($b>0)] }
-### detect_true_image_dimensions pixelMatrix wd ht _is_real_pixel "image"
+### detect_true_image_dimensions pixels wd ht _is_real_pixel "image"
 proc detect_true_image_dimensions {matrixOfPixelsRef width height \
                                      isRealPixelCB {descrForLog ""}}  {
   upvar $matrixOfPixelsRef pixels
   upvar $width             wd
   upvar $height            ht
   set N_SAMPLES 10;  # how many rows to check
+  set FAST_STEP -100;   # initial X-step decrement - an optimization
   set fullWidth [llength [lindex $pixels 0]]
   set ht [llength $pixels]
   set sampledWidths [list]
   set step [expr {int(floor($ht / $N_SAMPLES))}]
   for {set y 0}  {$y < $ht}  {incr y $step}  {
-    for {set x [expr $fullWidth-1]}  {$x >= 0}  {incr x -1}  {
+    set xMax [expr $fullWidth - 1]
+    # start search with fast rough pass from the right by 'FAST_STEP' decrements
+    for {set xRough $xMax}  {$xRough >= 0}  {incr xRough $FAST_STEP}  {
+      set rgbValStr [elem_list2d $pixels $y $xRough]
+      if { [$isRealPixelCB [decode_rgb $rgbValStr]] }  {
+        set xRough [expr {($xRough < $xMax)? $xRough - $FAST_STEP} : $xMax]
+        break
+      }
+    }
+    for {set x $xRough}  {$x >= 0}  {incr x -1}  {
       set rgbValStr [elem_list2d $pixels $y $x]
       set rgbList [decode_rgb $rgbValStr]
       if { [$isRealPixelCB $rgbList] }  {
