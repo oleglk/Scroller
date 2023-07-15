@@ -59,6 +59,7 @@ proc make_score_file {name imgPathList}  {
   # Print the arrays
   puts stdout "\n\n"
   print_score__all_pages_scoreLines scoreDict stdout
+  print_score__pageImgPathsMap scoreDict stdout
 
 };#__END_OF__make_score_file
 ################################################################################
@@ -315,6 +316,25 @@ proc print_score__all_pages_scoreLines {scoreDictRef {outChannel stdout}} {
   }
   puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS FOOT_scoreLines]]
 }
+
+
+# var g_pageImgPathsMap = new Map([
+#   ["pg01", "Vals_by_Petrov__01.jpg"],
+#   ["pg02", "Vals_by_Petrov__02.jpg"],
+#   ["pg03", "Vals_by_Petrov__03.jpg"],
+# ]);
+proc print_score__pageImgPathsMap {scoreDictRef {outChannel stdout}} {
+  upvar $scoreDictRef scoreDict
+  puts $outChannel [join \
+                     [dict get $::HEADERS_AND_FOOTERS HEAD_pageImgPathsMap] "\n"]
+  foreach pg [dict get $scoreDict  PageIdList]  {
+    set imgPath [dict get $scoreDict PageIdToImgPath $pg]
+    puts $outChannel [format {["%s", "%s"],} $pg $imgPath]
+  }
+  puts $outChannel [join \
+                     [dict get $::HEADERS_AND_FOOTERS FOOT_pageImgPathsMap] "\n"]
+}
+
 ############### End:   score printing stuff #####################################
 
 
@@ -399,6 +419,7 @@ proc decode_rgb {pixelStr}  {
 ################################################################################
 proc init_header_footer_dict {}  {
   set hfd [dict create]
+  #------------------------------------------------------------------------#
   dict set hfd HEAD_scoreLines  [list  \
 {/* Images are first resized to equal width, then measured:}  \
 { * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}}  \
@@ -407,9 +428,20 @@ proc init_header_footer_dict {}  {
 { * !Having page-width close to screen resolution makes fading alerts visible!*/ }  \
 {var g_scoreLines = [}  \
                                   ]
+  #------------------------------------------------------------------------#
   dict set hfd FOOT_scoreLines  [list  \
 {];}  \
                                 ]
+  #------------------------------------------------------------------------#
+  dict set hfd HEAD_pageImgPathsMap  [list  \
+{/* Image paths should be relative to the location of score files */}  \
+{var g_pageImgPathsMap = new Map([}
+                                ]
+  #------------------------------------------------------------------------#
+  dict set hfd FOOT_pageImgPathsMap  [list  \
+{];}  \
+                                ]
+  #------------------------------------------------------------------------#
   return  $hfd
 }
 ################################################################################
