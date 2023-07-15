@@ -34,6 +34,7 @@ set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
 
 ################ The "main" ####################################################
 ## Example 1:  make_score_file  "Papirossen"  [list "Scores/Marked/Papirossen_mk.gif"]
+## Example 2:  make_score_file  "Vals"  [list "Scores/Marked/Vals_by_Petrov_mk__01.gif" "Scores/Marked/Vals_by_Petrov_mk__02.gif" "Scores/Marked/Vals_by_Petrov_mk__03.gif"]
 proc make_score_file {name imgPathList}  {
   global scoreDict;  # OK_TMP
   set imgPathsOrdered $imgPathList;  # TODO: [sort_score_pages $imgPathList]
