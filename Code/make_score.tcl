@@ -29,12 +29,16 @@ set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
 set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
 set DEFAuLT_COLOR_SAMPLE_SIZE 30
 
+set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
+
 
 ################ The "main" ####################################################
 ## Example 1:  make_score_file  "Papirossen"  [list "Scores/Marked/Papirossen_mk.gif"]
 proc make_score_file {name imgPathList}  {
   global scoreDict;  # OK_TMP
   set imgPathsOrdered $imgPathList;  # TODO: [sort_score_pages $imgPathList]
+  # ::HEADERS_AND_FOOTERS <- dictionary with format-related headers/footers
+  set ::HEADERS_AND_FOOTERS [init_header_footer_dict]
   set scoreDict [init_score_data_dict $name $imgPathsOrdered \
                                       $::DEFAULT_TIME_BEAT]
   # prepare data for all pages
@@ -53,19 +57,8 @@ proc make_score_file {name imgPathList}  {
     LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
   }
   # Print the arrays
-  puts "\n\n"
-  foreach pg [dict get $scoreDict PageIdList]  {
-    puts "// Score data lines for page '$pg'"
-    foreach sl [dict get $scoreDict ScoreDataLines $pg]  {
-      puts "$sl"
-    }
-  }
-  foreach pg [dict get $scoreDict PageIdList]  {
-    puts "// Score control lines for page '$pg'"
-    foreach sl [dict get $scoreDict ScoreControlLines $pg]  {
-      puts "$sl"
-    }
-  }
+  puts stdout "\n\n"
+  print_score__all_pages_scoreLines scoreDict stdout
 
 };#__END_OF__make_score_file
 ################################################################################
@@ -108,12 +101,18 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
 }
 
 
+proc _is_black_pixel {rgbList}  {
+  lassign $rgbList r g b
+  return [expr ($r==0) && ($g==0) && ($b==0)]
+}
+
+
 # Workarounds use of excessive-width buffers for reading images.
 # Finds where on x-axis the actual pixel data ends
 ## TODO: could optimize with kind-of binary search
 ### Example:
-### proc _is_real_pixel {rgbList}  { lassign $rgbList r g b;  return [expr ($r>0)||($g>0)||($b>0)] }
-### detect_true_image_dimensions pixels wd ht _is_real_pixel "image"
+### proc _is_black_pixel {rgbList}  { lassign $rgbList r g b;  return [expr ($r>0)||($g>0)||($b>0)] }
+### detect_true_image_dimensions pixels wd ht _is_black_pixel "image"
 proc detect_true_image_dimensions {matrixOfPixelsRef width height \
                                      isRealPixelCB {descrForLog ""}}  {
   upvar $matrixOfPixelsRef pixels
@@ -164,7 +163,7 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
                                                    {ignoreUpToXY 0}}  {
   # set width [llength [lindex $matrixOfPixels 0]]
   # set height [llength $matrixOfPixels]
-  detect_true_image_dimensions matrixOfPixels width height _is_real_pixel ""
+  detect_true_image_dimensions matrixOfPixels width height _is_black_pixel ""
   set rgbDescr [format "rgb(%02X%02X%02X)" {*}$reqRgbList]
   LOG_MSG "-I- Begin searching for spans of $rgbDescr in $width*$height image"
 
@@ -257,7 +256,7 @@ proc init_score_data_dict {scoreName imgPathsOrdered defaultTimeBeat}  {
 #   {tag:"Control-Bottom", pageId:"pg03", x:0, y:914,  timeBeat:0},  
 #   {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeBeat:0},  
 # ];
-# Fills with kists of formatted text:
+# Fills with lists of formatted text:
 # 'scoreDict::ScoreDataLines::pageId' and 'scoreDict::ScoreControlLines::pageId'
 # 'pageLineBounds' is a list of line-delimeters' {min max}Y-coordinates
 proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
@@ -295,6 +294,25 @@ proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
   dict set scoreDict  ScoreDataLines    $pageId $dataLines
   dict set scoreDict  ScoreControlLines $pageId $ctrlLines
   LOG_MSG "-I- Generated [llength $dataLines] data-line(s) and [llength $ctrlLines] control-line(s) for page '$pageId'"
+}
+
+
+proc print_score__all_pages_scoreLines {scoreDictRef {outChannel stdout}} {
+  upvar $scoreDictRef scoreDict
+  puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS HEAD_scoreLines] "\n"]
+  foreach pg [dict get $scoreDict PageIdList]  {
+    puts $outChannel "// Score data lines for page '$pg'"
+    foreach sl [dict get $scoreDict ScoreDataLines $pg]  {
+      puts $outChannel "$sl"
+    }
+  }
+  foreach pg [dict get $scoreDict PageIdList]  {
+    puts $outChannel "// Score control lines for page '$pg'"
+    foreach sl [dict get $scoreDict ScoreControlLines $pg]  {
+      puts $outChannel "$sl"
+    }
+  }
+  puts $outChannel [dict get $::HEADERS_AND_FOOTERS FOOT_scoreLines]
 }
 ############### End:   score printing stuff #####################################
 
@@ -376,6 +394,24 @@ proc decode_rgb {pixelStr}  {
   return  [list $dR $dG $dB]
 }
 
+
+################################################################################
+proc init_header_footer_dict {}  {
+  set hfd [dict create]
+  dict set hfd HEAD_scoreLines  [list  \
+{/* Images are first resized to equal width, then measured:}  \
+{ * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}}  \
+{ * #### exec $IMCONVERT --version"]}  \
+{ * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}}  \
+{ * !Having page-width close to screen resolution makes fading alerts visible!*/ }  \
+{var g_scoreLines = [}  \
+                                  ]
+  dict set hfd FOOT_scoreLines  [list  \
+{];}  \
+                                ]
+  return  $hfd
+}
+################################################################################
 
 
 ##### Complete example: #########################################################
