@@ -101,9 +101,9 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
 }
 
 
-proc _is_black_pixel {rgbList}  {
+proc _is_nonblack_pixel {rgbList}  {
   lassign $rgbList r g b
-  return [expr ($r==0) && ($g==0) && ($b==0)]
+  return [expr ($r>0) || ($g>0) || ($b>0)]
 }
 
 
@@ -111,26 +111,27 @@ proc _is_black_pixel {rgbList}  {
 # Finds where on x-axis the actual pixel data ends
 ## TODO: could optimize with kind-of binary search
 ### Example:
-### proc _is_black_pixel {rgbList}  { lassign $rgbList r g b;  return [expr ($r>0)||($g>0)||($b>0)] }
-### detect_true_image_dimensions pixels wd ht _is_black_pixel "image"
+### proc _is_nonblack_pixel {rgbList}  { lassign $rgbList r g b;  return [expr ($r>0)||($g>0)||($b>0)] }
+### detect_true_image_dimensions pixels wd ht _is_nonblack_pixel "image"
 proc detect_true_image_dimensions {matrixOfPixelsRef width height \
                                      isRealPixelCB {descrForLog ""}}  {
   upvar $matrixOfPixelsRef pixels
   upvar $width             wd
   upvar $height            ht
   set N_SAMPLES 10;  # how many rows to check
-  set FAST_STEP -100;   # initial X-step decrement - an optimization
+  set FAST_DECR -100;   # initial X-step decrement - an optimization
   set fullWidth [llength [lindex $pixels 0]]
   set ht [llength $pixels]
   set sampledWidths [list]
   set step [expr {int(floor($ht / $N_SAMPLES))}]
   for {set y 0}  {$y < $ht}  {incr y $step}  {
     set xMax [expr $fullWidth - 1]
-    # start search with fast rough pass from the right by 'FAST_STEP' decrements
-    for {set xRough $xMax}  {$xRough >= 0}  {incr xRough $FAST_STEP}  {
+    # start search with fast rough pass from the right by 'FAST_DECR' decrements
+    for {set xRough $xMax}  {$xRough >= 0}  {incr xRough $FAST_DECR}  {
       set rgbValStr [elem_list2d $pixels $y $xRough]
       if { [$isRealPixelCB [decode_rgb $rgbValStr]] }  {
-        set xRough [expr {($xRough < $xMax)? $xRough - $FAST_STEP} : $xMax]
+        set xRough [expr {($xRough < $xMax)? ($xRough - $FAST_DECR) : $xMax}]
+        #puts "@@ Y=$y, xRough=$xRough  (pixel='$rgbValStr')"
         break
       }
     }
@@ -163,7 +164,7 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
                                                    {ignoreUpToXY 0}}  {
   # set width [llength [lindex $matrixOfPixels 0]]
   # set height [llength $matrixOfPixels]
-  detect_true_image_dimensions matrixOfPixels width height _is_black_pixel ""
+  detect_true_image_dimensions matrixOfPixels width height _is_nonblack_pixel ""
   set rgbDescr [format "rgb(%02X%02X%02X)" {*}$reqRgbList]
   LOG_MSG "-I- Begin searching for spans of $rgbDescr in $width*$height image"
 
