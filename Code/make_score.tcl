@@ -246,8 +246,7 @@ proc init_score_data_dict {scoreName imgPathsOrdered defaultTimeBeat}  {
 }
 
 
-## Sample output
-# var g_scoreLines = [
+## Sample output - scoreLines
 #   {tag:"line-011-Begin", pageId:"pg01", x:0, y:112,  timeBeat:11},
 #   {tag:"line-012-Begin", pageId:"pg01", x:0, y:288,  timeBeat:11},
 #   ...
@@ -258,9 +257,14 @@ proc init_score_data_dict {scoreName imgPathsOrdered defaultTimeBeat}  {
 #   {tag:"Control-Height", pageId:"pg02", x:0, y:1130, timeBeat:0},  
 #   {tag:"Control-Bottom", pageId:"pg03", x:0, y:914,  timeBeat:0},  
 #   {tag:"Control-Height", pageId:"pg03", x:0, y:1130, timeBeat:0},  
-# ];
+# ---
+## Sample output - playedLines
+#  {pageId:"pg01", lineIdx:4, timeBeat:6*g_beatsInTact},
+#  {pageId:"pg02", lineIdx:0, timeBeat:5*g_beatsInTact},
+# ---
 # Fills with lists of formatted text:
 # 'scoreDict::ScoreDataLines::pageId' and 'scoreDict::ScoreControlLines::pageId'
+# AND 'scoreDict::ScorePlayedLines::pageId' - sample (straight) play-order array
 # 'pageLineBounds' is a list of line-delimeters' {min max}Y-coordinates
 proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
                                         pageWidth pageHeight}  {
@@ -273,13 +277,18 @@ proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
   set timeBeat [dict get $scoreDict DefaultTimeBeat]
   # generate data lines
   set dataLines [list]
+  set playedLines [list]
   set numLines [expr [llength $pageLineBounds]-1];# top for each; bottom for last
   for {set iL 0}  {$iL < $numLines}  {incr iL 1}  {
     lassign [lindex $pageLineBounds $iL]  y1 y2
     set y [expr {int($y1 + 0.1*($y2 - $y1))}];  # just under top of delimeter
-    set str [format "{tag:\"%s\", pageId:\"%s\", x:0, y:%d,  timeBeat:%d},"   \
+    set strD [format "{tag:\"%s\", pageId:\"%s\", x:0, y:%d,  timeBeat:%d},"   \
               [format__dataline_tag $iPage $iL]  $pageId  $y  $timeBeat]
-    lappend dataLines $str
+    lappend dataLines $strD
+    #   {pageId:"pg01", lineIdx:0, timeBeat:6*g_beatsInTact},
+    set strP [format "{pageId:\"%s\", lineIdx:%d, timeBeat:%d},"   \
+                $pageId  $iL  $timeBeat]
+    lappend playedLines $strP
   }
   # generate control lines
   set ctrlLines [list]
@@ -296,8 +305,27 @@ proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
   
   dict set scoreDict  ScoreDataLines    $pageId $dataLines
   dict set scoreDict  ScoreControlLines $pageId $ctrlLines
+  dict set scoreDict  ScorePlayedLines  $pageId $playedLines
   LOG_MSG "-I- Generated [llength $dataLines] data-line(s) and [llength $ctrlLines] control-line(s) for page '$pageId'"
 }
+
+
+# # Fills with lists of formatted text:
+# # 'scoreDict::ScoreDataLines::pageId' and 'scoreDict::ScoreControlLines::pageId'
+# proc format_score__one_page_linePlayOrder {scoreDictRef iPage
+#                                            pageWidth pageHeight}  {
+#   upvar $scoreDictRef scoreDict
+#   set maxPageIdx [expr [dict get $scoreDict NumPages] - 1]
+#   if { ($iPage < 0) || ($iPage > $maxPageIdx) }  {
+#     error "-E- Invalid page index $iPage; should be 0...$maxPageIdx"
+#   }
+#   set pg  [format__page_id $iPage]
+#   set timeBeat [dict get $scoreDict DefaultTimeBeat]
+#   # generate played lines
+#   set playedLines [list]
+#   set numLines [expr [llength $pageLineBounds]-1];# top for each; bottom for last
+#   for {set iL 0}  {$iL < $numLines}  {incr iL 1}  {}
+# }
 
 
 proc print_score__all_pages_scoreLines {scoreDictRef {outChannel stdout}} {
