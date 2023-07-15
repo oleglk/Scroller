@@ -313,7 +313,7 @@ proc print_score__all_pages_scoreLines {scoreDictRef {outChannel stdout}} {
       puts $outChannel "$sl"
     }
   }
-  puts $outChannel [dict get $::HEADERS_AND_FOOTERS FOOT_scoreLines]
+  puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS FOOT_scoreLines]]
 }
 ############### End:   score printing stuff #####################################
 
