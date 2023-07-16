@@ -59,9 +59,14 @@ proc make_score_file {name imgPathList}  {
   }
   # Print the arrays
   puts stdout "\n\n"
+  LOG_MSG "-I- Printing score-lines array for score '$name'..."
   print_score__all_pages_scoreLines scoreDict stdout
+  LOG_MSG "-I- Printing page-image-paths array for score '$name'..."
   print_score__pageImgPathsMap scoreDict stdout
-
+  LOG_MSG "-I- Printing example line-play-order array for score '$name'..."
+  print_score__playedLines scoreDict stdout
+  LOG_MSG "-I- Done generting description file for score '$name'..."
+  
 };#__END_OF__make_score_file
 ################################################################################
 
@@ -275,7 +280,7 @@ proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
   }
   set pageId  [format__page_id $iPage]
   set timeBeat [dict get $scoreDict DefaultTimeBeat]
-  # generate data lines
+  # generate data lines and played lines (sample play-order)
   set dataLines [list]
   set playedLines [list]
   set numLines [expr [llength $pageLineBounds]-1];# top for each; bottom for last
@@ -344,6 +349,38 @@ proc print_score__all_pages_scoreLines {scoreDictRef {outChannel stdout}} {
     }
   }
   puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS FOOT_scoreLines]]
+}
+
+
+# Prints two examples of line play-order:
+# 1) straight: all lines once - from line-1 of page-1 till last line of last page
+# 2) dummy:    line-1 of page-1 twice, then last line of last page twice
+proc print_score__playedLines {scoreDictRef {outChannel stdout}} {
+  upvar $scoreDictRef scoreDict
+  set allPageIds [dict get $scoreDict PageIdList]
+  # print "straight" play-order"
+  puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
+                                               HEAD_playedLinesStraight] "\n"]
+  foreach pg $allPageIds  {
+    # print all score played lines for page '$pg'
+    foreach pl [dict get $scoreDict ScorePlayedLines $pg]  {
+      puts $outChannel "$pl"
+    }
+  }
+  puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
+                                               FOOT_playedLinesStraight]]
+
+  set pg1 [lindex $allPageIds 0]
+  set playedLines_pg1 [dict get $scoreDict ScorePlayedLines $pg1]
+  set pgN [lindex $allPageIds end]
+  set playedLines_pgN [dict get $scoreDict ScorePlayedLines $pgN]
+  # print "dummy" play-order" - first line twice, then last lins twice
+  puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
+                            HEAD_playedLinesDummy] "\n"]
+  foreach i {1 2}  {  puts $outChannel [lindex $playedLines_pg1 0] };   # first
+  foreach i {1 2}  {  puts $outChannel [lindex $playedLines_pgN end] }; # last
+  puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
+                            FOOT_playedLinesDummy] "\n"]
 }
 
 
@@ -470,6 +507,27 @@ proc init_header_footer_dict {}  {
   dict set hfd FOOT_pageImgPathsMap  [list  \
 {];}  \
                                 ]
+  #------------------------------------------------------------------------#
+  dict set hfd HEAD_playedLinesStraight  [list  \
+{/* Example of line play order spec: straight - without repetitions}  \
+{ * Line format:  {pageId:<line-page-id>, lineIdx:<line-index-from-0>, timeBeat:<line-play-time-in-beats>}  */}  \
+{var g_linePlayOrder_straight = [}
+                                ]
+  #------------------------------------------------------------------------#
+  dict set hfd FOOT_playedLinesStraight  [list  \
+{];}  \
+                                ]
+  #------------------------------------------------------------------------#
+  dict set hfd HEAD_playedLinesDummy  [list  \
+{/* Example of line play order spec: dummy - twice first line, twice last line}  \
+{ * Line format:  {pageId:<line-page-id>, lineIdx:<line-index-from-0>, timeBeat:<line-play-time-in-beats>}  */}  \
+                                ]
+  #------------------------------------------------------------------------#
+  dict set hfd FOOT_playedLinesDummy  [list  \
+{];}  \
+                                ]
+  #------------------------------------------------------------------------#
+  #------------------------------------------------------------------------#
   #------------------------------------------------------------------------#
   return  $hfd
 }
