@@ -26,6 +26,8 @@ proc LOG_MSG {msg}  { puts "$msg" }  ;  # TODO: logging
 
 
 set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
+set DEFAULT_NUM_LINES_IN_STEP 1;  # 1|2 (!) number of lines to scroll in one step
+set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
 set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
 set DEFAuLT_COLOR_SAMPLE_SIZE 30
 
@@ -40,8 +42,8 @@ proc make_score_file {name imgPathList}  {
   set imgPathsOrdered $imgPathList;  # TODO: [sort_score_pages $imgPathList]
   # ::HEADERS_AND_FOOTERS <- dictionary with format-related headers/footers
   set ::HEADERS_AND_FOOTERS [init_header_footer_dict]
-  set scoreDict [init_score_data_dict $name $imgPathsOrdered \
-                                      $::DEFAULT_TIME_BEAT]
+  set scoreDict [init_score_data_dict $name $imgPathsOrdered]
+
   # prepare data for all pages
   foreach pg [dict get $scoreDict PageIdList]  {
     set imgName [dict get $scoreDict  PageIdToImgName   $pg]
@@ -57,6 +59,9 @@ proc make_score_file {name imgPathList}  {
                                        $width $height
     LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
   }
+
+  puts stdout "\n"
+  print_score__control_parameters scoreDict stdout
   # Print the arrays
   puts stdout "\n"
   LOG_MSG "-I- Printing score-lines array for score '$name'..."
@@ -231,12 +236,14 @@ proc format__dataline_tag {iPage iLine}  {
 }
 
 
-proc init_score_data_dict {scoreName imgPathsOrdered defaultTimeBeat}  {
+proc init_score_data_dict {scoreName imgPathsOrdered}  {
   set scoreData [dict create]
-  dict set scoreData  Name            $scoreName
-  dict set scoreData  NumPages        [llength $imgPathsOrdered]
-  dict set scoreData  PageImgPathList $imgPathsOrdered
-  dict set scoreData  DefaultTimeBeat $defaultTimeBeat;  # default beats per line
+  dict set scoreData  Name                  $scoreName
+  dict set scoreData  NumPages              [llength $imgPathsOrdered]
+  dict set scoreData  PageImgPathList       $imgPathsOrdered
+  dict set scoreData  DefaultTimeBeat       $::DEFAULT_TIME_BEAT
+  dict set scoreData  DefaultNumLinesInStep $::DEFAULT_NUM_LINES_IN_STEP
+  dict set scoreData  DefaultTempo          $::DEFAULT_TEMPO
   set pageIds [list]
   set pageNames [list]
   for {set i 0}  {$i < [llength $imgPathsOrdered]}  {incr i 1}  {
@@ -333,6 +340,19 @@ proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
 #   set numLines [expr [llength $pageLineBounds]-1];# top for each; bottom for last
 #   for {set iL 0}  {$iL < $numLines}  {incr iL 1}  {}
 # }
+
+
+# const g_scoreName = "Vals_by_Petrov";
+# const g_numLinesInStep = 1;
+# var g_tempo = 60;  //60; // beats-per-minute
+proc print_score__control_parameters {scoreDictRef {outChannel stdout}}  {
+  upvar $scoreDictRef scoreDict
+  puts $outChannel "const g_scoreName = \"[dict get $scoreDict Name]\";"
+  puts $outChannel ""
+  puts $outChannel "const g_numLinesInStep = [dict get $scoreDict DefaultNumLinesInStep];"
+  puts $outChannel ""
+  puts $outChannel "const g_tempo = [dict get $scoreDict DefaultTempo];"
+}
 
 
 proc print_score__all_pages_scoreLines {scoreDictRef {outChannel stdout}} {
@@ -567,7 +587,7 @@ proc example_01 {}  {
   lassign $htwd _height _width
   set _pageLineBounds [find_vertical_spans_of_color_in_pixel_matrix $_pixels \
                         {0xFF 0xFF 0x00} 30]
-  set _scoreDict [init_score_data_dict $NAME $_imgPathsList 3]
+  set _scoreDict [init_score_data_dict $NAME $_imgPathsList]
   format_score__one_page_scoreLines  _scoreDict  0  $_pageLineBounds  \
                                      $_width $_height
 
