@@ -381,6 +381,9 @@ proc print_score__playedLines {scoreDictRef {outChannel stdout}} {
   foreach i {1 2}  {  puts $outChannel [lindex $playedLines_pgN end] }; # last
   puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
                             FOOT_playedLinesDummy] "\n"]
+  # print choice of "straight" play-order
+  puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
+                            CHOICE_playedLinesStraight] "\n"]
 }
 
 
@@ -527,6 +530,10 @@ proc init_header_footer_dict {}  {
 {];}  \
                                 ]
   #------------------------------------------------------------------------#
+  dict set hfd CHOICE_playedLinesStraight  [list  \
+{/* Example of choosing one of the pre-built line play orders: point at the "straight" order}  \
+{var g_linePlayOrder = g_linePlayOrder_straight;}  \
+                                ]
   #------------------------------------------------------------------------#
   #------------------------------------------------------------------------#
   return  $hfd
