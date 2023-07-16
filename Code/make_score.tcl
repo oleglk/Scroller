@@ -58,11 +58,13 @@ proc make_score_file {name imgPathList}  {
     LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
   }
   # Print the arrays
-  puts stdout "\n\n"
+  puts stdout "\n"
   LOG_MSG "-I- Printing score-lines array for score '$name'..."
   print_score__all_pages_scoreLines scoreDict stdout
+  puts stdout "\n"
   LOG_MSG "-I- Printing page-image-paths array for score '$name'..."
   print_score__pageImgPathsMap scoreDict stdout
+  puts stdout "\n"
   LOG_MSG "-I- Printing example line-play-order array for score '$name'..."
   print_score__playedLines scoreDict stdout
   LOG_MSG "-I- Done generting description file for score '$name'..."
@@ -358,6 +360,7 @@ proc print_score__all_pages_scoreLines {scoreDictRef {outChannel stdout}} {
 proc print_score__playedLines {scoreDictRef {outChannel stdout}} {
   upvar $scoreDictRef scoreDict
   set allPageIds [dict get $scoreDict PageIdList]
+
   # print "straight" play-order"
   puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
                                                HEAD_playedLinesStraight] "\n"]
@@ -368,20 +371,26 @@ proc print_score__playedLines {scoreDictRef {outChannel stdout}} {
     }
   }
   puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
-                                               FOOT_playedLinesStraight]]
+                            FOOT_playedLinesStraight]]
+  puts $outChannel ""
 
+  # print "dummy" play-order" - first line twice, then last lins twice
   set pg1 [lindex $allPageIds 0]
   set playedLines_pg1 [dict get $scoreDict ScorePlayedLines $pg1]
   set pgN [lindex $allPageIds end]
   set playedLines_pgN [dict get $scoreDict ScorePlayedLines $pgN]
-  # print "dummy" play-order" - first line twice, then last lins twice
   puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
                             HEAD_playedLinesDummy] "\n"]
   foreach i {1 2}  {  puts $outChannel [lindex $playedLines_pg1 0] };   # first
   foreach i {1 2}  {  puts $outChannel [lindex $playedLines_pgN end] }; # last
   puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
                             FOOT_playedLinesDummy] "\n"]
+
   # print choice of "straight" play-order
+  puts $outChannel ""
+  puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
+                            HELPER_choose_line_play_order] "\n"]
+  puts $outChannel "\n"
   puts $outChannel [join [dict get $::HEADERS_AND_FOOTERS  \
                             CHOICE_playedLinesStraight] "\n"]
 }
@@ -530,10 +539,17 @@ proc init_header_footer_dict {}  {
 {];}  \
                                 ]
   #------------------------------------------------------------------------#
+  dict set hfd HELPER_choose_line_play_order  [list  \
+{// a helper function for safe selection of play-order spec}  \
+{function _TwoLevelCopy(arrayOfObjects)}  \
+{{  return  arrayOfObjects.map(a => {return {...a}});  }}  \
+                                ]
+  #------------------------------------------------------------------------#
   dict set hfd CHOICE_playedLinesStraight  [list  \
 {/* Example of choosing one of the pre-built line play orders: point at the "straight" order}  \
-{var g_linePlayOrder = g_linePlayOrder_straight;}  \
+{var g_linePlayOrder = _TwoLevelCopy( g_linePlayOrder_straight );}  \
                                 ]
+  #------------------------------------------------------------------------#
   #------------------------------------------------------------------------#
   #------------------------------------------------------------------------#
   return  $hfd
