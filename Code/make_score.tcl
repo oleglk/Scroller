@@ -60,7 +60,14 @@ proc make_score_file {name imgPathList}  {
     LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
   }
 
+  # output the whole score file
   puts stdout "\n"
+  LOG_MSG "-I- Printing score-file HTML header for score '$name'..."
+  puts stdout [join [format \
+        [dict get $::HEADERS_AND_FOOTERS HTML_NAME_comment_template] $name] "\n"]
+  puts stdout [join [dict get $::HEADERS_AND_FOOTERS HEAD_html] "\n"]
+  puts stdout "\n"
+  LOG_MSG "-I- Printing user-configurable parameters for score '$name'..."
   print_score__control_parameters scoreDict stdout
   # Print the arrays
   puts stdout "\n"
@@ -72,6 +79,9 @@ proc make_score_file {name imgPathList}  {
   puts stdout "\n"
   LOG_MSG "-I- Printing example line-play-order array for score '$name'..."
   print_score__playedLines scoreDict stdout
+  puts stdout "\n"
+  LOG_MSG "-I- Printing score-file HTML footer for score '$name'..."
+  puts stdout [join [dict get $::HEADERS_AND_FOOTERS FOOT_html] "\n"]
   LOG_MSG "-I- Done generting description file for score '$name'..."
   
 };#__END_OF__make_score_file
@@ -572,6 +582,49 @@ proc init_header_footer_dict {}  {
 {var g_linePlayOrder = _TwoLevelCopy( g_linePlayOrder_straight );}  \
                                 ]
   #------------------------------------------------------------------------#
+  dict set hfd HTML_NAME_comment_template  [list  \
+{<!-- Score/notes for "%s" -->}  \
+                                ]
+  #------------------------------------------------------------------------#
+  dict set hfd HEAD_html  [list  \
+{<!DOCTYPE HTML>}  \
+{<html>}  \
+{<head>}  \
+{<style>}  \
+"img {"  \
+{width: 75%;}  \
+"}"  \
+{</style>}  \
+{}  \
+{<script type="text/javascript">}  \
+{////////////////////////////////////////////////////////////////////////////////}  \
+                                ]
+  #------------------------------------------------------------------------#
+  dict set hfd FOOT_html  [list  \
+{////////////////////////////////////////////////////////////////////////////////}  \
+{</script>}  \
+{</head>}  \
+{}  \
+{<body>}  \
+{</body>}  \
+{}  \
+{<!-- ..................... In the very end ................................. -->}  \
+{}  \
+{<!-- Load the generic Dialog class code -->}  \
+{<script src="../Code/ModalDialog.js"></script>}  \
+{<!-- Load the utility code -->}  \
+{<script src="../Code/ScrollerCommonUtils.js"></script>}  \
+{<!-- Load the layout code -->}  \
+{<script src="../Code/PlayOrder.js"></script>}  \
+{<script src="../Code/ScoreImgLayout.js"></script>}  \
+{}  \
+{<!-- Load and execute the scrolling code                                     -->}  \
+{<!-- (... then create the play-order layout)                                 -->}  \
+{<!-- (... then prepare global data for the scroller and start it)            -->}  \
+{<script src="../Code/img_scroll.js"></script> }  \
+{}  \
+{</html>}  \
+                                ]
   #------------------------------------------------------------------------#
   #------------------------------------------------------------------------#
   return  $hfd
