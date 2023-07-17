@@ -44,6 +44,10 @@ proc make_score_file {name imgPathList}  {
   set ::HEADERS_AND_FOOTERS [init_header_footer_dict]
   set scoreDict [init_score_data_dict $name $imgPathsOrdered]
 
+  set outDir [file dirname [lindex $imgPathsOrdered 0]]
+  set outPath [file join $outDir [format {%s__straight_out.html} $name]]
+  set outF [safe_open_outfile $outPath]
+  
   # prepare data for all pages
   foreach pg [dict get $scoreDict PageIdList]  {
     set imgName [dict get $scoreDict  PageIdToImgName   $pg]
@@ -61,29 +65,31 @@ proc make_score_file {name imgPathList}  {
   }
 
   # output the whole score file
-  puts stdout "\n"
-  LOG_MSG "-I- Printing score-file HTML header for score '$name'..."
-  puts stdout [join [format \
+  set outDescr "score '$name' into '$outPath'"
+  puts $outF "\n"
+  LOG_MSG "-I- Printing score-file HTML header for $outDescr..."
+  puts $outF [join [format \
         [dict get $::HEADERS_AND_FOOTERS HTML_NAME_comment_template] $name] "\n"]
-  puts stdout [join [dict get $::HEADERS_AND_FOOTERS HEAD_html] "\n"]
-  puts stdout "\n"
-  LOG_MSG "-I- Printing user-configurable parameters for score '$name'..."
-  print_score__control_parameters scoreDict stdout
+  puts $outF [join [dict get $::HEADERS_AND_FOOTERS HEAD_html] "\n"]
+  puts $outF "\n"
+  LOG_MSG "-I- Printing user-configurable parameters for $outDescr..."
+  print_score__control_parameters scoreDict $outF
   # Print the arrays
-  puts stdout "\n"
-  LOG_MSG "-I- Printing score-lines array for score '$name'..."
-  print_score__all_pages_scoreLines scoreDict stdout
-  puts stdout "\n"
-  LOG_MSG "-I- Printing page-image-paths array for score '$name'..."
-  print_score__pageImgPathsMap scoreDict stdout
-  puts stdout "\n"
-  LOG_MSG "-I- Printing example line-play-order array for score '$name'..."
-  print_score__playedLines scoreDict stdout
-  puts stdout "\n"
-  LOG_MSG "-I- Printing score-file HTML footer for score '$name'..."
-  puts stdout [join [dict get $::HEADERS_AND_FOOTERS FOOT_html] "\n"]
-  LOG_MSG "-I- Done generting description file for score '$name'..."
-  
+  puts $outF "\n"
+  LOG_MSG "-I- Printing score-lines array for $outDescr..."
+  print_score__all_pages_scoreLines scoreDict $outF
+  puts $outF "\n"
+  LOG_MSG "-I- Printing page-image-paths array for $outDescr..."
+  print_score__pageImgPathsMap scoreDict $outF
+  puts $outF "\n"
+  LOG_MSG "-I- Printing example line-play-order array for $outDescr..."
+  print_score__playedLines scoreDict $outF
+  puts $outF "\n"
+  LOG_MSG "-I- Printing score-file HTML footer for $outDescr..."
+  puts $outF [join [dict get $::HEADERS_AND_FOOTERS FOOT_html] "\n"]
+  puts $outF "\n"
+  LOG_MSG "-I- Done generting description file for $outDescr..."
+  safe_close_outfile $outF
 };#__END_OF__make_score_file
 ################################################################################
 
@@ -523,6 +529,28 @@ proc decode_rgb {pixelStr}  {
   }
   scan  "$hR $hG $hB"  {%x %x %x}  dR dG dB
   return  [list $dR $dG $dB]
+}
+
+
+proc safe_open_outfile {fullPath} {
+  set tclExecResult [catch {
+    if { ![string equal $fullPath "stdout"] } {
+      set outF [open [file normalize $fullPath] w]
+    } else {
+      set outF stdout
+    }
+  } execResult]
+  if { $tclExecResult != 0 } {
+    set err "-E- Failed to open output file '$fullPath': $execResult!"
+    #LOG_MSG $err
+    error $err
+  }
+  return  $outF
+}
+
+
+proc safe_close_outfile {outChannel} {
+  if { ![string equal $outChannel "stdout"] } {    close $outChannel	}
 }
 
 
