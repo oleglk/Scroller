@@ -225,6 +225,22 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
 }
 
 
+# Receives and returns list of pairs {y1 y2} -
+#  - each pair is {upper lower} coordinates of spans (of required color)
+# In the returned list spans that were closer than 'minDist' to each other are merged
+proc merge_nearby_spans {spanBeginsEnds minDist}  {
+  set nSpans1 [llength $spanBeginsEnds]
+  set spans2 [list]
+  # first run to check basic assumptions
+  for {set i 0} {$i < $nSpans1-1} {}  { ;  # incrementing 'i' inside the loop
+    lassign [lindex $spanBeginsEnds $i] y11 y12
+    lassign [lindex $spanBeginsEnds [expr $i+1]] y21 y22
+    if { $y12 < $y11 }  { error "-E- Invalid span #$i: $y11...$y12" }
+    if { !(($y21 > $y12) && ($y22 > $y12) }  { error "-E- Overlapping spans #$i: $y11...$y12 and #[expr $i+1]: $y21...$y22" }
+  }
+}
+
+
 ############### Begin: score printing stuff ####################################
 proc format__page_id {iPage}  {
   return  [format "pg%02d" [expr {$iPage + 1}]]
