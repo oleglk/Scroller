@@ -577,7 +577,7 @@ proc init_header_footer_dict {}  {
                                 ]
   #------------------------------------------------------------------------#
   dict set hfd FOOT_pageImgPathsMap  [list  \
-{];}  \
+{]);}  \
                                 ]
   #------------------------------------------------------------------------#
   dict set hfd HEAD_playedLinesStraight  [list  \
@@ -593,6 +593,7 @@ proc init_header_footer_dict {}  {
   dict set hfd HEAD_playedLinesDummy  [list  \
 {/* Example of line play order spec: dummy - twice first line, twice last line}  \
 { * Line format:  {pageId:<line-page-id>, lineIdx:<line-index-from-0>, timeBeat:<line-play-time-in-beats>}  */}  \
+{var g_linePlayOrder_dummy = [}
                                 ]
   #------------------------------------------------------------------------#
   dict set hfd FOOT_playedLinesDummy  [list  \
@@ -606,7 +607,8 @@ proc init_header_footer_dict {}  {
                                 ]
   #------------------------------------------------------------------------#
   dict set hfd CHOICE_playedLinesStraight  [list  \
-{/* Example of choosing one of the pre-built line play orders: point at the "straight" order}  \
+{/* Example of choosing one of the pre-built line play orders:}  \
+{   - point at the "straight" order */ }  \
 {var g_linePlayOrder = _TwoLevelCopy( g_linePlayOrder_straight );}  \
                                 ]
   #------------------------------------------------------------------------#
