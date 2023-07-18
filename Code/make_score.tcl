@@ -444,8 +444,9 @@ proc print_score__pageImgPathsMap {scoreDictRef {outChannel stdout}} {
   puts $outChannel [join \
                      [dict get $::HEADERS_AND_FOOTERS HEAD_pageImgPathsMap] "\n"]
   foreach pg [dict get $scoreDict  PageIdList]  {
-    set imgPath [dict get $scoreDict PageIdToImgPath $pg]
-    puts $outChannel [format {["%s", "%s"],} $pg $imgPath]
+    # set imgPath [dict get $scoreDict PageIdToImgPath $pg]
+    set imgFileName [dict get $scoreDict PageIdToImgName $pg]
+    puts $outChannel [format {["%s", "%s"],} $pg $imgFileName]
   }
   puts $outChannel [join \
                      [dict get $::HEADERS_AND_FOOTERS FOOT_pageImgPathsMap] "\n"]
@@ -561,7 +562,7 @@ proc init_header_footer_dict {}  {
   dict set hfd HEAD_scoreLines  [list  \
 {/* Images are first resized to equal width, then measured:}  \
 { * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}}  \
-{ * #### exec $IMCONVERT --version"]}  \
+{ * #### exec $IMCONVERT --version"}  \
 { * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}}  \
 { * !Having page-width close to screen resolution makes fading alerts visible!*/ }  \
 {var g_scoreLines = [}  \
