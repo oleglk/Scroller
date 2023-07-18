@@ -35,8 +35,8 @@ set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
 
 
 ################ The "main" ####################################################
-## Example 1:  make_score_file  "Papirossen"  [list "Scores/Marked/Papirossen_mk.gif"]
-## Example 2:  make_score_file  "Vals"  [list "Scores/Marked/Vals_by_Petrov_mk__01.gif" "Scores/Marked/Vals_by_Petrov_mk__02.gif" "Scores/Marked/Vals_by_Petrov_mk__03.gif"]
+## Example 1:  make_score_file  "Papirossen"  [list "Scores/Papirossen_mk.gif"]
+## Example 2:  make_score_file  "Vals"  [list "Scores/Vals_by_Petrov_mk__01.gif" "Scores/Vals_by_Petrov_mk__02.gif" "Scores/Vals_by_Petrov_mk__03.gif"]
 proc make_score_file {name imgPathList}  {
   global scoreDict;  # OK_TMP
   set imgPathsOrdered $imgPathList;  # TODO: [sort_score_pages $imgPathList]
@@ -637,4 +637,10 @@ proc example_01 {}  {
     }
   }
 }
-  
+################################################################################
+
+################################################################################
+## Make symbolic links to score images in a directory other than "Scores/"
+##   set myDir [pwd];  cd Scores/;  foreach img [glob -nocomplain -directory "Marked" {*.gif}]  {puts "$img";  exec  ln -s -f $img [file tail $img]};  cd $myDir
+################################################################################
+
