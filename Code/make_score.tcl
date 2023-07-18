@@ -340,24 +340,6 @@ proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
 }
 
 
-# # Fills with lists of formatted text:
-# # 'scoreDict::ScoreDataLines::pageId' and 'scoreDict::ScoreControlLines::pageId'
-# proc format_score__one_page_linePlayOrder {scoreDictRef iPage
-#                                            pageWidth pageHeight}  {
-#   upvar $scoreDictRef scoreDict
-#   set maxPageIdx [expr [dict get $scoreDict NumPages] - 1]
-#   if { ($iPage < 0) || ($iPage > $maxPageIdx) }  {
-#     error "-E- Invalid page index $iPage; should be 0...$maxPageIdx"
-#   }
-#   set pg  [format__page_id $iPage]
-#   set timeBeat [dict get $scoreDict DefaultTimeBeat]
-#   # generate played lines
-#   set playedLines [list]
-#   set numLines [expr [llength $pageLineBounds]-1];# top for each; bottom for last
-#   for {set iL 0}  {$iL < $numLines}  {incr iL 1}  {}
-# }
-
-
 # const g_scoreName = "Vals_by_Petrov";
 # const g_numLinesInStep = 1;
 # var g_tempo = 60;  //60; // beats-per-minute
@@ -455,40 +437,6 @@ proc print_score__pageImgPathsMap {scoreDictRef {outChannel stdout}} {
 ############### End:   score printing stuff #####################################
 
 
-
-# # Returns (list) 'width' * list-of-y1,y2 -
-# #  - per-column list of {upper lower} coordinates of spans of required color
-# proc ABANDONED__find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
-#                                                    {ignoreUpToXY 0}}  {
-#   set width [llength [lindex $matrixOfPixels 0]]
-#   set height [llength $matrixOfPixels]
-#   set spans [list]
-#   for {set col 0}  {$col < $width}  {inctr col 1}  {
-#     set oneColSpans [list]
-#     set spanTop -1;  # == outside of any span
-#     set column [lindex $matrixOfPixels $col];  # a shortcut
-#     for {set row 0}  {$row < $height}  {incr row 1}  {
-#       if { ($col < $ignoreUpToXY) && ($row < $ignoreUpToXY) }  { continue }
-#       set rgbValStr [lindex $column $row]
-#       #lassign [decode_rgb $rgbValStr] rV gV bV
-#       set equ [equ_rgb [decode_rgb $rgbValStr]  $reqRgbList]
-#       if { $equ && ($spanTop < 0) }  { ;  # new span started
-#         set spanTop $row
-#       }
-#       elseif { !$equ && ($spanTop >= 0) }  { ;  # old span ended
-#         lappend oneColSpans [list $spanTop [expr $row-1]]
-#         set spanTop -1;  # prepare for the next span
-#       }
-#     }
-#     if { $spanTop >= 0 }  { ;  # last span ends at the bottom
-#       lappend oneColSpans [list $spanTop [expr $height-1]]
-#       set spanTop -1;  # just cleanup
-#     }
-#     if { 0 != [llength $oneColSpans] }  {
-#       # TODO: append
-#     }
-#   }
-# }
 
 
 # Returns 1 if the two (rgb) colors are _nearly_ equal, otherwise returns 0
