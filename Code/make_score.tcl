@@ -53,8 +53,11 @@ proc make_score_file {name imgPathList}  {
     set htwd [read_image_pixels_into_array  $imgPath  2000  pixels]
     lassign $htwd height width
     # TODO: pass matrix by refernce
-    set pageLineBounds [find_vertical_spans_of_color_in_pixel_matrix $pixels \
-                        $::DEFAuLT_MARKER_RGB $::DEFAuLT_COLOR_SAMPLE_SIZE]
+    set pageLineBoundsRaw [find_vertical_spans_of_color_in_pixel_matrix $pixels \
+                             $::DEFAuLT_MARKER_RGB $::DEFAuLT_COLOR_SAMPLE_SIZE]
+    set tmpMinDist 3
+    set pageLineBounds [merge_nearby_spans $pageLineBoundsRaw $tmpMinDist  \
+                        "score page $pg"]
     format_score__one_page_scoreLines  scoreDict  $iPage  $pageLineBounds  \
                                        $width $height
     LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
@@ -228,16 +231,63 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
 # Receives and returns list of pairs {y1 y2} -
 #  - each pair is {upper lower} coordinates of spans (of required color)
 # In the returned list spans that were closer than 'minDist' to each other are merged
-proc merge_nearby_spans {spanBeginsEnds minDist}  {
+# Example 1: merge_nearby_spans {{1 3} {5 6} {8 9}} 2 "ex1"
+# Example 2: merge_nearby_spans {{1 3} {5 7} {8 9}} 2 "ex2"
+# Example 3: merge_nearby_spans {{1 3} {5 7} {8 9}} 3 "ex3"
+proc merge_nearby_spans {spanBeginsEnds minDist whereStr}  {
   set nSpans1 [llength $spanBeginsEnds]
+  set descr  "$nSpans1 span(s) of $whereStr"
+  set cntMerges 0
   set spans2 [list]
   # first run to check basic assumptions
-  for {set i 0} {$i < $nSpans1-1} {}  { ;  # incrementing 'i' inside the loop
-    lassign [lindex $spanBeginsEnds $i] y11 y12
+  for {set i 0} {$i < $nSpans1-1} {incr i 1}  {
+    lassign [lindex $spanBeginsEnds $i         ] y11 y12
     lassign [lindex $spanBeginsEnds [expr $i+1]] y21 y22
     if { $y12 < $y11 }  { error "-E- Invalid span #$i: $y11...$y12" }
-    if { !(($y21 > $y12) && ($y22 > $y12) }  { error "-E- Overlapping spans #$i: $y11...$y12 and #[expr $i+1]: $y21...$y22" }
+    if { !($y21 > $y12) && ($y22 > $y12) }  { error "-E- Overlapping spans #$i: $y11...$y12 and #[expr $i+1]: $y21...$y22" }
   }
+  set spans1 $spanBeginsEnds
+  set nPass 0
+  # assume no spans overlap - already checked
+  while 1  { ; # while there are spans to be merged
+    set spanIndicesToMergeWithNext [list]
+    incr nPass 1
+    for {set i 0} {$i < $nSpans1-1} {incr i 1}  {
+      lassign [lindex $spans1 $i         ] y11 y12
+      lassign [lindex $spans1 [expr $i+1]] y21 y22
+      if { ($y21 - $y12) < $minDist }  { lappend spanIndicesToMergeWithNext $i }
+    }
+    if { 0 == [llength $spanIndicesToMergeWithNext] }  { break }
+    LOG_MSG "-D- Span merging pass #$nPass has [llength $spanIndicesToMergeWithNext] merge(s)"
+    LOG_MSG "-D- Span merging pass #$nPass begins with: {$spans1}"
+    # perform the merges - input list 'spans1', output list 'spans2'
+    set spans2 [list]
+    for {set i [expr $nSpans1-1]} {$i >= 0} {incr i -1}  {
+      set prev [expr $i - 1];  # could be ==-1, which is not scheduled for merge
+      # element #i could be a candidate to be appended to element #prev
+      if { -1== [lsearch -integer -sorted  $spanIndicesToMergeWithNext $prev] } {
+        # #i not to be appended to #prev; just copy #i to the output
+        set spans2 [linsert $spans2 0 [lindex $spans1 $i]]
+        continue
+      }
+      lassign [lindex $spans1 $prev] y11 y12
+      lassign [lindex $spans1 $i   ] y21 y22
+      LOG_MSG "-I- Merging spans $y11...$y12 with $y21...$y22 for $descr"
+      set spans2 [linsert $spans2 0 [list $y11 $y22]];  # merge #prev with #i
+      incr i -1;  # next time skip to the predecessor of #prev
+      incr cntMerges 1
+    };#END_OF__merging_pass_loop
+    set spans1 $spans2;  # 
+    set nSpans1 [llength $spans1]
+    LOG_MSG "-D- Span merging pass #$nPass ends   with: {$spans1}"
+  };#END_OF__while_loop
+  if { $cntMerges > 0 }   {
+    LOG_MSG "-I- Performed $cntMerges merge(s) of originally $descr"
+  } else {
+    LOG_MSG "-I- No merge(s) needed for $descr"
+  }
+  return  $spans1
+  ##for {set i 0} {$i < $nSpans1-1} {}  {} ;  # incrementing 'i' inside the loop
 }
 
 
