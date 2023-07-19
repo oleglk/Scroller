@@ -59,9 +59,7 @@ proc make_score_file {name imgPathList}  {
     # TODO: pass matrix by refernce
     set pageLineBoundsRaw [find_vertical_spans_of_color_in_pixel_matrix $pixels \
                              $::DEFAuLT_MARKER_RGB $::DEFAuLT_COLOR_SAMPLE_SIZE]
-    set tmpMinDist 3
-    set pageLineBounds [merge_nearby_spans $pageLineBoundsRaw $tmpMinDist  \
-                        "score page $pg"]
+    set pageLineBounds [merge_nearby_spans $pageLineBoundsRaw "score page $pg"]
     format_score__one_page_scoreLines  scoreDict  $iPage  $pageLineBounds  \
                                        $width $height
     LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
@@ -250,18 +248,22 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
 # Example 1: merge_nearby_spans {{1 3} {5 6} {8 9}} 2 "ex1"
 # Example 2: merge_nearby_spans {{1 3} {5 7} {8 9}} 2 "ex2"
 # Example 3: merge_nearby_spans {{1 3} {5 7} {8 9}} 3 "ex3"
-proc merge_nearby_spans {spanBeginsEnds minDist whereStr}  {
+proc merge_nearby_spans {spanBeginsEnds whereStr}  {
   set nSpans1 [llength $spanBeginsEnds]
   set descr  "$nSpans1 span(s) of $whereStr"
   set cntMerges 0
   set spans2 [list]
-  # first run to check basic assumptions
+  # first run to check basic assumptions and pick 'minDist'
+  set maxDist 0
   for {set i 0} {$i < $nSpans1-1} {incr i 1}  {
     lassign [lindex $spanBeginsEnds $i         ] y11 y12
     lassign [lindex $spanBeginsEnds [expr $i+1]] y21 y22
-    if { $y12 < $y11 }  { error "-E- Invalid span #$i: $y11...$y12" }
-    if { !($y21 > $y12) && ($y22 > $y12) }  { error "-E- Overlapping spans #$i: $y11...$y12 and #[expr $i+1]: $y21...$y22" }
+    if { $y12 < $y11 }  { error "-E- Invalid span #$i: $y11...$y12 (in $descr)" }
+    if { !($y21 > $y12) && ($y22 > $y12) }  { error "-E- Overlapping spans #$i: $y11...$y12 and #[expr $i+1]: $y21...$y22 (in $descr)" }
+    if { $maxDist < ($y21 - $y12) }  { set maxDist [expr $y21 - $y12] }
   }
+  set minDist [expr {int( $maxDist / 2.0 )}]
+  LOG_MSG "-D- Minimal span-to-span distance chosen for $descr: $minDist"
   set spans1 $spanBeginsEnds
   set nPass 0
   # assume no spans overlap - already checked
