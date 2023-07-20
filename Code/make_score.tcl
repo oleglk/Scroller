@@ -244,10 +244,11 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
 
 # Receives and returns list of pairs {y1 y2} -
 #  - each pair is {upper lower} coordinates of spans (of required color)
-# In the returned list spans that were closer than 'minDist' to each other are merged
-# Example 1: merge_nearby_spans {{1 3} {5 6} {8 9}} 2 "ex1"
-# Example 2: merge_nearby_spans {{1 3} {5 7} {8 9}} 2 "ex2"
-# Example 3: merge_nearby_spans {{1 3} {5 7} {8 9}} 3 "ex3"
+# In the returned list spans are merged that were
+# closer to each other than half of the max span-to-span distance
+# Example 1: merge_nearby_spans {{1 3} {5 6} {8 9}} "ex1"
+# Example 2: merge_nearby_spans {{1 3} {5 7} {18 19}} "ex2"
+# Example 3: merge_nearby_spans {{1 3} {5 7} {8 9} {21 22}} "ex3"
 proc merge_nearby_spans {spanBeginsEnds whereStr}  {
   set nSpans1 [llength $spanBeginsEnds]
   set descr  "$nSpans1 span(s) of $whereStr"
