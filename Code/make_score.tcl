@@ -198,6 +198,7 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
   detect_true_image_dimensions matrixOfPixels width height _is_nonblack_pixel ""
   set rgbDescr [format "rgb(%02X%02X%02X)" {*}$reqRgbList]
   LOG_MSG "-I- Begin searching for spans of $rgbDescr in $width*$height image"
+  set timeBegin [clock seconds]
 
   set spans [list]
   set spanTop -1;  # == outside of any span
@@ -238,6 +239,7 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
   } else {
     LOG_MSG "-W- Found no span(s) of $rgbDescr"
   }
+  LOG_MSG "-D- Search for spans took [expr [clock seconds] - $timeBegin] second(s)"
   return  $spans
 }
 
