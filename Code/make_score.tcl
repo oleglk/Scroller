@@ -36,7 +36,7 @@ set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
 
 ################ The "main" ####################################################
 ## Example 1:  make_score_file  "Papirossen"  [list "Scores/Papirossen_mk.gif"]
-## Example 2:  make_score_file  "Vals"  [list "Scores/Vals_by_Petrov_mk__01.gif" "Scores/Vals_by_Petrov_mk__02.gif" "Scores/Vals_by_Petrov_mk__03.gif"]
+## Example 2:  make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov_mk__01.gif" "Scores/Vals_by_Petrov_mk__02.gif" "Scores/Vals_by_Petrov_mk__03.gif"]
 proc make_score_file {name imgPathList}  {
   global scoreDict;  # OK_TMP
   set imgPathsOrdered $imgPathList;  # TODO: [sort_score_pages $imgPathList]
@@ -58,7 +58,11 @@ proc make_score_file {name imgPathList}  {
     lassign $htwd height width
     # TODO: pass matrix by refernce
     set pageLineBoundsRaw [find_vertical_spans_of_color_in_pixel_matrix $pixels \
-                             $::DEFAuLT_MARKER_RGB $::DEFAuLT_COLOR_SAMPLE_SIZE]
+       $::DEFAuLT_MARKER_RGB _is_nonblack_pixel_str $::DEFAuLT_COLOR_SAMPLE_SIZE]
+    if { 0 == [llength $pageLineBoundsRaw] }  {
+      set err "-E- Aborted since no score lines detected on page '$pg'"
+      LOG_MSG $err;  error $err
+    }
     set pageLineBounds [merge_nearby_spans $pageLineBoundsRaw "score page $pg"]
     format_score__one_page_scoreLines  scoreDict  $iPage  $pageLineBounds  \
                                        $width $height
@@ -137,6 +141,10 @@ proc _is_nonblack_pixel {rgbList}  {
   return [expr ($r>0) || ($g>0) || ($b>0)]
 }
 
+proc _is_nonblack_pixel_str {rgbStr}  {
+  return  [expr { $rgbStr != {#000000} }]
+}
+
 
 # Workarounds use of excessive-width buffers for reading images.
 # Finds where on x-axis the actual pixel data ends
@@ -192,9 +200,10 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
 # Returns list of pairs {y1 y2} -
 #  - each pair is {upper lower} coordinates of spans of required color
 proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
-                                                   {ignoreUpToXY 0}}  {
+                                        isNonBlackPixelStrCB {ignoreUpToXY 0}}  {
   # set width [llength [lindex $matrixOfPixels 0]]
   # set height [llength $matrixOfPixels]
+  set reqRgbStr [encode_rgb $reqRgbList]
   detect_true_image_dimensions matrixOfPixels width height _is_nonblack_pixel ""
   set rgbDescr [format "rgb(%02X%02X%02X)" {*}$reqRgbList]
   LOG_MSG "-I- Begin searching for spans of $rgbDescr in $width*$height image"
@@ -208,9 +217,9 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
     for {set col 0}  {$col < $width}  {incr col 1}  {
       if { ($col < $ignoreUpToXY) && ($row < $ignoreUpToXY) }  { continue }
       set rgbValStr [elem_list2d $matrixOfPixels $row $col]
-      set rgbList [decode_rgb $rgbValStr]
-      if { ![IS_REAL_PIXEL_VALUE $rgbList] }  { continue }; #ignore extra columns
-      set equ [equ_rgb $rgbList $reqRgbList]
+      if { ![$isNonBlackPixelStrCB $rgbValStr] }  {
+        continue }; #ignore extra columns
+      set equ [string equal -nocase $rgbValStr $reqRgbStr]
       if { $equ }  {
         LOG_MSG "-D- Matched ($rgbValStr) at row=$row, col=$col"
         set foundInCol $col
@@ -239,7 +248,7 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
   } else {
     LOG_MSG "-W- Found no span(s) of $rgbDescr"
   }
-  LOG_MSG "-D- Search for spans took [expr [clock seconds] - $timeBegin] second(s)"
+  LOG_MSG "-D- Search for spans of $rgbDescr in $width*$height image took [expr [clock seconds] - $timeBegin] second(s)"
   return  $spans
 }
 
@@ -552,6 +561,12 @@ proc decode_rgb {pixelStr}  {
 }
 
 
+# {0 161 178} => "#00A1B2".  On error returns 0
+proc encode_rgb {rgbList}  {
+  return  [format "#%02X%02X%02X" {*}$rgbList]
+  
+}
+
 proc safe_open_outfile {fullPath} {
   set tclExecResult [catch {
     if { ![string equal $fullPath "stdout"] } {
@@ -691,7 +706,7 @@ proc example_01 {}  {
   set htwd [read_image_pixels_into_array  $SCORE_IMG_PATH  2000  _pixels]
   lassign $htwd _height _width
   set _pageLineBounds [find_vertical_spans_of_color_in_pixel_matrix $_pixels \
-                        {0xFF 0xFF 0x00} 30]
+                        {0xFF 0xFF 0x00} _is_nonblack_pixel_str 30]
   set _scoreDict [init_score_data_dict $NAME $_imgPathsList]
   format_score__one_page_scoreLines  _scoreDict  0  $_pageLineBounds  \
                                      $_width $_height
