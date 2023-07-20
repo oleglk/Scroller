@@ -26,7 +26,6 @@ window.addEventListener( 'unhandledrejection', function (e) {
 
 //////// Begin: scroller application configuration stuff ///////////////////////
 const g_ScrollerPreferances = {
-  numLinesInStep: 1, // 1|2 HARDCODED(!) number of lines to scroll in one step
   progressShowPeriodSec: 1,   // progress bar (or marker) update period
   progressBar_numCellsForMinFullTime: 3,  // shortest progress bar (char-s)
   progressBar_fontSize: 25,
@@ -49,6 +48,7 @@ const g_ScoreRawInputs = {
   scoreLines: g_scoreLines, /*{tag:STR, pageId:STR, x:INT, y:INT, timeBeat:FLOAT}*/
   linePlayOrder: g_linePlayOrder, /*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
   pageImgPathsMap: g_pageImgPathsMap, /*{pageId(STR) : path(STR)*/
+  defaultNumLinesInStep:  (typeof g_numLinesInStep !== 'undefined')? g_numLinesInStep : 1, /*how many lines to scroll in one step - 1 or 2 - specified in the score file*/
   defaultTempo:  (typeof g_tempo !== 'undefined')? g_tempo : 0, /*beat/min - specified in the score file*/
 };
 const RI = g_ScoreRawInputs;   // shortcut to per-score raw inputs
@@ -76,6 +76,7 @@ const PD = g_ScoreMassagedDataInputs;  // shortcut to per-score processed inputs
 //////// Begin: runtime/state variables of the current session /////////////////
 const g_RunTimeState = {
   helpAndTempoDialog: null,
+  numLinesInStep: RI.defaultNumLinesInStep,  // how many lines to scroll in one step - 1 or 2 - specified in the score file
   tempo: RI.defaultTempo,   // beat/min; default specified in the score file*
   stepManual: (RI.defaultTempo > 0)? false/*auto-scroll*/ : true/*manual-step*/,
   totalHeight: -1,          // for document scroll height
@@ -100,7 +101,7 @@ const RT = g_RunTimeState;  // shortcut to runtime/state
 
 
 arrange_score_global_data(RI.scoreName, RI.pageImgPathsMap,
-                          RI.scoreLines, RI.linePlayOrder, PF.numLinesInStep);
+                          RI.scoreLines, RI.linePlayOrder, RT.numLinesInStep);
 // at this stage 'PD.scoreStations' is built, but times reflect default tempo
 
 //(meaningless - will not wait for:)  modal_alert("OK_TMP: Test modal_alert()");
@@ -182,6 +183,11 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
                                    scoreLinesArray, linePlayOrderArray,
                                    numLinesInStep)
 {
+  if ( (numLinesInStep < 1) || (numLinesInStep > 2) )  {
+    const err = `-E- Invalid number of lines in a step: g_numLinesInStep=${numLinesInStep}; allowed values are 1,2`;
+    console.log(err);  alert(err);
+    throw new Error(err);  // actually exceptions in promisses are missed
+  }
   // Create the play-order layout (occurs AFTER the HTML body)
   // arguments:
   //    name,
@@ -376,9 +382,9 @@ async function show_and_process_help_and_tempo_dialog()
     const tmp_scoreDataLines = filter_and_massage_positions(RI.scoreLines);
     PD.perStationScorePositionMarkers = [];  // prepare for completely new values
     PlayOrder.recompute_times_in_score_stations_array(
-                   PD.scoreStations, RT.tempo, PF.numLinesInStep, RI.linePlayOrder,
-                   tmp_scoreDataLines, PD.playedLinePageOccurences,
-                   PD.perStationScorePositionMarkers);
+                 PD.scoreStations, RT.tempo, RT.numLinesInStep, RI.linePlayOrder,
+                 tmp_scoreDataLines, PD.playedLinePageOccurences,
+                 PD.perStationScorePositionMarkers);
   }
   console.log("-I- " + modeMsg);
   let statusMsg = modeMsg + "\<br\><br\>" + _status_descr(RT.currStep, -1);
