@@ -28,8 +28,8 @@ proc LOG_MSG {msg}  { puts "$msg" }  ;  # TODO: logging
 set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
 set DEFAULT_NUM_LINES_IN_STEP 1;  # 1|2 (!) number of lines to scroll in one step
 set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
-set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
-set DEFAuLT_COLOR_SAMPLE_SIZE 30
+##set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
+set DEFAuLT_COLOR_SAMPLE_SIZE 10
 
 set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
 
@@ -37,7 +37,7 @@ set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
 ################ The "main" ####################################################
 ## Example 1:  make_score_file  "Papirossen"  [list "Scores/Papirossen_mk.gif"]
 ## Example 2:  make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov_mk__01.gif" "Scores/Vals_by_Petrov_mk__02.gif" "Scores/Vals_by_Petrov_mk__03.gif"]
-proc make_score_file {name imgPathList}  {
+proc make_score_file {name imgPathList {markerRgbList 0}}  {
   global scoreDict;  # OK_TMP
   set imgPathsOrdered $imgPathList;  # TODO: [sort_score_pages $imgPathList]
   # ::HEADERS_AND_FOOTERS <- dictionary with format-related headers/footers
@@ -49,6 +49,7 @@ proc make_score_file {name imgPathList}  {
   set outF [safe_open_outfile $outPath]
   
   # prepare data for all pages
+  set pageMarkerRgbList $markerRgbList;  # common enforcing - if given
   foreach pg [dict get $scoreDict PageIdList]  {
     set imgName [dict get $scoreDict  PageIdToImgName   $pg]
     set imgPath [dict get $scoreDict  PageIdToImgPath   $pg]
@@ -56,14 +57,23 @@ proc make_score_file {name imgPathList}  {
     LOG_MSG "-I- Begin processing score page '$pg', path: '$imgPath'"
     set htwd [read_image_pixels_into_array  $imgPath  2000  pixels]
     lassign $htwd height width
+    if { $markerRgbList == 0 }  {;  # no common marker color enforced
+      if { 0 == [set pageMarkerRgbList [detect_page_marker_color  \
+                                     pixels  $::DEFAuLT_COLOR_SAMPLE_SIZE]] }  {
+        error "No line-position marker color for page '$pg' ($imgName)"
+      }
+    }
     # TODO: pass matrix by refernce
     set pageLineBoundsRaw [find_vertical_spans_of_color_in_pixel_matrix $pixels \
-       $::DEFAuLT_MARKER_RGB _is_nonblack_pixel_str $::DEFAuLT_COLOR_SAMPLE_SIZE]
-    if { 0 == [llength $pageLineBoundsRaw] }  {
+       $pageMarkerRgbList _is_nonblack_pixel_str $::DEFAuLT_COLOR_SAMPLE_SIZE]
+    if { [llength $pageLineBoundsRaw] > 1 }  {
+      set pageLineBounds [merge_nearby_spans $pageLineBoundsRaw "score page $pg"]
+    }
+    if { ([llength $pageLineBoundsRaw] <= 1) ||  \
+         ([llength $pageLineBounds   ] <= 1)  }  {
       set err "-E- Aborted since no score lines detected on page '$pg'"
       LOG_MSG $err;  error $err
     }
-    set pageLineBounds [merge_nearby_spans $pageLineBoundsRaw "score page $pg"]
     format_score__one_page_scoreLines  scoreDict  $iPage  $pageLineBounds  \
                                        $width $height
     LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
@@ -197,6 +207,36 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
 }
 
 
+# Returns the most frequent color in the upper quadrant of the image -
+# the color for marking line boundaries in this image. Format - [list R G B].
+# If not found, returns 0.
+proc detect_page_marker_color {matrixOfPixelsRef  colorSampleSize}  {
+  upvar $matrixOfPixelsRef matrixOfPixels
+  if { $colorSampleSize <= 0 }  {
+    error "Invalid colorSampleSize $colorSampleSize; should be positive integer"
+  }
+  set pageMarkerRgbList [list]
+  set colorCntDict [dict create]
+  for {set row 0}  {$row < $colorSampleSize}  {incr row 1}  {
+    for {set col 0}  {$col < $colorSampleSize}  {incr col 1}  {
+      set rgbValStr [elem_list2d $matrixOfPixels $row $col]
+      dict incr colorCntDict $rgbValStr 1
+    }
+  }
+  set maxColor ""
+  set maxCount 0
+  dict for {rgbStr cnt} $colorCntDict  {
+    if { $cnt > $maxCount }  {
+      set maxCount $cnt;      set maxColor $rgbStr
+    }
+  }
+  set rgbList [decode_rgb $maxColor]
+  set freq [expr {round(100 * $maxCount / ($colorSampleSize*$colorSampleSize))}]
+  LOG_MSG "-D- Chosen marker color '$rgbList'; frequency: $freq%%"
+  return  $rgbList
+}
+
+
 # Returns list of pairs {y1 y2} -
 #  - each pair is {upper lower} coordinates of spans of required color
 proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
@@ -245,6 +285,8 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
   }
   if { [llength $spans] > 0 }  {
     LOG_MSG "-I- Found [llength $spans] span(s) of $rgbDescr - between Y=[lindex [lindex $spans 0] 0] and Y=[lindex [lindex $spans end] 1]"
+  } elseif { [llength $spans] == 1 } {
+    LOG_MSG "-W- Found single span of $rgbDescr - something is wrong"
   } else {
     LOG_MSG "-W- Found no span(s) of $rgbDescr"
   }
