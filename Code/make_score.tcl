@@ -29,7 +29,7 @@ set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
 set DEFAULT_NUM_LINES_IN_STEP 1;  # 1|2 (!) number of lines to scroll in one step
 set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
 ##set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
-set DEFAuLT_COLOR_SAMPLE_SIZE 10
+set MIN_COLOR_SAMPLE_SIZE 10
 
 set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
 
@@ -57,15 +57,19 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
     LOG_MSG "-I- Begin processing score page '$pg', path: '$imgPath'"
     set htwd [read_image_pixels_into_array  $imgPath  2000  pixels]
     lassign $htwd height width
+    detect_true_image_dimensions pixels trueWidth trueHeight _is_nonblack_pixel \
+                                 "page '$pg' ($imgName)"
     if { $markerRgbList == 0 }  {;  # no common marker color enforced
+      set pageColorSampleSize [choose_marker_color_sample_size \
+                                                          $trueWidth $trueHeight]
       if { 0 == [set pageMarkerRgbList [detect_page_marker_color  \
-                                     pixels  $::DEFAuLT_COLOR_SAMPLE_SIZE]] }  {
+                                             pixels  $pageColorSampleSize]] }  {
         error "No line-position marker color for page '$pg' ($imgName)"
       }
     }
     # TODO: pass matrix by refernce
     set pageLineBoundsRaw [find_vertical_spans_of_color_in_pixel_matrix $pixels \
-       $pageMarkerRgbList _is_nonblack_pixel_str $::DEFAuLT_COLOR_SAMPLE_SIZE]
+      $pageMarkerRgbList _is_nonblack_pixel_str [expr 1.5 *$pageColorSampleSize]]
     if { [llength $pageLineBoundsRaw] > 1 }  {
       set pageLineBounds [merge_nearby_spans $pageLineBoundsRaw "score page $pg"]
     }
@@ -200,6 +204,9 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
   foreach s $sampledWidths  {
     if { $s > $wd }  { set wd $s }
   }
+  if { $wd <= 0 }  {
+    error "Zero width encountered while height=$ht ($descrForLog)"
+  }
   if { $descrForLog != "" }  {
     LOG_MSG "-I- Actual size of $descrForLog is $wd*$ht (full: $fullWidth*$ht)"
   }
@@ -207,14 +214,28 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
 }
 
 
+proc choose_marker_color_sample_size {width height}  {
+  set colorSampleSize [expr {($width < $height)? round($width / 100)  \
+                                               : round($height / 100)}]
+  if { $colorSampleSize < $::MIN_COLOR_SAMPLE_SIZE }  {
+    set colorSampleSize $::MIN_COLOR_SAMPLE_SIZE
+  }
+  set maxSampleXY [expr $colorSampleSize - 1]
+  LOG_MSG "-D- Marker color value will be sampled in (0...$maxSampleXY, 0...$maxSampleXY) of $width*$height image"
+  return  $colorSampleSize
+}
+
+
 # Returns the most frequent color in the upper quadrant of the image -
 # the color for marking line boundaries in this image. Format - [list R G B].
 # If not found, returns 0.
-proc detect_page_marker_color {matrixOfPixelsRef  colorSampleSize}  {
+proc detect_page_marker_color {matrixOfPixelsRef colorSampleSize}  {
   upvar $matrixOfPixelsRef matrixOfPixels
   if { $colorSampleSize <= 0 }  {
     error "Invalid colorSampleSize $colorSampleSize; should be positive integer"
   }
+  set maxSampleXY [expr $colorSampleSize - 1]
+  
   set pageMarkerRgbList [list]
   set colorCntDict [dict create]
   for {set row 0}  {$row < $colorSampleSize}  {incr row 1}  {
@@ -232,7 +253,7 @@ proc detect_page_marker_color {matrixOfPixelsRef  colorSampleSize}  {
   }
   set rgbList [decode_rgb $maxColor]
   set freq [expr {round(100 * $maxCount / ($colorSampleSize*$colorSampleSize))}]
-  LOG_MSG "-D- Chosen marker color '$rgbList'; frequency: $freq%%"
+  LOG_MSG "-D- Chosen marker color '$rgbList'; frequency: $freq%"
   return  $rgbList
 }
 
