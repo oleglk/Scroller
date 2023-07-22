@@ -214,14 +214,14 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
 }
 
 
-proc choose_marker_color_sample_size {width height}  {
-  set colorSampleSize [expr {($width < $height)? round($width / 100)  \
-                                               : round($height / 100)}]
+proc choose_marker_color_sample_size {imgWidth imgHeight}  {
+  set colorSampleSize [expr {($imgWidth < $imgHeight)? round($imgWidth  / 100) \
+                                                     : round($imgHeight / 100)}]
   if { $colorSampleSize < $::MIN_COLOR_SAMPLE_SIZE }  {
     set colorSampleSize $::MIN_COLOR_SAMPLE_SIZE
   }
   set maxSampleXY [expr $colorSampleSize - 1]
-  LOG_MSG "-D- Marker color value will be sampled in (0...$maxSampleXY, 0...$maxSampleXY) of $width*$height image"
+  LOG_MSG "-D- Marker color value will be sampled in (0...$maxSampleXY, 0...$maxSampleXY) of $imgWidth*$imgHeight image"
   return  $colorSampleSize
 }
 
