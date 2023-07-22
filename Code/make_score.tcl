@@ -222,7 +222,7 @@ proc choose_marker_color_sample_size {imgWidth imgHeight}  {
     set colorSampleSize $::MIN_COLOR_SAMPLE_SIZE
   }
   set maxSampleXY [expr $colorSampleSize - 1]
-  LOG_MSG "-D- Marker color value will be sampled in (0...$maxSampleXY, 0...$maxSampleXY) of $imgWidth*$imgHeight image"
+  LOG_MSG "-D- Marker color value will be sampled in the area up to (0...$maxSampleXY, 0...$maxSampleXY) of $imgWidth*$imgHeight image"
   return  $colorSampleSize
 }
 
@@ -274,7 +274,8 @@ proc detect_page_marker_color {matrixOfPixelsRef \
     }
     _most_frequent_key_in_dict $colorCntDict maxColor2 maxCount2 freq2
     if { $freq2 < $freq1 }  {
-      LOG_MSG "-D- Color-sample growing stopped at 0...$last;  frequency dropped $freq1 ==> $freq2"
+      LOG_MSG "-D- Color-sample growing stopped at 0...$last;  frequency dropped $freq1 ==> $freq2 (colors: $maxColor1 -> $maxColor2)"
+      LOG_MSG "-D- Color-counts at 0...$last: {$colorCntDict}"
       break };  # result = {maxColor1 maxCount1 freq1}
     set maxColor1 $maxColor2;   set maxCount1 $maxCount2;    set freq1 $freq2
   }
