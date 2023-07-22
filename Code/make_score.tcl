@@ -226,6 +226,38 @@ proc choose_marker_color_sample_size {imgWidth imgHeight}  {
 }
 
 
+# # Returns the most frequent color in the upper quadrant of the image -
+# # the color for marking line boundaries in this image. Format - [list R G B].
+# # If not found, returns 0.
+# proc detect_page_marker_color {matrixOfPixelsRef colorSampleSize}  {
+#   upvar $matrixOfPixelsRef matrixOfPixels
+#   if { $colorSampleSize <= 0 }  {
+#     error "Invalid colorSampleSize $colorSampleSize; should be positive integer"
+#   }
+#   set maxSampleXY [expr $colorSampleSize - 1]
+  
+#   set pageMarkerRgbList [list]
+#   set colorCntDict [dict create]
+#   for {set row 0}  {$row < $colorSampleSize}  {incr row 1}  {
+#     for {set col 0}  {$col < $colorSampleSize}  {incr col 1}  {
+#       set rgbValStr [elem_list2d $matrixOfPixels $row $col]
+#       dict incr colorCntDict $rgbValStr 1
+#     }
+#   }
+#   set maxColor ""
+#   set maxCount 0
+#   dict for {rgbStr cnt} $colorCntDict  {
+#     if { $cnt > $maxCount }  {
+#       set maxCount $cnt;      set maxColor $rgbStr
+#     }
+#   }
+#   set rgbList [decode_rgb $maxColor]
+#   set freq [expr {round(100 * $maxCount / ($colorSampleSize*$colorSampleSize))}]
+#   LOG_MSG "-D- Chosen marker color '$rgbList'; frequency: $freq%"
+#   return  $rgbList
+# }
+
+
 # Returns the most frequent color in the upper quadrant of the image -
 # the color for marking line boundaries in this image. Format - [list R G B].
 # If not found, returns 0.
@@ -238,21 +270,15 @@ proc detect_page_marker_color {matrixOfPixelsRef colorSampleSize}  {
   
   set pageMarkerRgbList [list]
   set colorCntDict [dict create]
+  # 
   for {set row 0}  {$row < $colorSampleSize}  {incr row 1}  {
     for {set col 0}  {$col < $colorSampleSize}  {incr col 1}  {
       set rgbValStr [elem_list2d $matrixOfPixels $row $col]
       dict incr colorCntDict $rgbValStr 1
     }
   }
-  set maxColor ""
-  set maxCount 0
-  dict for {rgbStr cnt} $colorCntDict  {
-    if { $cnt > $maxCount }  {
-      set maxCount $cnt;      set maxColor $rgbStr
-    }
-  }
+  _most_frequent_key_in_dict $colorCntDict maxColor maxCount freq
   set rgbList [decode_rgb $maxColor]
-  set freq [expr {round(100 * $maxCount / ($colorSampleSize*$colorSampleSize))}]
   LOG_MSG "-D- Chosen marker color '$rgbList'; frequency: $freq%"
   return  $rgbList
 }
@@ -651,6 +677,25 @@ proc safe_close_outfile {outChannel} {
   if { ![string equal $outChannel "stdout"] } {    close $outChannel	}
 }
 
+
+# _most_frequent_key_in_dict [dict create "a" 2  "b" 1  "c" 3] k c f;  # = c 3 50
+proc _most_frequent_key_in_dict {keyToCntDict \
+                           mostFreqKey cntOfMostFreqKey freqOfMostFreqKeyPrc}  {
+  upvar $mostFreqKey      freqKey
+  upvar $cntOfMostFreqKey maxCount
+  upvar $freqOfMostFreqKeyPrc freq
+  set freqKey ""
+  set maxCount 0
+  set totalCont 0
+  dict for {key cnt} $keyToCntDict  {
+    incr totalCont $cnt
+    if { $cnt > $maxCount }  {
+      set maxCount $cnt;      set freqKey $key
+    }
+  }
+  set freq [expr {round(100.0 * $maxCount / $totalCont)}]
+  return
+}
 
 ################################################################################
 proc init_header_footer_dict {}  {
