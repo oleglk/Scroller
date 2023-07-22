@@ -60,16 +60,17 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
     detect_true_image_dimensions pixels trueWidth trueHeight _is_nonblack_pixel \
                                  "page '$pg' ($imgName)"
     if { $markerRgbList == 0 }  {;  # no common marker color enforced
-      set pageColorSampleSize [choose_marker_color_sample_size \
+      set pageMaxColorSampleSize [choose_marker_color_sample_size \
                                                           $trueWidth $trueHeight]
       if { 0 == [set pageMarkerRgbList [detect_page_marker_color  \
-                                             pixels  $pageColorSampleSize]] }  {
+                   pixels $::MIN_COLOR_SAMPLE_SIZE $pageMaxColorSampleSize]] }  {
         error "No line-position marker color for page '$pg' ($imgName)"
       }
     }
     # TODO: pass matrix by refernce
     set pageLineBoundsRaw [find_vertical_spans_of_color_in_pixel_matrix $pixels \
-      $pageMarkerRgbList _is_nonblack_pixel_str [expr 1.5 *$pageColorSampleSize]]
+                             $pageMarkerRgbList _is_nonblack_pixel_str \
+                             [expr 1.5 *$pageMaxColorSampleSize]]
     if { [llength $pageLineBoundsRaw] > 1 }  {
       set pageLineBounds [merge_nearby_spans $pageLineBoundsRaw "score page $pg"]
     }
@@ -215,8 +216,8 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
 
 
 proc choose_marker_color_sample_size {imgWidth imgHeight}  {
-  set colorSampleSize [expr {($imgWidth < $imgHeight)? round($imgWidth  / 100) \
-                                                     : round($imgHeight / 100)}]
+  set colorSampleSize [expr {($imgWidth < $imgHeight)? round($imgWidth  / 20) \
+                                                     : round($imgHeight / 20)}]
   if { $colorSampleSize < $::MIN_COLOR_SAMPLE_SIZE }  {
     set colorSampleSize $::MIN_COLOR_SAMPLE_SIZE
   }
@@ -226,60 +227,60 @@ proc choose_marker_color_sample_size {imgWidth imgHeight}  {
 }
 
 
-# # Returns the most frequent color in the upper quadrant of the image -
-# # the color for marking line boundaries in this image. Format - [list R G B].
-# # If not found, returns 0.
-# proc detect_page_marker_color {matrixOfPixelsRef colorSampleSize}  {
-#   upvar $matrixOfPixelsRef matrixOfPixels
-#   if { $colorSampleSize <= 0 }  {
-#     error "Invalid colorSampleSize $colorSampleSize; should be positive integer"
-#   }
-#   set maxSampleXY [expr $colorSampleSize - 1]
-  
-#   set pageMarkerRgbList [list]
-#   set colorCntDict [dict create]
-#   for {set row 0}  {$row < $colorSampleSize}  {incr row 1}  {
-#     for {set col 0}  {$col < $colorSampleSize}  {incr col 1}  {
-#       set rgbValStr [elem_list2d $matrixOfPixels $row $col]
-#       dict incr colorCntDict $rgbValStr 1
-#     }
-#   }
-#   set maxColor ""
-#   set maxCount 0
-#   dict for {rgbStr cnt} $colorCntDict  {
-#     if { $cnt > $maxCount }  {
-#       set maxCount $cnt;      set maxColor $rgbStr
-#     }
-#   }
-#   set rgbList [decode_rgb $maxColor]
-#   set freq [expr {round(100 * $maxCount / ($colorSampleSize*$colorSampleSize))}]
-#   LOG_MSG "-D- Chosen marker color '$rgbList'; frequency: $freq%"
-#   return  $rgbList
-# }
-
-
 # Returns the most frequent color in the upper quadrant of the image -
 # the color for marking line boundaries in this image. Format - [list R G B].
 # If not found, returns 0.
-proc detect_page_marker_color {matrixOfPixelsRef colorSampleSize}  {
+proc detect_page_marker_color {matrixOfPixelsRef \
+                               minSampleSize maxSampleSize}  {
   upvar $matrixOfPixelsRef matrixOfPixels
-  if { $colorSampleSize <= 0 }  {
-    error "Invalid colorSampleSize $colorSampleSize; should be positive integer"
+  if { $minSampleSize <= 0 }  {
+    error "Invalid minSampleSize $minSampleSize; should be positive integer"
   }
-  set maxSampleXY [expr $colorSampleSize - 1]
+  if { $maxSampleSize < $minSampleSize }  {
+    error "maxSampleSize < minSampleSize: ($maxSampleSize < $minSampleSize)"
+  }
+  if { ($maxSampleSize - $minSampleSize) > 10 }  { ; # implementation inefficient
+    LOG_MSG "-W- maxSampleSize of $maxSampleSize is too large; set to [expr $minSampleSize + 10]"
+    set maxSampleSize [expr $minSampleSize + 10]
+  }
+  #set maxSampleXY [expr $minSampleSize - 1]
   
   set pageMarkerRgbList [list]
   set colorCntDict [dict create]
-  # 
-  for {set row 0}  {$row < $colorSampleSize}  {incr row 1}  {
-    for {set col 0}  {$col < $colorSampleSize}  {incr col 1}  {
+  # first compute color-appearance frequences in 0...minSampleSize quadrant
+  for {set row 0}  {$row < $minSampleSize}  {incr row 1}  {
+    for {set col 0}  {$col < $minSampleSize}  {incr col 1}  {
       set rgbValStr [elem_list2d $matrixOfPixels $row $col]
       dict incr colorCntDict $rgbValStr 1
     }
   }
-  _most_frequent_key_in_dict $colorCntDict maxColor maxCount freq
-  set rgbList [decode_rgb $maxColor]
-  LOG_MSG "-D- Chosen marker color '$rgbList'; frequency: $freq%"
+  _most_frequent_key_in_dict $colorCntDict maxColor1 maxCount1 freq1
+  # grow the sample quadrant while frequency doesn't reduce
+  ##  00 01 02  03
+  ##  10 11 12  13
+  ##  20 21 22  23
+  ##            
+  ##  30 31 32  33
+  # increment the sample while frequency isn't decreased ($freq2 >= $freq1)
+  for {set last $minSampleSize}  {$last < $maxSampleSize}  {incr last 1}  {
+    # incorporate row #last and column #last into 'colorCntDict'
+    for {set i 0}  {$i <= $last}  {incr i 1}  {
+      set rgbValStr [elem_list2d $matrixOfPixels $last $i];    # 30 31 32 33
+      dict incr colorCntDict $rgbValStr 1
+      if { $i != $last }  {
+        set rgbValStr [elem_list2d $matrixOfPixels $i $last];  # 03 13 23
+        dict incr colorCntDict $rgbValStr 1
+      }
+    }
+    _most_frequent_key_in_dict $colorCntDict maxColor2 maxCount2 freq2
+    if { $freq2 < $freq1 }  {
+      LOG_MSG "-D- Color-sample growing stopped at 0...$last;  frequency dropped $freq1 ==> $freq2"
+      break };  # result = {maxColor1 maxCount1 freq1}
+    set maxColor1 $maxColor2;   set maxCount1 $maxCount2;    set freq1 $freq2
+  }
+  set rgbList [decode_rgb $maxColor1]
+  set size [expr $last - 1]
+  LOG_MSG "-D- Chosen marker color '$rgbList';  sample-size: $size*$size  frequency: $freq1%"
   return  $rgbList
 }
 
