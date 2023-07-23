@@ -24,6 +24,7 @@ set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
 set MIN_COLOR_SAMPLE_SIZE 10
 ###
 set LOGFILE_NAME_PATTERN "%s__score_maker_log.txt";  # %s - for score name
+set LOG_DEBUG 1;  # whether to print debug-level messages into the logfie
 ######### End: Score-Maker preferances #######################################
 
 
@@ -728,6 +729,7 @@ proc LOG_MSG {msg}  {
   if { $::LOG_F == 0 }  {
     LOG_OPEN
   }
+  if { ($::LOG_DEBUG == 0) && [string match "-D-*" $msg] }  { return }
   puts  $::LOG_F  "$msg"
 }
 
@@ -739,7 +741,9 @@ proc LOG_OPEN {}  {
   set logPath [file join $::OUT_DIR \
                          [format $::LOGFILE_NAME_PATTERN $::SCORE_NAME]]
   set ::LOG_F [safe_open_outfile $logPath]
-  puts stdout "Log file for score '$::SCORE_NAME' goes into '$logPath'"
+  set descr "Log file for score '$::SCORE_NAME'"
+  puts stdout "$descr goes into '$logPath'"
+  puts $::LOG_F "$descr; debug messages are [expr {($::LOG_DEBUG != 0)? {included} : {not included}}]"
 }
 
 proc LOG_CLOSE {}  { safe_close_outfile ::LOG_F }
