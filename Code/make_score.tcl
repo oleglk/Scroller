@@ -23,7 +23,7 @@ set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
 ###
 ##set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
 set MIN_COLOR_SAMPLE_SIZE 10
-set COLOR_CMP_APPROX 1;  # whether to allow variation in line-marker color 
+set COLOR_CMP_APPROX 0;  # whether to allow variation in line-marker color 
 ###
 set LOGFILE_NAME_PATTERN "%s__score_maker_log.txt";  # %s - for score name
 set LOG_DEBUG 1;  # whether to print debug-level messages into the logfie
@@ -330,7 +330,9 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
       set rgbValStr [elem_list2d $matrixOfPixels $row $col]
       if { ![$isNonBlackPixelStrCB $rgbValStr] }  {
         continue }; #ignore extra columns
-      set equ [equ_rgbstr $rgbValStr $reqRgbStr]
+      set equ [expr {($::COLOR_CMP_APPROX == 0)?  \
+                       [string equal -nocase  $rgbValStr $reqRgbStr] :  \
+                       [equ_rgbstr_to_rgblist $rgbValStr $reqRgbList]}]
       if { $equ }  {
         LOG_MSG "-D- Matched ($rgbValStr) at row=$row, col=$col"
         set foundInCol $col
@@ -634,10 +636,13 @@ proc print_score__pageImgPathsMap {scoreDictRef {outChannel stdout}} {
 
 # Returns 1 if the two (rgb) colors are _nearly_ equal, otherwise returns 0
 proc equ_rgbstr {rgbStr1 rgbStr2}  {
-  if { $::COLOR_CMP_APPROX == 0 }  {
-    return  [string equal -nocase $rgbStr1 $rgbStr2]
-  }
   return  [equ_rgb  [decode_rgb $rgbStr1]  [decode_rgb $rgbStr2]]
+}
+
+
+# Returns 1 if the two (rgb) colors are _nearly_ equal, otherwise returns 0
+proc equ_rgbstr_to_rgblist {rgbStr1 rgbList2}  {
+  return  [equ_rgb  [decode_rgb $rgbStr1]  $rgbList2]
 }
 
 
@@ -645,17 +650,28 @@ proc equ_rgbstr {rgbStr1 rgbStr2}  {
 proc equ_rgb {rgbList1 rgbList2}  {
   #### LOG_MSG "@@@@ {$rgbList1} {$rgbList2}"
   set thresholdPrc 1.0;  # relDiffPrc(250, 255) == 0.9900990099009901
-  set bigDiff 0
-  for {set c 0}  {$c < 3}  {incr c 1}  {
-    set v1 [lindex $rgbList1 $c];    set v2 [lindex $rgbList2 $c]
-    if { ($v1 == 0) && ($v2 == 0) }  { continue }
-    set relDiffPrc [expr {(($v1 == 0) && ($v2 == 0))? 0.0
-                          : [expr {100.0 * abs($v1 - $v2) / ($v1 + $v2)}] }]
+  # unroll as much as possible - to improve performance
+  lassign $rgbList1 r1 g1 b1
+  lassign $rgbList2 r2 g2 b2
+  if { ($r1 > 0) || ($r2 > 0) }  {
+    set relDiffPrc [expr {100.0 * abs($r1 - $r2) / ($r1 + $r2)}]
     if { $relDiffPrc >= $thresholdPrc }  {
-      set bigDiff 1
+      return  0
     }
   }
-  return  [expr {$bigDiff == 0}]
+  if { ($g1 > 0) || ($g2 > 0) }  {
+    set relDiffPrc [expr {100.0 * abs($g1 - $g2) / ($g1 + $g2)}]
+    if { $relDiffPrc >= $thresholdPrc }  {
+      return  0
+    }
+  }
+  if { ($b1 > 0) || ($b2 > 0) }  {
+    set relDiffPrc [expr {100.0 * abs($b1 - $b2) / ($b1 + $b2)}]
+    if { $relDiffPrc >= $thresholdPrc }  {
+      return  0
+    }
+  }
+  return  1
 }
 
 
