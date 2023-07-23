@@ -20,8 +20,10 @@ package require Tk
 set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
 set DEFAULT_NUM_LINES_IN_STEP 1;  # 1|2 (!) number of lines to scroll in one step
 set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
+###
 ##set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
 set MIN_COLOR_SAMPLE_SIZE 10
+set COLOR_CMP_APPROX 1;  # whether to allow variation in line-marker color 
 ###
 set LOGFILE_NAME_PATTERN "%s__score_maker_log.txt";  # %s - for score name
 set LOG_DEBUG 1;  # whether to print debug-level messages into the logfie
@@ -328,7 +330,7 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
       set rgbValStr [elem_list2d $matrixOfPixels $row $col]
       if { ![$isNonBlackPixelStrCB $rgbValStr] }  {
         continue }; #ignore extra columns
-      set equ [string equal -nocase $rgbValStr $reqRgbStr]
+      set equ [equ_rgbstr $rgbValStr $reqRgbStr]
       if { $equ }  {
         LOG_MSG "-D- Matched ($rgbValStr) at row=$row, col=$col"
         set foundInCol $col
@@ -631,6 +633,15 @@ proc print_score__pageImgPathsMap {scoreDictRef {outChannel stdout}} {
 
 
 # Returns 1 if the two (rgb) colors are _nearly_ equal, otherwise returns 0
+proc equ_rgbstr {rgbStr1 rgbStr2}  {
+  if { $::COLOR_CMP_APPROX == 0 }  {
+    return  [string equal -nocase $rgbStr1 $rgbStr2]
+  }
+  return  [equ_rgb  [decode_rgb $rgbStr1]  [decode_rgb $rgbStr2]]
+}
+
+
+  # Returns 1 if the two (rgb) colors are _nearly_ equal, otherwise returns 0
 proc equ_rgb {rgbList1 rgbList2}  {
   #### LOG_MSG "@@@@ {$rgbList1} {$rgbList2}"
   set thresholdPrc 1.0;  # relDiffPrc(250, 255) == 0.9900990099009901
