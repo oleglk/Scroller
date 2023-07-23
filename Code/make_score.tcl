@@ -65,7 +65,9 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
     set imgPath [dict get $scoreDict  PageIdToImgPath   $pg]
     set iPage   [dict get $scoreDict  PageIdToPageIndex $pg]
     set begMsg "Begin processing score page '$pg', path: '$imgPath'"
-    puts stdout "$begMsg\n... Please wait ...";  LOG_MSG "-I- $begMsg"
+    puts stdout "$begMsg";
+    LOG_MSG "-I- $begMsg"
+    puts stdout "\n... Please wait ..."
     set htwd [read_image_pixels_into_array  $imgPath  2000  pixels]
     lassign $htwd height width
     detect_true_image_dimensions pixels trueWidth trueHeight _is_nonblack_pixel \
@@ -120,8 +122,10 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
   LOG_MSG "-I- Printing score-file HTML footer for $outDescr..."
   puts $outF [join [dict get $::HEADERS_AND_FOOTERS FOOT_html] "\n"]
   puts $outF "\n"
-  LOG_MSG "-I- Done generting description file for $outDescr..."
-  safe_close_outfile $outF
+  set finMsg "Done generting description file for $outDescr..."
+  puts stdout $finMsg
+  LOG_MSG "-I- $finMsg"
+  safe_close_outfile outF
   LOG_CLOSE
 };#__END_OF__make_score_file
 ################################################################################
@@ -690,8 +694,12 @@ proc safe_open_outfile {fullPath} {
 }
 
 
-proc safe_close_outfile {outChannel} {
-  if { ![string equal $outChannel "stdout"] } {    close $outChannel	}
+proc safe_close_outfile {outChannelRef} {
+  upvar $outChannelRef outChannel
+  if { ![string equal $outChannel "stdout"] } {
+    close $outChannel
+    set outChannel 0
+  }
 }
 
 
@@ -734,7 +742,7 @@ proc LOG_OPEN {}  {
   puts stdout "Log file for score '$::SCORE_NAME' goes into '$logPath'"
 }
 
-proc LOG_CLOSE {}  { safe_close_outfile $::LOG_F }
+proc LOG_CLOSE {}  { safe_close_outfile ::LOG_F }
 ######### End: Score-Maker logging utils ######################################
 
 
