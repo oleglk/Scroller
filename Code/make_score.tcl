@@ -15,6 +15,18 @@ set SCRIPT_DIR [file normalize [file dirname [info script]]]
 
 package require Tk
 
+
+######### Begin: Score-Maker preferances #######################################
+set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
+set DEFAULT_NUM_LINES_IN_STEP 1;  # 1|2 (!) number of lines to scroll in one step
+set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
+##set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
+set MIN_COLOR_SAMPLE_SIZE 10
+###
+set LOGFILE_NAME_PATTERN "%s__score_maker_log.txt";  # %s - for score name
+######### End: Score-Maker preferances #######################################
+
+
 # In order to speed-up reading pixel colors from files,
 # we allocate extra matrix columns; values there aren't valid RGB colors
 proc IS_REAL_PIXEL_VALUE {rgbList}  {
@@ -22,16 +34,13 @@ proc IS_REAL_PIXEL_VALUE {rgbList}  {
   return  1
 }
 
-proc LOG_MSG {msg}  { puts "$msg" }  ;  # TODO: logging
 
-
-set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
-set DEFAULT_NUM_LINES_IN_STEP 1;  # 1|2 (!) number of lines to scroll in one step
-set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
-##set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
-set MIN_COLOR_SAMPLE_SIZE 10
-
+######### Begin: Score-Maker gloal variables ####################################
+set SCORE_NAME ""
+set LOG_F      0;  # log-file output channel
+set OUT_DIR    "";  # output directory for score-file and log-file
 set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
+######### End: Score-Maker gloal variables ######################################
 
 
 ################ The "main" ####################################################
@@ -44,8 +53,9 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
   set ::HEADERS_AND_FOOTERS [init_header_footer_dict]
   set scoreDict [init_score_data_dict $name $imgPathsOrdered]
 
-  set outDir [file dirname [lindex $imgPathsOrdered 0]]
-  set outPath [file join $outDir [format {%s__straight_out.html} $name]]
+  set ::SCORE_NAME $name
+  set ::OUT_DIR [file dirname [lindex $imgPathsOrdered 0]]
+  set outPath [file join $::OUT_DIR [format {%s__straight_out.html} $name]]
   set outF [safe_open_outfile $outPath]
   
   # prepare data for all pages
@@ -54,7 +64,8 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
     set imgName [dict get $scoreDict  PageIdToImgName   $pg]
     set imgPath [dict get $scoreDict  PageIdToImgPath   $pg]
     set iPage   [dict get $scoreDict  PageIdToPageIndex $pg]
-    LOG_MSG "-I- Begin processing score page '$pg', path: '$imgPath'"
+    set begMsg "Begin processing score page '$pg', path: '$imgPath'"
+    puts stdout "$begMsg\n... Please wait ...";  LOG_MSG "-I- $begMsg"
     set htwd [read_image_pixels_into_array  $imgPath  2000  pixels]
     lassign $htwd height width
     detect_true_image_dimensions pixels trueWidth trueHeight _is_nonblack_pixel \
@@ -81,7 +92,8 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
     }
     format_score__one_page_scoreLines  scoreDict  $iPage  $pageLineBounds  \
                                        $width $height
-    LOG_MSG "-I- End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
+    set endMsg "End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
+    puts stdout "$endMsg";  LOG_MSG "-I- $endMsg"
   }
 
   # output the whole score file
@@ -110,6 +122,7 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
   puts $outF "\n"
   LOG_MSG "-I- Done generting description file for $outDescr..."
   safe_close_outfile $outF
+  LOG_CLOSE
 };#__END_OF__make_score_file
 ################################################################################
 
@@ -230,6 +243,8 @@ proc choose_marker_color_sample_size {imgWidth imgHeight}  {
 # Returns the most frequent color in the upper quadrant of the image -
 # the color for marking line boundaries in this image. Format - [list R G B].
 # If not found, returns 0.
+## Starts the search in 0..'minSampleSize', then grows the sample quadrant
+##   until the frequency begins reducing - up to 0..'maxSampleSize'.
 proc detect_page_marker_color {matrixOfPixelsRef \
                                minSampleSize maxSampleSize}  {
   upvar $matrixOfPixelsRef matrixOfPixels
@@ -698,6 +713,30 @@ proc _most_frequent_key_in_dict {keyToCntDict \
   set freq [expr {round(100.0 * $maxCount / $totalCont)}]
   return
 }
+
+
+######### Begin: Score-Maker logging utils ######################################
+proc LOG_MSG {msg}  {
+  if { $::LOG_F == 0 }  {
+    LOG_OPEN
+  }
+  puts  $::LOG_F  "$msg"
+}
+
+proc LOG_OPEN {}  {
+  if { $::SCORE_NAME == "" }  {
+    error "Missing score name - cannot init log file" }
+  if { $::OUT_DIR == "" }  {
+    error "Missing output directory name - cannot init log file" }
+  set logPath [file join $::OUT_DIR \
+                         [format $::LOGFILE_NAME_PATTERN $::SCORE_NAME]]
+  set ::LOG_F [safe_open_outfile $logPath]
+  puts stdout "Log file for score '$::SCORE_NAME' goes into '$logPath'"
+}
+
+proc LOG_CLOSE {}  { safe_close_outfile $::LOG_F }
+######### End: Score-Maker logging utils ######################################
+
 
 ################################################################################
 proc init_header_footer_dict {}  {
