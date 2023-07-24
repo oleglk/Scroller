@@ -23,7 +23,8 @@ set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
 ###
 ##set DEFAuLT_MARKER_RGB {0xFF 0xFF 0x00}
 set MIN_COLOR_SAMPLE_SIZE 10
-set COLOR_CMP_APPROX 0;  # whether to allow variation in line-marker color 
+set COLOR_CMP_APPROX 0;  # whether to allow variation in line-marker color
+set MIN_MARKER_COLOR_LINE_WIDTH_PRC 1;  # in percents of page-image width
 ###
 set LOGFILE_NAME_PATTERN "%s__score_maker_log.txt";  # %s - for score name
 set LOG_DEBUG 1;  # whether to print debug-level messages into the logfie
@@ -364,7 +365,70 @@ proc find_vertical_spans_of_color_in_pixel_matrix {matrixOfPixels reqRgbList
     LOG_MSG "-W- Found no span(s) of $rgbDescr"
   }
   LOG_MSG "-D- Search for spans of $rgbDescr in $width*$height image took [expr [clock seconds] - $timeBegin] second(s)"
-  return  $spans
+  set goodSpans [drop_narrow_spans $matrixOfPixels $width $height \
+                                   $reqRgbList $spans]
+  return  $goodSpans
+}
+
+
+# Filters out spans that are narrower than allowed.
+# Min span-width is a fraction of image-width;
+#     given by 'MIN_MARKER_COLOR_LINE_WIDTH_PRC'.
+proc drop_narrow_spans {matrixOfPixels width height reqRgbList spanBeginsEnds}  {
+  set timeBegin [clock seconds]
+  set minColorSpanWidth \
+              [expr {int($::MIN_MARKER_COLOR_LINE_WIDTH_PRC * $width / 100.0)}]
+  set nSpans1 [llength $spanBeginsEnds]
+  set reqRgbStr [encode_rgb $reqRgbList]
+  set filteredSpanBeginsEnds [list]
+  for {set i 0} {$i < $nSpans1} {incr i 1}  {
+    lassign [lindex $spanBeginsEnds $i] y1 y2
+    set spanDescr "color-span #$i/\[$y1...$y2\]"
+    LOG_MSG "-D- Verifying width of $spanDescr"
+    # find left- and right columns if the current span
+    set spanLeftCol $width ;  # e,g, unknown
+    set spanRightCol -1
+    for {set row $y1}  {$row <= $y2}  {incr row 1}  {
+      # update leftmost column
+      for {set col 0}  {$col < $width}  {incr col 1}  {
+        set rgbValStr [elem_list2d $matrixOfPixels $row $col]
+        set equ [expr {($::COLOR_CMP_APPROX == 0)?  \
+                         [string equal -nocase  $rgbValStr $reqRgbStr] :  \
+                         [equ_rgbstr_to_rgblist $rgbValStr $reqRgbList]}]
+        if { $equ }  { ; # span starts at #col
+          if { $col < $spanLeftCol }  {
+            set spanLeftCol $col
+          }
+          break;  # done with left column in this line
+        }
+      };#__END_OF__left_to_right_cycle_over_columns_in_a_span
+      # update rightmost column
+      for {set col [expr $width-1]}  {$col >= 0}  {incr col -1}  {
+        set rgbValStr [elem_list2d $matrixOfPixels $row $col]
+        set equ [expr {($::COLOR_CMP_APPROX == 0)?  \
+                         [string equal -nocase  $rgbValStr $reqRgbStr] :  \
+                         [equ_rgbstr_to_rgblist $rgbValStr $reqRgbList]}]
+        if { $equ }  { ; # span ends at #col
+          if { $col > $spanRightCol }  {
+            set spanRightCol $col
+          }
+          break;  # done with right column in this line
+        }
+      };#__END_OF__right_to_left_cycle_over_columns_in_a_span
+    };#__END_OF__cycle_over_rows_in_a_span
+    set spanWidth [expr $spanRightCol - $spanLeftCol + 1]
+    set wideEnough [expr $spanWidth >= $minColorSpanWidth]
+    set msg [format \
+          "Width of $spanDescr - %d - is %s threshold of %d pixel(s)" \
+          $spanWidth [expr {($wideEnough)? "above":"below"}] $minColorSpanWidth]
+    LOG_MSG "-D- $msg"
+    if { $wideEnough }  {
+      lappend filteredSpanBeginsEnds [list $y1 $y2];  # keep this span
+    }
+  };#__END_OF__cycle_over_spans
+  LOG_MSG "-I- Width verification of color {$reqRgbList} spans on a page left [llength $filteredSpanBeginsEnds] span(s) out of [llength $spanBeginsEnds]"
+  LOG_MSG "-D- Color-span width verification in $width*$height image took [expr [clock seconds] - $timeBegin] second(s)"
+  return  $filteredSpanBeginsEnds
 }
 
 
