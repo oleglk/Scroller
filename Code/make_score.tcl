@@ -788,7 +788,10 @@ proc init_header_footer_dict {}  {
 { * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}}  \
 { * !Having page-width close to screen resolution makes fading alerts visible!}  \
 { * More possible enhancements: widen by 1.5, turn gray into black: }  \
-{ * foreach f [glob {*.jpg}]  {$IMCONVERT $f  -resize 150%x100%  -resize 1050x  -black-threshold 80% -quality 92 [file join "ENH" [file tail $f]]}  */}  \
+{ * foreach f [glob {*.jpg}]  {$IMCONVERT $f  -resize 150%x100%  -resize 1050x  -black-threshold 80% -quality 92 [file join "ENH" [file tail $f]]}}  \
+{****************************************************************************/} \
+{}  \
+{}  \
 {var g_scoreLines = [}  \
                                   ]
   #------------------------------------------------------------------------#
