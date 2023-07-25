@@ -815,6 +815,81 @@ proc _most_frequent_key_in_dict {keyToCntDict \
 }
 
 
+# example: order_names_by_numeric_fields {a1 a10 a7b4 a3 a2}
+proc order_names_by_numeric_fields {namesUnordered {logPriCB puts}}  {
+  if { [llength $namesUnordered] == 1 }  {
+    $logPriCB "-I- Single page in the score - no reordering needed"
+    return  $namesUnordered
+  }
+  set minLength 9999
+  foreach name $namesUnordered  {
+    if { $minLength < [string length $name] }  {
+      set minLength [string length $name]
+    }
+  }
+  set commonPrefixLength -1
+  for {set i 0}  {($i < $minLength) && ($commonPrefixLength < 0)}  {incr i 1}  {
+    set chI [string index [lindex $namesUnordered 0] $i];  # to compare with rest
+    foreach name $namesUnordered  {
+      if { $chI != [string index $name $i] }  {
+        set commonPrefixLength $i;  # signals end of search
+        break
+      }
+    }
+  }
+  if { $commonPrefixLength < 0 }  {
+    set commonPrefixLength $minLength;  # TODO: is it OK?
+  }
+  set commonPrefix [string range  [lindex $namesUnordered 0]  \
+                                  0  [expr $commonPrefixLength-1]]
+  $logPriCB "-D- Common prefix of all page-file names is '$commonPrefix'; length: $commonPrefixLength"
+  # find all numbers that appear after the common prefix
+  set nameToNumeric [dict create]
+  set maxNumDigits 0;  # needed for further reformatting
+  foreach name $namesUnordered  {
+    set suffix [string range $name $commonPrefixLength end]
+    set stringOfNumbers [regsub -all -- {[^0-9]+} $suffix " "]
+    set numbers [split [string trim $stringOfNumbers]]
+    if { [llength $numbers] == 0 }  {
+      error "-E- Page file name '$name' lacks numeric field; cannot order the pages"
+    }
+    $logPriCB "'$name' =unprocessed=> {$numbers} ('$stringOfNumbers')"
+    dict set nameToNumeric $name $numbers
+    foreach numStr $numbers {
+      if { $maxNumDigits < [string length $numStr] }  {
+        set maxNumDigits   [string length $numStr]
+      }
+    }
+  }
+  # replace lists of numbers by strings with all numbers normalized to max length
+  set nameToNormalized [dict create]
+  dict for {name numLiist} $nameToNumeric  {
+    set normList [list]
+    foreach num $numLiist { lappend normList [format "%0*d" $maxNumDigits $num] }
+    dict set nameToNormalized $name [join $normList " "]
+  }
+  $logPriCB "-D- Normalized numeric fields in page file names: {$nameToNormalized}"
+  # check for repetitions; if all unique, can map from numeric-fields to names
+  set allNumericFieldsUnsorted [dict values $nameToNormalized]
+  set allNumericFieldsSorted [lsort -unique -ascii $allNumericFieldsUnsorted]
+  $logPriCB "-D- Normalized numeric fields ordered: {$allNumericFieldsSorted}" 
+  set numEqual [expr \
+       [llength $allNumericFieldsUnsorted] - [llength $allNumericFieldsSorted]]
+  if { $numEqual > 0 } {
+    error "-E- Detected $numEqual page names with non-unique numeric fields"
+  }
+  # build a reversed (normalized-numeric-field-as-srring :: name) mapping
+  set numToName [dict create];  # normalized-numeric-field-as-srring :: name
+  dict for {name numStr} $nameToNormalized  { dict set numToName $numStr $name }
+  # assemble the list of names ordered by normalized numeric fields
+  set namesOrdered [list]
+  foreach numStr $allNumericFieldsSorted {
+    lappend namesOrdered [dict get $numToName $numStr]
+  }
+  return  $namesOrdered
+}
+
+
 ######### Begin: Score-Maker logging utils ######################################
 proc LOG_MSG {msg}  {
   if { $::LOG_F == 0 }  {
