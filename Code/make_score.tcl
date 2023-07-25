@@ -52,16 +52,16 @@ set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
 ## Example 2:  make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov_mk__01.gif" "Scores/Vals_by_Petrov_mk__02.gif" "Scores/Vals_by_Petrov_mk__03.gif"]
 proc make_score_file {name imgPathList {markerRgbList 0}}  {
   global scoreDict;  # OK_TMP
-  set imgPathsOrdered $imgPathList;  # TODO: [sort_score_pages $imgPathList]
+  set ::SCORE_NAME $name
+  set ::OUT_DIR [file dirname [lindex $imgPathList 0]]
+  set outPath [file join $::OUT_DIR [format {%s__straight_out.html} $name]]
+  set outF [safe_open_outfile $outPath]
+  
+  set imgPathsOrdered [order_names_by_numeric_fields $imgPathList "LOG_MSG"]
   # ::HEADERS_AND_FOOTERS <- dictionary with format-related headers/footers
   set ::HEADERS_AND_FOOTERS [init_header_footer_dict]
   set scoreDict [init_score_data_dict $name $imgPathsOrdered]
 
-  set ::SCORE_NAME $name
-  set ::OUT_DIR [file dirname [lindex $imgPathsOrdered 0]]
-  set outPath [file join $::OUT_DIR [format {%s__straight_out.html} $name]]
-  set outF [safe_open_outfile $outPath]
-  
   # prepare data for all pages
   set pageMarkerRgbList $markerRgbList;  # common enforcing - if given
   foreach pg [dict get $scoreDict PageIdList]  {
@@ -886,6 +886,7 @@ proc order_names_by_numeric_fields {namesUnordered {logPriCB puts}}  {
   foreach numStr $allNumericFieldsSorted {
     lappend namesOrdered [dict get $numToName $numStr]
   }
+  $logPriCB "-I- Ordered list of score page images: {$namesOrdered}"
   return  $namesOrdered
 }
 
