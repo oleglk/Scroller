@@ -43,10 +43,14 @@ const PF = g_ScrollerPreferances;   // shortcut to preferances
 
 
 //////// Begin: raw inputs for a particular score //////////////////////////////
+//////// (All these ("g_*" variables) appear in score description files) ///////
 const g_ScoreRawInputs = {
   scoreName: g_scoreName,
+  // g_scoreLines: score-lines' locations (page + vertical coord.) and durations
   scoreLines: g_scoreLines, /*{tag:STR, pageId:STR, x:INT, y:INT, timeBeat:FLOAT}*/
+  // g_linePlayOrder: specifies play order of the score-lines with actual times
   linePlayOrder: g_linePlayOrder, /*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
+  // g_pageImgPathsMap: file-paths of score pages' images
   pageImgPathsMap: g_pageImgPathsMap, /*{pageId(STR) : path(STR)*/
   defaultNumLinesInStep:  (typeof g_numLinesInStep !== 'undefined')? g_numLinesInStep : 1, /*how many lines to scroll in one step - 1 or 2 - specified in the score file*/
   defaultTempo:  (typeof g_tempo !== 'undefined')? g_tempo : 0, /*beat/min - specified in the score file*/
