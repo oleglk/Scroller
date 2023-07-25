@@ -856,6 +856,7 @@ proc init_header_footer_dict {}  {
 {****************************************************************************/} \
 {}  \
 {}  \
+{// g_scoreLines: score-lines' locations (page + vertical coord.) and durations} \
 {var g_scoreLines = [}  \
                                   ]
   #------------------------------------------------------------------------#
@@ -864,7 +865,8 @@ proc init_header_footer_dict {}  {
                                 ]
   #------------------------------------------------------------------------#
   dict set hfd HEAD_pageImgPathsMap  [list  \
-{/* Image paths should be relative to the location of score files */}  \
+{/* g_pageImgPathsMap: file-paths of score pages' images}  \
+{ * Image paths should be relative to the location of score files */}  \
 {var g_pageImgPathsMap = new Map([}
                                 ]
   #------------------------------------------------------------------------#
@@ -873,7 +875,8 @@ proc init_header_footer_dict {}  {
                                 ]
   #------------------------------------------------------------------------#
   dict set hfd HEAD_playedLinesStraight  [list  \
-{/* Example of line play order spec: straight - without repetitions}  \
+{/* g_linePlayOrder: specifies play order of the score-lines with actual times} \
+{ * Example of line play order spec: straight - without repetitions}  \
 { * Line format:  {pageId:<line-page-id>, lineIdx:<line-index-from-0>, timeBeat:<line-play-time-in-beats>}  */}  \
 {var g_linePlayOrder_straight = [}
                                 ]
