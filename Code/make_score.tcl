@@ -154,10 +154,15 @@ proc gui_start {}  {
   puts "Selected [llength $fileList] score-page image file(s): {$fileList}"
   set nameList [lmap filePath $fileList {file rootname [file tail $filePath]}]
   set commonPrefix [find_common_prefix_of_strings $nameList]
-  puts "Common prefix is: '$commonPrefix'"
+  ##puts "Common prefix is: '$commonPrefix'"
   set scoreName [string trimright $commonPrefix "_-0123456789 \r\n"]; #"", NOT {}
   puts "Chosen score name is: '$scoreName'"
-  return  [make_score_file $scoreName $fileList]
+  if { [catch {
+    return  [make_score_file $scoreName $fileList]
+  } errText] } {
+    puts "(TMP) Error occurred: $errText"
+  }
+  
 }
 ################################################################################
 
