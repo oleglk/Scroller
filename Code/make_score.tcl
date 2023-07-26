@@ -815,11 +815,21 @@ proc _most_frequent_key_in_dict {keyToCntDict \
 }
 
 
-# example: order_names_by_numeric_fields {a1 a10 a7b4 a3 a2}
+# Returns list of names ordered by ALL numbers appearing after the common prefix
+# Example 1: order_names_by_numeric_fields {a1 a10 a7b4 a3 a2}
+# Example 2: order_names_by_numeric_fields {adc e bc}
+# Example 3: order_names_by_numeric_fields {e3 ad3c e bc}
+# Example 4: order_names_by_numeric_fields {e3 ad3c e3 3bc}
+# Example 5: order_names_by_numeric_fields {ea3 ad3c e3 3bc}
 proc order_names_by_numeric_fields {namesUnordered {logPriCB puts}}  {
   if { [llength $namesUnordered] == 1 }  {
     $logPriCB "-I- Single page in the score - no reordering needed"
     return  $namesUnordered
+  }
+  set abcOrder [lsort -unique -ascii -increasing $namesUnordered]
+  set numEqual [expr [llength $namesUnordered] - [llength $abcOrder]]
+  if { $numEqual > 0 } {
+    error "-E- Detected $numEqual non-unoque page name(s)"
   }
   set minLength 9999
   foreach name $namesUnordered  {
@@ -851,7 +861,9 @@ proc order_names_by_numeric_fields {namesUnordered {logPriCB puts}}  {
     set stringOfNumbers [regsub -all -- {[^0-9]+} $suffix " "]
     set numbers [split [string trim $stringOfNumbers]]
     if { [llength $numbers] == 0 }  {
-      error "-E- Page file name '$name' lacks numeric field; cannot order the pages"
+      $logPriCB "-W- Page file name '$name' lacks numeric field; will order the pages alphabetically"
+      $logPriCB "-I- Ordered list of score page images: {$abcOrder}"
+      return  $abcOrder
     }
     $logPriCB "'$name' =unprocessed=> {$numbers} ('$stringOfNumbers')"
     dict set nameToNumeric $name $numbers
@@ -876,7 +888,9 @@ proc order_names_by_numeric_fields {namesUnordered {logPriCB puts}}  {
   set numEqual [expr \
        [llength $allNumericFieldsUnsorted] - [llength $allNumericFieldsSorted]]
   if { $numEqual > 0 } {
-    error "-E- Detected $numEqual page names with non-unique numeric fields"
+    $logPriCB "-W- Detected $numEqual page names with non-unique numeric fields; will order the pages alphabetically"
+    $logPriCB "-I- Ordered list of score page images: {$abcOrder}"
+    return  $abcOrder
   }
   # build a reversed (normalized-numeric-field-as-srring :: name) mapping
   set numToName [dict create];  # normalized-numeric-field-as-srring :: name
