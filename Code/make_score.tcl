@@ -134,6 +134,33 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
 };#__END_OF__make_score_file
 ################################################################################
 
+################ The GUI #######################################################
+proc gui_start {}  {
+  set types {
+    {{GIF Files}        {.gif}        }
+    {{GIF Files}        {}        GIFF}
+    {{PNG Files}        {.png}        }
+    {{PPM Files}        {.ppm}        }
+  }
+  # (note: log-file is unavailble untill score name is chosen)
+  
+  set fileList [tk_getOpenFile -multiple 1 -filetypes $types  \
+                          -title "Please select image(s) with all score pages"]
+  
+  if { $fileList == "" } {
+    puts "No score-page image files selected. Aborting."
+    return  ""
+  }
+  puts "Selected [llength $fileList] score-page image file(s): {$fileList}"
+  set nameList [lmap filePath $fileList {file rootname [file tail $filePath]}]
+  set commonPrefix [find_common_prefix_of_strings $nameList]
+  puts "Common prefix is: '$commonPrefix'"
+  set scoreName [string trimright $commonPrefix "_-0123456789 \r\n"]; #"", NOT {}
+  puts "Chosen score name is: '$scoreName'"
+  return  [make_score_file $scoreName $fileList]
+}
+################################################################################
+
 
 
 # Reads data from 'imgPath' and puts it into 'listOfPixels'
@@ -831,28 +858,11 @@ proc order_names_by_numeric_fields {namesUnordered {logPriCB puts}}  {
   if { $numEqual > 0 } {
     error "-E- Detected $numEqual non-unoque page name(s)"
   }
-  set minLength 9999
-  foreach name $namesUnordered  {
-    if { $minLength < [string length $name] }  {
-      set minLength [string length $name]
-    }
-  }
-  set commonPrefixLength -1
-  for {set i 0}  {($i < $minLength) && ($commonPrefixLength < 0)}  {incr i 1}  {
-    set chI [string index [lindex $namesUnordered 0] $i];  # to compare with rest
-    foreach name $namesUnordered  {
-      if { $chI != [string index $name $i] }  {
-        set commonPrefixLength $i;  # signals end of search
-        break
-      }
-    }
-  }
-  if { $commonPrefixLength < 0 }  {
-    set commonPrefixLength $minLength;  # TODO: is it OK?
-  }
-  set commonPrefix [string range  [lindex $namesUnordered 0]  \
-                                  0  [expr $commonPrefixLength-1]]
+  
+  set commonPrefix [find_common_prefix_of_strings $namesUnordered]
+  set commonPrefixLength [llength $commonPrefix]
   $logPriCB "-D- Common prefix of all page-file names is '$commonPrefix'; length: $commonPrefixLength"
+  
   # find all numbers that appear after the common prefix
   set nameToNumeric [dict create]
   set maxNumDigits 0;  # needed for further reformatting
@@ -902,6 +912,32 @@ proc order_names_by_numeric_fields {namesUnordered {logPriCB puts}}  {
   }
   $logPriCB "-I- Ordered list of score page images: {$namesOrdered}"
   return  $namesOrdered
+}
+
+
+proc find_common_prefix_of_strings {stringList}  {
+  set minLength 9999
+  foreach name $stringList  {
+    if { $minLength < [string length $name] }  {
+      set minLength [string length $name]
+    }
+  }
+  set commonPrefixLength -1
+  for {set i 0}  {($i < $minLength) && ($commonPrefixLength < 0)}  {incr i 1}  {
+    set chI [string index [lindex $stringList 0] $i];  # to compare with rest
+    foreach name $stringList  {
+      if { $chI != [string index $name $i] }  {
+        set commonPrefixLength $i;  # signals end of search
+        break
+      }
+    }
+  }
+  if { $commonPrefixLength < 0 }  {
+    set commonPrefixLength $minLength;  # TODO: is it OK?
+  }
+  set commonPrefix [string range  [lindex $stringList 0]  \
+                      0  [expr $commonPrefixLength-1]]
+  return  $commonPrefix
 }
 
 
