@@ -84,7 +84,7 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
                                                           $trueWidth $trueHeight]
       if { 0 == [set pageMarkerRgbList [detect_page_marker_color  \
                    pixels $::MIN_COLOR_SAMPLE_SIZE $pageMaxColorSampleSize]] }  {
-        error "No line-position marker color for page '$pg' ($imgName)"
+        ABORT "No line-position marker color for page '$pg' ($imgName)"
       }
     }
     # TODO: pass matrix by refernce
@@ -97,7 +97,7 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
     if { ([llength $pageLineBoundsRaw] <= 1) ||  \
          ([llength $pageLineBounds   ] <= 1)  }  {
       set err "-E- Aborted since no score lines detected on page '$pg'"
-      LOG_MSG $err;  error $err
+      ABORT $err
     }
     format_score__one_page_scoreLines  scoreDict  $iPage  $pageLineBounds  \
                                        $width $height
@@ -176,14 +176,16 @@ proc gui_start {}  {
   SCREEN_MSG "Chosen score name is: '$scoreName'"
   if { [catch {
     make_score_file $scoreName $fileList
+    set status "Score template generation succeeded."
   } errText] } {
     SCREEN_MSG "* Error occurred: $errText"
+    set status "Score template generation failed."
   }
   set msg "Press Ok / <Enter> to close..."
   if { !$::_RUN_IN_GUI }  {
     SCREEN_MSG "\n ======== $msg ========";    gets stdin
   } else {
-    tk_messageBox -type ok -title $::_APPTITLE -message $msg
+    tk_messageBox -type ok -title $::_APPTITLE -message "$status\n\n$msg"
     catch { destroy .gUI_TXT }; # dismiss log window; protect from manual close
   }
   return
@@ -202,7 +204,7 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
   upvar $listOfPixels pixels
   if { ![file exists $imgPath] }  {
     set err "-E- Inexistent input file '$imgPath'"
-    error $err
+    ABORT $err
   }
   set tclExecResult [catch {
     set imgH [image create photo -file $imgPath -width $maxWidth]
@@ -212,7 +214,7 @@ proc read_image_pixels_into_array {imgPath maxWidth listOfPixels {loud 1}}  {
   if { $tclExecResult != 0 } {
     if { $loud == 1 }  {
       set err "-E- Cannot get pixel data of '$imgPath' ($execResult)"
-      error $err
+      ABORT $err
     }
     return  0
   }
@@ -283,7 +285,7 @@ proc detect_true_image_dimensions {matrixOfPixelsRef width height \
     if { $s > $wd }  { set wd $s }
   }
   if { $wd <= 0 }  {
-    error "Zero width encountered while height=$ht ($descrForLog)"
+    ABORT "Zero width encountered while height=$ht ($descrForLog)"
   }
   if { $descrForLog != "" }  {
     LOG_MSG "-I- Actual size of $descrForLog is $wd*$ht (full: $fullWidth*$ht)"
@@ -313,16 +315,15 @@ proc detect_page_marker_color {matrixOfPixelsRef \
                                minSampleSize maxSampleSize}  {
   upvar $matrixOfPixelsRef matrixOfPixels
   if { $minSampleSize <= 0 }  {
-    error "Invalid minSampleSize $minSampleSize; should be positive integer"
+    ABORT "Invalid minSampleSize $minSampleSize; should be positive integer"
   }
   if { $maxSampleSize < $minSampleSize }  {
-    error "maxSampleSize < minSampleSize: ($maxSampleSize < $minSampleSize)"
+    ABORT "maxSampleSize < minSampleSize: ($maxSampleSize < $minSampleSize)"
   }
-  if { ($maxSampleSize - $minSampleSize) > 10 }  { ; # implementation inefficient
-    LOG_MSG "-W- maxSampleSize of $maxSampleSize is too large; set to [expr $minSampleSize + 10]"
-    set maxSampleSize [expr $minSampleSize + 10]
-  }
-  #set maxSampleXY [expr $minSampleSize - 1]
+  # if { ($maxSampleSize - $minSampleSize) > 10 }  {;# implementation inefficient
+  #   LOG_MSG "-W- maxSampleSize of $maxSampleSize is too large; set to [expr $minSampleSize + 10]"
+  #   set maxSampleSize [expr $minSampleSize + 10]
+  # }
   
   set pageMarkerRgbList [list]
   set colorCntDict [dict create]
@@ -334,6 +335,7 @@ proc detect_page_marker_color {matrixOfPixelsRef \
     }
   }
   _most_frequent_key_in_dict $colorCntDict maxColor1 maxCount1 freq1
+  set maxFreq $freq1
   # grow the sample quadrant while frequency doesn't reduce
   ##  00 01 02  03
   ##  10 11 12  13
@@ -352,11 +354,16 @@ proc detect_page_marker_color {matrixOfPixelsRef \
       }
     }
     _most_frequent_key_in_dict $colorCntDict maxColor2 maxCount2 freq2
-    if { $freq2 < $freq1 }  {
+    if { $freq2 > $maxFreq }  { set maxFreq $freq2 }
+    if { $freq2 < (0.8*$maxFreq) }  { ;  # was: ($freq2 < $freq1)
       LOG_MSG "-D- Color-sample growing stopped at 0...$last;  frequency dropped $freq1 ==> $freq2 (colors: $maxColor1 -> $maxColor2)"
       LOG_MSG "-D- Color-counts at 0...$last: {$colorCntDict}"
       break };  # result = {maxColor1 maxCount1 freq1}
     set maxColor1 $maxColor2;   set maxCount1 $maxCount2;    set freq1 $freq2
+  }
+  if { $last == $maxSampleSize }  {
+    LOG_MSG "-E- Color-sample of '$rgbValStr' is suspiciously large (at least 0...$last* 0...$last); could it be the background color?"
+    return  0
   }
   set rgbList [decode_rgb $maxColor1]
   set size [expr $last - 1]
@@ -505,8 +512,8 @@ proc merge_nearby_spans {spanBeginsEnds whereStr}  {
   for {set i 0} {$i < $nSpans1-1} {incr i 1}  {
     lassign [lindex $spanBeginsEnds $i         ] y11 y12
     lassign [lindex $spanBeginsEnds [expr $i+1]] y21 y22
-    if { $y12 < $y11 }  { error "-E- Invalid span #$i: $y11...$y12 (in $descr)" }
-    if { !($y21 > $y12) && ($y22 > $y12) }  { error "-E- Overlapping spans #$i: $y11...$y12 and #[expr $i+1]: $y21...$y22 (in $descr)" }
+    if { $y12 < $y11 }  { ABORT "-E- Invalid span #$i: $y11...$y12 (in $descr)" }
+    if { !($y21 > $y12) && ($y22 > $y12) }  { ABORT "-E- Overlapping spans #$i: $y11...$y12 and #[expr $i+1]: $y21...$y22 (in $descr)" }
     if { $maxDist < ($y21 - $y12) }  { set maxDist [expr $y21 - $y12] }
   }
   set minDist [expr {int( $maxDist / 2.0 )}]
@@ -616,7 +623,7 @@ proc format_score__one_page_scoreLines {scoreDictRef iPage pageLineBounds
   upvar $scoreDictRef scoreDict
   set maxPageIdx [expr [dict get $scoreDict NumPages] - 1]
   if { ($iPage < 0) || ($iPage > $maxPageIdx) }  {
-    error "-E- Invalid page index $iPage; should be 0...$maxPageIdx"
+    ABORT "-E- Invalid page index $iPage; should be 0...$maxPageIdx"
   }
   set pageId  [format__page_id $iPage]
   set timeBeat [dict get $scoreDict DefaultTimeBeat]
@@ -801,7 +808,7 @@ proc elem_list2d {listOfLists row col}  {
   set height [llength $listOfLists]
   if { ($row < 0) || ($row >= $height) || ($col < 0) || ($col >= $width) }  {
     set err "-E- Invalid pixel index ($row $col); should be (0..[expr $height-1], 0..[expr $width-1])"
-    error $err
+    ABORT $err
   }
   return  [lindex [lindex $listOfLists $row] $col]
 }
@@ -835,8 +842,7 @@ proc safe_open_outfile {fullPath} {
   } execResult]
   if { $tclExecResult != 0 } {
     set err "-E- Failed to open output file '$fullPath': $execResult!"
-    #LOG_MSG $err
-    error $err
+    ABORT $err
   }
   return  $outF
 }
@@ -885,7 +891,7 @@ proc order_names_by_numeric_fields {namesUnordered {logPriCB puts}}  {
   set abcOrder [lsort -unique -ascii -increasing $namesUnordered]
   set numEqual [expr [llength $namesUnordered] - [llength $abcOrder]]
   if { $numEqual > 0 } {
-    error "-E- Detected $numEqual non-unoque page name(s)"
+    ABORT "-E- Detected $numEqual non-unoque page name(s)"
   }
   
   set commonPrefix [find_common_prefix_of_strings $namesUnordered]
@@ -981,9 +987,9 @@ proc LOG_MSG {msg}  {
 
 proc LOG_OPEN {}  {
   if { $::SCORE_NAME == "" }  {
-    error "Missing score name - cannot init log file" }
+    ABORT "Missing score name - cannot init log file" }
   if { $::OUT_DIR == "" }  {
-    error "Missing output directory name - cannot init log file" }
+    ABORT "Missing output directory name - cannot init log file" }
   set logPath [file join $::OUT_DIR \
                          [format $::LOGFILE_NAME_PATTERN $::SCORE_NAME]]
   set ::LOG_F [safe_open_outfile $logPath]
@@ -1011,6 +1017,11 @@ proc SCREEN_MSG {msg}  {
   update idletasks;  # flush the output into the log window
   .gUI_TXT configure -state disabled
   return
+}
+
+
+proc ABORT {msg}  {
+  LOG_MSG $msg;  LOG_CLOSE;  error $msg
 }
 ######### End: Score-Maker logging utils ######################################
 
