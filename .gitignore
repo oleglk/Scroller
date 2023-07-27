@@ -1,6 +1,12 @@
 *~
 SciTE_Scroller.session
 Scores/Cropped/
+Scores/Marked/
 Scores/ORIG/
+Scores/*.gif
+Scores/*.jpg
+Scores/*.png
+Scores/*log.txt
+Scores/*out.html
 TMP/
 V[0-9]*/
