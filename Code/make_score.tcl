@@ -15,6 +15,8 @@ set SCRIPT_DIR [file normalize [file dirname [info script]]]
 
 package require Tk
 
+set _RUN_IN_GUI 0
+set _GUI_NUM_LOG_LINES 20
 
 ######### Begin: Score-Maker preferances #######################################
 set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
@@ -69,9 +71,9 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
     set imgPath [dict get $scoreDict  PageIdToImgPath   $pg]
     set iPage   [dict get $scoreDict  PageIdToPageIndex $pg]
     set begMsg "Begin processing score page '$pg', path: '$imgPath'"
-    puts stdout "$begMsg";
+    SCREEN_MSG "$begMsg";
     LOG_MSG "-I- $begMsg"
-    puts stdout "\n... Please wait ..."
+    SCREEN_MSG "\n... Please wait ..."
     set htwd [read_image_pixels_into_array  $imgPath  2000  pixels]
     lassign $htwd height width
     detect_true_image_dimensions pixels trueWidth trueHeight _is_nonblack_pixel \
@@ -99,7 +101,7 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
     format_score__one_page_scoreLines  scoreDict  $iPage  $pageLineBounds  \
                                        $width $height
     set endMsg "End processing score page '$pg', path: '$imgPath', width=$width, height=$height"
-    puts stdout "$endMsg";  LOG_MSG "-I- $endMsg"
+    SCREEN_MSG "$endMsg";  LOG_MSG "-I- $endMsg"
   }
 
   # output the whole score file
@@ -127,7 +129,7 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
   puts $outF [join [dict get $::HEADERS_AND_FOOTERS FOOT_html] "\n"]
   puts $outF "\n"
   set finMsg "Done generting description file for $outDescr..."
-  puts stdout $finMsg
+  SCREEN_MSG $finMsg
   LOG_MSG "-I- $finMsg"
   safe_close_outfile outF
   LOG_CLOSE
@@ -136,6 +138,11 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
 
 ################ The GUI #######################################################
 proc gui_start {}  {
+  set ::_RUN_IN_GUI 1
+  # initialize text widgt for screen log
+  grid [text .gUI_TXT -state disabled -width 80 -height \
+          $::_GUI_NUM_LOG_LINES -wrap none]
+  
   set types {
     {{GIF Files}        {.gif}        }
     {{GIF Files}        {}        GIFF}
@@ -148,21 +155,26 @@ proc gui_start {}  {
                           -title "Please select image(s) with all score pages"]
   
   if { $fileList == "" } {
-    puts "No score-page image files selected. Aborting."
-    return  ""
+    SCREEN_MSG "No score-page image files selected.  Press <Enter> to close..."
+    gets stdin
+    catch { destroy .gUI_TXT };  # dismiss log window; protect from manual close
+    return
   }
-  puts "Selected [llength $fileList] score-page image file(s): {$fileList}"
+  SCREEN_MSG "Selected [llength $fileList] score-page image file(s): {$fileList}"
   set nameList [lmap filePath $fileList {file rootname [file tail $filePath]}]
   set commonPrefix [find_common_prefix_of_strings $nameList]
-  ##puts "Common prefix is: '$commonPrefix'"
+  ##SCREEN_MSG "Common prefix is: '$commonPrefix'"
   set scoreName [string trimright $commonPrefix "_-0123456789 \r\n"]; #"", NOT {}
-  puts "Chosen score name is: '$scoreName'"
+  SCREEN_MSG "Chosen score name is: '$scoreName'"
   if { [catch {
-    return  [make_score_file $scoreName $fileList]
+    make_score_file $scoreName $fileList
   } errText] } {
-    puts "(TMP) Error occurred: $errText"
+    SCREEN_MSG "(TMP) Error occurred: $errText"
   }
-  
+  SCREEN_MSG "\n ======== Press <Enter> to close... ========"
+  gets stdin
+  catch { destroy .gUI_TXT };  # dismiss log window; protect from manual close
+  return
 }
 ################################################################################
 
@@ -964,11 +976,30 @@ proc LOG_OPEN {}  {
                          [format $::LOGFILE_NAME_PATTERN $::SCORE_NAME]]
   set ::LOG_F [safe_open_outfile $logPath]
   set descr "Log file for score '$::SCORE_NAME'"
-  puts stdout "$descr goes into '$logPath'"
+  SCREEN_MSG "$descr goes into '$logPath'"
   puts $::LOG_F "$descr; debug messages are [expr {($::LOG_DEBUG != 0)? {included} : {not included}}]"
 }
 
 proc LOG_CLOSE {}  { safe_close_outfile ::LOG_F }
+
+
+proc SCREEN_MSG {msg}  {
+  if { !$::_RUN_IN_GUI }  {
+    puts stdout "$msg";  return
+  }
+  set numlines [lindex [split [.gUI_TXT index "end - 1 line"] "."] 0]
+  .gUI_TXT configure -state normal
+  if { $numlines==$::_GUI_NUM_LOG_LINES }  {
+    .gUI_TXT delete 1.0 2.0
+  }
+  if { [.gUI_TXT index "end-1c"]!="1.0" }  {
+    .gUI_TXT insert end "\n"
+  }
+  .gUI_TXT insert end "$msg"
+  update idletasks;  # flush the output into the log window
+  .gUI_TXT configure -state disabled
+  return
+}
 ######### End: Score-Maker logging utils ######################################
 
 
