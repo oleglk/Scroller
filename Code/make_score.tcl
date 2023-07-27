@@ -144,6 +144,8 @@ proc gui_start {}  {
           $::_GUI_NUM_LOG_LINES -wrap char]
   
   set types {
+    {"Image Files"      {.gif .png .ppm}	}
+    {"Image Files"      {}        {GIFF PNG PPM}}
     {{GIF Files}        {.gif}        }
     {{GIF Files}        {}        GIFF}
     {{PNG Files}        {.png}        }
