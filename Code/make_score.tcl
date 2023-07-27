@@ -175,7 +175,7 @@ proc gui_start {}  {
   if { [catch {
     make_score_file $scoreName $fileList
   } errText] } {
-    SCREEN_MSG "(TMP) Error occurred: $errText"
+    SCREEN_MSG "* Error occurred: $errText"
   }
   set msg "Press Ok / <Enter> to close..."
   if { !$::_RUN_IN_GUI }  {
