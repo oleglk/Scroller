@@ -15,6 +15,7 @@ set SCRIPT_DIR [file normalize [file dirname [info script]]]
 
 package require Tk
 
+set _APPTITLE "Score-Maker"
 set _RUN_IN_GUI 0
 set _GUI_NUM_LOG_LINES 20
 
@@ -142,6 +143,7 @@ proc gui_start {}  {
   # initialize text widgt for screen log
   grid [text .gUI_TXT -state disabled -width 80 -height \
           $::_GUI_NUM_LOG_LINES -wrap char]
+  wm title . $::_APPTITLE
   
   set types {
     {"Image Files"      {.gif .png .ppm}	}
@@ -161,7 +163,7 @@ proc gui_start {}  {
     if { !$::_RUN_IN_GUI }  {
       SCREEN_MSG $msg;      gets stdin
     } else {
-      tk_messageBox -type ok -message $msg
+      tk_messageBox -type ok -title $::_APPTITLE -message $msg
       catch { destroy .gUI_TXT }; # dismiss log window; protect from manual close
     }
     return
@@ -181,7 +183,7 @@ proc gui_start {}  {
   if { !$::_RUN_IN_GUI }  {
     SCREEN_MSG "\n ======== $msg ========";    gets stdin
   } else {
-    tk_messageBox -type ok -message $msg
+    tk_messageBox -type ok -title $::_APPTITLE -message $msg
     catch { destroy .gUI_TXT }; # dismiss log window; protect from manual close
   }
   return
