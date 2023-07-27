@@ -141,7 +141,7 @@ proc gui_start {}  {
   set ::_RUN_IN_GUI 1
   # initialize text widgt for screen log
   grid [text .gUI_TXT -state disabled -width 80 -height \
-          $::_GUI_NUM_LOG_LINES -wrap none]
+          $::_GUI_NUM_LOG_LINES -wrap char]
   
   set types {
     {{GIF Files}        {.gif}        }
@@ -155,9 +155,11 @@ proc gui_start {}  {
                           -title "Please select image(s) with all score pages"]
   
   if { $fileList == "" } {
-    SCREEN_MSG "No score-page image files selected.  Press <Enter> to close..."
-    gets stdin
-    if { $::_RUN_IN_GUI }  {
+    set msg "No score-page image files selected.  Press Ok / <Enter> to close..."
+    if { !$::_RUN_IN_GUI }  {
+      SCREEN_MSG $msg;      gets stdin
+    } else {
+      tk_messageBox -type ok -message $msg
       catch { destroy .gUI_TXT }; # dismiss log window; protect from manual close
     }
     return
@@ -173,10 +175,12 @@ proc gui_start {}  {
   } errText] } {
     SCREEN_MSG "(TMP) Error occurred: $errText"
   }
-  SCREEN_MSG "\n ======== Press <Enter> to close... ========"
-  gets stdin
-  if { $::_RUN_IN_GUI }  {
-    catch { destroy .gUI_TXT };  # dismiss log window; protect from manual close
+  set msg "Press Ok / <Enter> to close..."
+  if { !$::_RUN_IN_GUI }  {
+    SCREEN_MSG "\n ======== $msg ========";    gets stdin
+  } else {
+    tk_messageBox -type ok -message $msg
+    catch { destroy .gUI_TXT }; # dismiss log window; protect from manual close
   }
   return
 }
