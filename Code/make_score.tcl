@@ -157,7 +157,9 @@ proc gui_start {}  {
   if { $fileList == "" } {
     SCREEN_MSG "No score-page image files selected.  Press <Enter> to close..."
     gets stdin
-    catch { destroy .gUI_TXT };  # dismiss log window; protect from manual close
+    if { $::_RUN_IN_GUI }  {
+      catch { destroy .gUI_TXT }; # dismiss log window; protect from manual close
+    }
     return
   }
   SCREEN_MSG "Selected [llength $fileList] score-page image file(s): {$fileList}"
@@ -173,7 +175,9 @@ proc gui_start {}  {
   }
   SCREEN_MSG "\n ======== Press <Enter> to close... ========"
   gets stdin
-  catch { destroy .gUI_TXT };  # dismiss log window; protect from manual close
+  if { $::_RUN_IN_GUI }  {
+    catch { destroy .gUI_TXT };  # dismiss log window; protect from manual close
+  }
   return
 }
 ################################################################################
