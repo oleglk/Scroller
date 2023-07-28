@@ -599,12 +599,12 @@ function _manual_one_step(stepIncrement)
   }
   const nSteps = filter_positions(PD.scoreStations).length;
   if ( (RT.currStep < 0) || (RT.currStep >= nSteps) ) {
-    msg = `-E- Invalid step ${RT.currStep}; should be 0..${nSteps-1}; jump to the begining`;
+    msg = `-E- Invalid step ${RT.currStep}; should be 0..${nSteps-1}; assume ${(RT.currStep < 0)? "top":"bottom"}`;
     console.trace();
     console.log(msg);
-    alert(msg);
-    RT.currStep = 0;
-    return;
+    //alert(msg);
+    RT.currStep = (RT.currStep < 0)? 0 : nSteps-1;
+    // DO NOT return; perform the requested step assuming the fixed position
   }
 
   /*  */
