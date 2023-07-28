@@ -251,7 +251,7 @@ async function scroll__onload(event)
   event.stopImmediatePropagation(); // crucial because of prompt inside handler!
   
   // Unregister main events to prevent interference with help/tempo/mode dialog
-  ["click", "contextmenu", "dblclick"].forEach(
+  ["click", "contextmenu", "dblclick", "keydown"].forEach(
         evType => unregister_window_event_listener( evType ));
   
   // set tab title to score-file name
@@ -290,6 +290,8 @@ async function scroll__onload(event)
   }
   register_window_event_listener(   "dblclick",
                                     wrap__restart_handler);
+  register_window_event_listener(   "keydown",
+                                    _arrow_step_handler);
   
   RT.totalHeight = get_scroll_height();
 
@@ -629,6 +631,32 @@ function _manual_one_step(stepIncrement)
 }
 
 
+function _arrow_step_handler(event)
+{
+  if ( !RT.stepManual && RT.scrollIsOn )  {
+    msg = "-W- STEPPING REQUESTS IGNORED UNTIL AUTO-SCROLL IS STOPPED";
+    console.log(msg);
+    timed_alert(msg, 1/*sec*/);
+    // event.preventDefault();
+    // /* Keep the rest of the handlers from being executed
+    //  *   (and it prevents the event from bubbling up the DOM tree) */
+    // event.stopImmediatePropagation();
+    return;  // let the event continue for now
+  }
+  const modeManual = RT.stepManual;
+  if ( !modeManual )
+    RT.stepManual = true;  // temporary override - to allow one step
+  if (      event.key === 'ArrowLeft' )  {
+    manual_step_back_handler(event);
+  }
+  else if ( event.key === 'ArrowRight' )  {
+    manual_step_forth_handler(event);
+  }
+  RT.stepManual = modeManual;  // restore the original mode
+  return;
+}
+
+
 async function restart_handler(event)
 {
   // restart with confirmation in auto mode would require pause scrolling
@@ -669,7 +697,7 @@ Press <OK> to re-select operation mode, <Cancel> to continue...
 
   // Unregister main events to prevent interference with restart dialog
   let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
-  ["click", "contextmenu", "dblclick"].forEach(
+  ["click", "contextmenu", "dblclick", "keydown"].forEach(
         evType => unregister_window_event_listener( evType ));
   window.addEventListener("keydown", _confirm_escape_handler);
 
@@ -869,7 +897,7 @@ async function modal_alert(msg)
 
   // Unregister main events to prevent interference with this dialog
   let copyOfRegistry = new Map(_global_events_registry());  // shallow-copy
-  ["click", "contextmenu", "dblclick"].forEach(
+  ["click", "contextmenu", "dblclick", "keydown"].forEach(
     evType => unregister_window_event_listener( evType ));
   ////(no need) window.addEventListener("keydown", _confirm_escape_handler);
 
