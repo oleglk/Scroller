@@ -15,11 +15,14 @@ set SCRIPT_DIR [file normalize [file dirname [info script]]]
 
 package require Tk
 
-set _APPTITLE "Score-Maker"
-set _RUN_IN_GUI 0
-set _GUI_NUM_LOG_LINES 20
+
+set _RUN_IN_GUI          0;  # overriden if started by proc gui_start
 
 ######### Begin: Score-Maker preferances #######################################
+set _APPTITLE            "Score-Maker";  # shown in window caption
+set _GUI_NUM_LOG_COLUMNS 100;            # width  of short-log window
+set _GUI_NUM_LOG_LINES   40;             # height of short-log window
+###
 set DEFAULT_TIME_BEAT 3;  # default line duration in beat-s
 set DEFAULT_NUM_LINES_IN_STEP 1;  # 1|2 (!) number of lines to scroll in one step
 set DEFAULT_TEMPO 60;  # default play tempo in beats per minute
@@ -137,12 +140,13 @@ proc make_score_file {name imgPathList {markerRgbList 0}}  {
 };#__END_OF__make_score_file
 ################################################################################
 
+
 ################ The GUI #######################################################
 proc gui_start {}  {
   set ::_RUN_IN_GUI 1
   # initialize text widgt for screen log
-  grid [text .gUI_TXT -state disabled -width 80 -height \
-          $::_GUI_NUM_LOG_LINES -wrap char]
+  grid [text .gUI_TXT -state disabled -width $::_GUI_NUM_LOG_COLUMNS \
+          -height $::_GUI_NUM_LOG_LINES -wrap char]
   wm title . $::_APPTITLE
   
   set types {
