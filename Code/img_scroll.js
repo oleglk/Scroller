@@ -621,11 +621,19 @@ function _manual_one_step(stepIncrement)
   }
   rec = filter_positions(PD.scoreStations)[newStep];
   const actionStr = (newStep == (RT.currStep + stepIncrement))?
-                                ((stepIncrement < 0)? "BACK":"FORTH") : "JUMP"; 
-  msg = `${actionStr} TO STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (previous step was ${RT.currStep})`;
+        ((stepIncrement < 0)? "BACK":"FORTH") : "JUMP";
+  // using arrow keys in stopped auto-scroll mode may attempt to go out of bounds
+  if ( newStep >= nSteps )
+    msg = `ALREADY AT THE END`;
+  else if ( newStep < 0 )
+    msg = `ALREADY AT THE BEGINNING`;
+  else
+    msg = `${actionStr} TO STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (previous step was ${RT.currStep})`;
   console.log(msg);
-  RT.currStep = newStep;
   timed_alert(msg, 1/*sec*/);
+  if ( (newStep >= nSteps) || (newStep < 0) )
+    return;  // nowhere to go; just ignore
+  RT.currStep = newStep;
   // in manual-step mode it should scroll immediately
   scroll_perform_one_step(RT.currStep);
 }
