@@ -567,6 +567,7 @@ function timed_progress_bar(color, currTimePrc, currLineFullTime,
 function format_progress_bar_str(position_0to1,
                 fullTime, minFullTime, numCellsForMinFullTime)
 {
+  //console.log(`-D- (RAW) format_progress_bar_str(position_0to1=${position_0to1}, fullTime=${fullTime}, minFullTime=${minFullTime}, numCellsForMinFullTime=${numCellsForMinFullTime})`);
   const emptyCh = "-";   const filledCh = ">";
   if ( (position_0to1 < 0) || (position_0to1 > 1.0) ||
        (fullTime < Math.floor(minFullTime)) )
@@ -576,7 +577,7 @@ function format_progress_bar_str(position_0to1,
   // fullTime    - x
   const full = Math.floor( 1.0 * fullTime *
                            numCellsForMinFullTime / Math.floor(minFullTime) );
-  const curr = Math.floor( position_0to1 * full );
+  const curr = Math.round( position_0to1 * full );  // <= 'full' in any case
   //console.log(`-D- format_progress_bar_str(curr=${position_0to1}=>${curr}, full=${fullTime}=>${full})    full=FLOOR( ${fullTime}*${numCellsForMinFullTime}/FLOOR(${minFullTime}) )*`);
   const tmpDescr = `(${curr}/${full})`;
   const currSecStr = (PF.progressBar_countDown == true)?
