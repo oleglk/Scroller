@@ -34,7 +34,8 @@ const g_ScrollerPreferances = {
    * No Manual Scroll == compute next position based on current step, ignore scroll position.
    * (Do not confuse "Manual Scroll" with "Manual Step".)
    * Disclaimer: manual scroll isn't properly debugged. */
-  permitManualScroll: false,  // 
+  permitManualScroll: false,  // whether to change step number following manual scroll (drag)
+  loudAlerts: false,
   ///
   _singleClickDelayMs: 400,  // to ignore single-click upon double-click
 };
@@ -455,7 +456,10 @@ async function scroll_start_handler(event)
     // if manually scrolled while being paused, change step;  TODO: MAYBE DEACTIVATE?
     rec = filter_positions(PD.scoreStations)[newStep];
     countDownMsg = `Second(s) left till resume from step ${newStep}:`;
-    msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${RT.currStep})`;
+    if ( PF.loudAlerts )
+      msg = `RESUME SCROLLING FROM STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (was paused at step ${RT.currStep})`;
+    else
+      msg = `RESUME SCROLLING FROM STEP ${newStep}`;
     console.log(msg);
     RT.currStep = newStep;
     // it immediately scrolls, since the step is already advanced
@@ -492,7 +496,10 @@ function scroll_stop_handler(event)
 
   rec = filter_positions(PD.scoreStations)[RT.currStep];
   winY = get_scroll_current_y();
-  msg = `STOP/PAUSE SCROLLING AT STEP ${rec.tag}::${one_position_toString(RT.currStep, rec)};  POSITION ${winY}`;
+  if ( PF.loudAlerts )
+    msg = `STOP/PAUSE SCROLLING AT STEP ${rec.tag}::${one_position_toString(RT.currStep, rec)};  POSITION ${winY}`;
+  else
+    msg = `STOP/PAUSE SCROLLING AT STEP ${RT.currStep}`;
   console.log(msg);
   alert(msg);
   scroll_abort();
@@ -628,8 +635,12 @@ function _manual_one_step(stepIncrement)
     msg = `ALREADY AT THE END`;
   else if ( newStep < 0 )
     msg = `ALREADY AT THE BEGINNING`;
-  else
-    msg = `${actionStr} TO STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (previous step was ${RT.currStep})`;
+  else {
+    if ( PF.loudAlerts )
+      msg = `${actionStr} TO STEP ${one_position_toString(newStep, rec)} FOR POSITION ${currWinY} (previous step was ${RT.currStep})`;
+    else
+      msg = `${actionStr} TO STEP ${newStep}`;
+  }
   console.log(msg);
   timed_alert(msg, 1/*sec*/);
   if ( (newStep >= nSteps) || (newStep < 0) )
