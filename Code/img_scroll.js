@@ -153,7 +153,8 @@ function build_help_string(showHeader, showFooter, modeManual=RT.stepManual)
 == by Oleg Kosyakovsky - Haifa, Israel - 2023
 
 
-=> Left-mouse-button-Double-Click \t= Choose Step Mode (MANUAL/AUTO)\n`;
+=> Left-mouse-button-Double-Click \t= Choose Step Mode (MANUAL/AUTO)
+=> Left(Right)-Arrow-Key \t= One Step Back(Forth)\n`;
   }
   ret += `
 ============= Step Mode: ${(modeManual)? "MANUAL " : "AUTO =="}=============`;
