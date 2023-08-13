@@ -1,5 +1,13 @@
 Score-maker usage instructions
 
 1) Scan the score pages as goos as possible.
-2) Crop tightky on the sides
-3) 
+
+2) Crop tightky on the sides.
+
+3) Resize all page images to the same width.
+ * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+ * #### exec $IMCONVERT --version; check the path before script
+ * file mkdir RESIZED
+ * foreach f [glob {CROPPED/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
+ ****
+ * !Having page-width close to screen resolution makes fading alerts visible!*/  
