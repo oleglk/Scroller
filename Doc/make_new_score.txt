@@ -13,5 +13,48 @@ Score-maker usage instructions
  ****
  * !Having page-width close to screen resolution makes fading alerts visible!*/  
 
-4) Mark all line top-s and last line bottom wirg 
-- use Paint or alike; save results as .gif (or ppm, ?png?)
+4) Mark all line top-s and last line bottom with the same color.
+- use "Paint" application or alike; save results as .gif (or ppm, ?png?)
+- place a small quadrant (5*5) of the chosen marker color in the top-left corner
+- place the marks "tightly" close to the related score lines - as close as possible; the more 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
