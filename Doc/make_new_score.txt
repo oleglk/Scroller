@@ -4,10 +4,14 @@ Score-maker usage instructions
 
 2) Crop tightky on the sides.
 
-3) Resize all page images to the same width.
+3) Resize all page images to the same width
+(recommended pixel-width:- ~80% of intended screen horizontal resolution)
  * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
  * #### exec $IMCONVERT --version; check the path before script
  * file mkdir RESIZED
- * foreach f [glob {CROPPED/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
+ * foreach f [glob {CROPPED/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file join "RESIZED" [file tail $f]]}
  ****
  * !Having page-width close to screen resolution makes fading alerts visible!*/  
+
+4) Mark all line top-s and last line bottom wirg 
+- use Paint or alike; save results as .gif (or ppm, ?png?)
