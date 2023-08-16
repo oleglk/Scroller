@@ -50,7 +50,7 @@ set SCORE_NAME ""
 set LOG_F      0;  # log-file output channel
 set OUT_DIR    "";  # output directory for score-file and log-file
 set HEADERS_AND_FOOTERS 0;  # for dictionary with format-related headers/footers
-######### End: Score-Maker gloal variables ######################################
+######### End: Score-Maker global variables #####################################
 
 
 ################ The "main" ####################################################
