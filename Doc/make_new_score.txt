@@ -22,6 +22,7 @@ Score-maker usage instructions
 
 ==== Auto-generating score templates ===========================================
 2.1) Put all page scans (with line markings) for the score into one directory and start Tcl/Tk graphical shell (usually "wish") in its parent directory.
+TODO: symbolic link to "Code\" subdirectory
   >>>>> Example (Windows cmd):
   C:\Oleg\GitWork\Scroller\Scores\V02>md Scores
   C:\Oleg\GitWork\Scroller\Scores\V02>copy MARKED\Vals_by_Petrov__*.gif Scores\
@@ -36,27 +37,31 @@ Score-maker usage instructions
 2.2) (In Tcl shell) Load score-maker code
 source C:/Oleg/GitWork/Scroller/Code/make_score.tcl
 
-2.3) (In Tcl shell) 
+2.3) (In Tcl shell) Invoke the score-maker
 make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov__01.gif" "Scores/Vals_by_Petrov__02.gif" "Scores/Vals_by_Petrov__03.gif"]screen :
 
 >>>>>> Sample screen output:
-(V02) 3 % make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov__01.gif" "Scores/Vals_by_Petrov__02.gif" "Scores/Vals_by_Petrov__03.gif"]
-Log file for score 'Vals_by_Petrov' goes into 'Scores/Vals_by_Petrov__score_maker_log.txt'
-Begin processing score page 'pg01', path: 'Scores/Vals_by_Petrov__01.gif'
+  (V02) 3 % make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov__01.gif" "Scores/Vals_by_Petrov__02.gif" "Scores/Vals_by_Petrov__03.gif"]
+  Log file for score 'Vals_by_Petrov' goes into 'Scores/Vals_by_Petrov__score_maker_log.txt'
+  Begin processing score page 'pg01', path: 'Scores/Vals_by_Petrov__01.gif'
 
-... Please wait ...
-End processing score page 'pg01', path: 'Scores/Vals_by_Petrov__01.gif', width=2000, height=1292
-Begin processing score page 'pg02', path: 'Scores/Vals_by_Petrov__02.gif'
+  ... Please wait ...
+  End processing score page 'pg01', path: 'Scores/Vals_by_Petrov__01.gif', width=2000, height=1292
+  Begin processing score page 'pg02', path: 'Scores/Vals_by_Petrov__02.gif'
 
-... Please wait ...
-End processing score page 'pg02', path: 'Scores/Vals_by_Petrov__02.gif', width=2000, height=1286
-Begin processing score page 'pg03', path: 'Scores/Vals_by_Petrov__03.gif'
+  ... Please wait ...
+  End processing score page 'pg02', path: 'Scores/Vals_by_Petrov__02.gif', width=2000, height=1286
+  Begin processing score page 'pg03', path: 'Scores/Vals_by_Petrov__03.gif'
 
-... Please wait ...
-End processing score page 'pg03', path: 'Scores/Vals_by_Petrov__03.gif', width=2000, height=1293
-Done generting description file for score 'Vals_by_Petrov' into 'Scores/Vals_by_Petrov__straight_out.html'...
+  ... Please wait ...
+  End processing score page 'pg03', path: 'Scores/Vals_by_Petrov__03.gif', width=2000, height=1293
+  Done generting description file for score 'Vals_by_Petrov' into 'Scores/Vals_by_Petrov__straight_out.html'...
 0
-
+====
+Several facts to be learned from the above:
+- the detailed log file for score 'Vals_by_Petrov' could be found  in  'Scores/Vals_by_Petrov__score_maker_log.txt';
+- the score has 3 original pages; all processed succesfully
+- the resulting description file template is: 'Scores/Vals_by_Petrov__straight_out.html'.
 
 
 
