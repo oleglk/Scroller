@@ -674,7 +674,7 @@ proc print_score__control_parameters {scoreDictRef {outChannel stdout}}  {
   puts $outChannel "const g_scoreName = \"[dict get $scoreDict Name]\";"
   puts $outChannel ""
   puts $outChannel "//=========== Begin: user-configurable settings ===========";
-  puts $outChannel "const g_numLinesInStep = [dict get $scoreDict DefaultNumLinesInStep];  // how many lines to scroll in one step - 1 or 2"
+  puts $outChannel "const g_numLinesInStep = [dict get $scoreDict DefaultNumLinesInStep];  // how many lines to scroll in one step - 1...3"
   puts $outChannel ""
   puts $outChannel "const g_tempo = [dict get $scoreDict DefaultTempo];  // assumed play speed - beats per minute"
   puts $outChannel "//=========== End:   user-configurable settings ===========";

@@ -53,7 +53,7 @@ const g_ScoreRawInputs = {
   linePlayOrder: g_linePlayOrder, /*{pageId:STR, lineIdx:INT, timeBeat:FLOAT}*/
   // g_pageImgPathsMap: file-paths of score pages' images
   pageImgPathsMap: g_pageImgPathsMap, /*{pageId(STR) : path(STR)*/
-  defaultNumLinesInStep:  (typeof g_numLinesInStep !== 'undefined')? g_numLinesInStep : 1, /*how many lines to scroll in one step - 1 or 2 - specified in the score file*/
+  defaultNumLinesInStep:  (typeof g_numLinesInStep !== 'undefined')? g_numLinesInStep : 1, /*how many lines to scroll in one step - 1...3 - specified in the score file*/
   defaultTempo:  (typeof g_tempo !== 'undefined')? g_tempo : 0, /*beat/min - specified in the score file*/
 };
 const RI = g_ScoreRawInputs;   // shortcut to per-score raw inputs
@@ -81,7 +81,7 @@ const PD = g_ScoreMassagedDataInputs;  // shortcut to per-score processed inputs
 //////// Begin: runtime/state variables of the current session /////////////////
 const g_RunTimeState = {
   helpAndTempoDialog: null,
-  numLinesInStep: RI.defaultNumLinesInStep,  // how many lines to scroll in one step - 1 or 2 - specified in the score file
+  numLinesInStep: RI.defaultNumLinesInStep,  // how many lines to scroll in one step - 1 or 3 - specified in the score file
   tempo: RI.defaultTempo,   // beat/min; default specified in the score file*
   stepManual: (RI.defaultTempo > 0)? false/*auto-scroll*/ : true/*manual-step*/,
   totalHeight: -1,          // for document scroll height
@@ -105,9 +105,8 @@ const RT = g_RunTimeState;  // shortcut to runtime/state
 //////// Begin: prepare global data for the scroller and start it ///////////////
 
 
-arrange_score_global_data(RI.scoreName, RI.pageImgPathsMap,
-                          RI.scoreLines, RI.linePlayOrder, RT.numLinesInStep);
-// at this stage 'PD.scoreStations' is built, but times reflect default tempo
+// CANNOT: await arrange_score_global_data(RI.scoreName, RI.pageImgPathsMap,
+//                           RI.scoreLines, RI.linePlayOrder, RT.numLinesInStep);
 
 //(meaningless - will not wait for:)  modal_alert("OK_TMP: Test modal_alert()");
 
@@ -184,13 +183,14 @@ function build_help_string(showHeader, showFooter, modeManual=RT.stepManual)
 
 
 /* Builds browser page with score images' occurences in the play order.
- * Collects score data in the expected global collections */ 
+ * Collects score data in the expected global collections.
+ * Must be "await"-ed - call it only from async functions. */ 
 async function arrange_score_global_data(scoreName, pageImgPathsMap,
                                    scoreLinesArray, linePlayOrderArray,
                                    numLinesInStep)
 {
   if ( (numLinesInStep < 1) || (numLinesInStep > 3) )  {
-    const err = `-E- Invalid number of lines in a step: g_numLinesInStep=${numLinesInStep}; allowed values are 1,2`;
+    const err = `-E- Invalid number of lines in a step: g_numLinesInStep=${numLinesInStep}; allowed values are 1,2,3`;
     console.log(err);  alert(err);
     throw new Error(err);  // actually exceptions in promisses are missed
   }
@@ -216,8 +216,13 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
   let iml = new ScoreImgLayout(pageImgPathsMap,
                                plo.imgPageOccurences
                               );
-  await iml.render_images();  //...await completion to access image widths
-  // BUG: it doesn't wait for rendering to finish. Vals_* fails with 3 lines/step
+    // ensure all canvas have same width (the max among them)
+    // store image dimensions as the co-product
+
+  await iml.detect_all_images_dimensions();  // "await" to access image widths
+  //console.log("-D- Passed iml.detect_all_images_dimensions()");
+  await iml.render_images();  //...await completion to access
+  //console.log("-D- Passed iml.render_images()");
   PD.maxScoreImageWidth = iml.get_max_score_image_width();
 
   // ... the copy will be 2-level deep - fine for the task
@@ -256,6 +261,12 @@ async function scroll__onload(event)
   // Unregister main events to prevent interference with help/tempo/mode dialog
   ["click", "contextmenu", "dblclick", "keydown"].forEach(
         evType => unregister_window_event_listener( evType ));
+
+  
+  await arrange_score_global_data(RI.scoreName, RI.pageImgPathsMap,
+                          RI.scoreLines, RI.linePlayOrder, RT.numLinesInStep);
+  // at this stage 'PD.scoreStations' is built, but times reflect default tempo
+
   
   // set tab title to score-file name
   let fileName = window.location.pathname.split("/").pop();

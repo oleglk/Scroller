@@ -303,10 +303,12 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
           i1 += numLinesInStep )   {  // 'i1' = idx of station's first line
       iStation += 1;
       let stationRec = scoreStationsData[iStation];
-      let i2 = i1 + numLinesInStep;    // 'i2' = idx of station's last  line
+      let i2 = Math.min(i1 + numLinesInStep, linePlayOrderArray.length);
+      // 'i2' == idx of station's last  line
       let timeInStationBeat = 0;
       let markerXY = [];  // for marker positions within all lines in the station
-      for ( let j = i1;  j < i2;  j += 1 )  { 
+      for ( let j = i1;  j < i2;  j += 1 )  {
+        //console.log(`-D- @TMP@ j=${j}  [${i1}...${i2})`);
         const playedLine = linePlayOrderArray[j];
         const scoreline = scoreDataLinesArray.find( (element, index, array) =>
                             (element.pageId == playedLine.pageId) &&

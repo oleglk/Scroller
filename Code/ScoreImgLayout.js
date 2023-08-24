@@ -21,38 +21,12 @@ class ScoreImgLayout
 
 
   /* Draws the images AND builds array of (occurence-based) score-stations.
-   * Reads and stores image dimensions
+   * ! Run it after image dimensions aready read and stored ! TODO: exception
    * TODO: Score-stations must include 'occurenceId' field.
    * TODO: what should be the 'y' value in a score-station - with crop?
  */
   async render_images()  {
     // ??? document.body.innerHTML = "";  // pre-clean the page contents
-
-    // ensure all canvas have same width (the max among them)
-    // store image dimensions as the co-product
-    this._imageDimensions = new Map();  // Map(pageId : {width:w, height:h})
-
-    let maxWidth = 0;
-    for ( const [i, occ] of this.imgPageOccurences.entries() )  {
-      if ( !this.pageImagePaths.has(occ.pageId) )  {
-        err = `-E- Missing image path for page "${occ.pageId}". Aborting`;
-        console.log(err);  console.trace();  alert(err);
-        return  false;
-      }
-      let imgPath = this.pageImagePaths.get(occ.pageId);
-      try {
-        let {width:w, height:h} = await detect_img_dimensions(imgPath);
-        console.log(`-D- Original image [${occ.pageId}=${imgPath}] width = ${w}`);
-        this._imageDimensions.set(occ.pageId, {width:w, height:h});
-        if ( w > maxWidth )  { maxWidth = w; }
-      } catch (rejectErrorMsg) {
-        console.log(`Exception reading dimensions of '${imgPath}'`);
-        console.log(rejectErrorMsg);  alert(rejectErrorMsg);
-        return  false;
-      }
-    }
-    this._maxWidth = maxWidth;
-    console.log(`Maximal width = ${this._maxWidth}`);
     
     // create a "div" to hold all the images
     let g = document.createElement('div');
@@ -81,6 +55,36 @@ class ScoreImgLayout
 
     console.log(`-I- Success rendering ${this.imgPageOccurences.length} image-page occurence(s) at width=${this._maxWidth}`);
     return  true;
+  }
+
+
+  async detect_all_images_dimensions()  {
+    // ensure all canvas have same width (the max among them)
+    // store image dimensions as the co-product
+    this._imageDimensions = new Map();  // Map(pageId : {width:w, height:h})
+
+    let maxWidth = 0;
+    for ( const [i, occ] of this.imgPageOccurences.entries() )  {
+      if ( !this.pageImagePaths.has(occ.pageId) )  {
+        err = `-E- Missing image path for page "${occ.pageId}". Aborting`;
+        console.log(err);  console.trace();  alert(err);
+        return  false;
+      }
+      let imgPath = this.pageImagePaths.get(occ.pageId);
+      try {
+        let {width:w, height:h} = await detect_img_dimensions(imgPath);
+        console.log(`-D- Original image [${occ.pageId}=${imgPath}] width = ${w}`);
+        this._imageDimensions.set(occ.pageId, {width:w, height:h});
+        if ( w > maxWidth )  { maxWidth = w; }
+      } catch (rejectErrorMsg) {
+        console.log(`Exception reading dimensions of '${imgPath}'`);
+        console.log(rejectErrorMsg);  alert(rejectErrorMsg);
+        return  false;
+      }
+    }
+    this._maxWidth = maxWidth;
+    console.log(`Maximal width = ${this._maxWidth}`);
+    return  true;  // will be wrapped into Promise
   }
 
 
@@ -231,7 +235,7 @@ function draw_empty_image(width, height, htmlContainerId, textStr="")
 }
 
 
-async function detect_img_dimensions(url) {
+function detect_img_dimensions(url) {
   // we return a Promise that gets resolved with {width:W, height:H} object
   return new Promise((resolve, reject) => {
     // TODO: verify image-file existence; reject if none
