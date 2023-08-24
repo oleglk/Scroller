@@ -189,7 +189,7 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
                                    scoreLinesArray, linePlayOrderArray,
                                    numLinesInStep)
 {
-  if ( (numLinesInStep < 1) || (numLinesInStep > 2) )  {
+  if ( (numLinesInStep < 1) || (numLinesInStep > 3) )  {
     const err = `-E- Invalid number of lines in a step: g_numLinesInStep=${numLinesInStep}; allowed values are 1,2`;
     console.log(err);  alert(err);
     throw new Error(err);  // actually exceptions in promisses are missed
@@ -217,6 +217,7 @@ async function arrange_score_global_data(scoreName, pageImgPathsMap,
                                plo.imgPageOccurences
                               );
   await iml.render_images();  //...await completion to access image widths
+  // BUG: it doesn't wait for rendering to finish. Vals_* fails with 3 lines/step
   PD.maxScoreImageWidth = iml.get_max_score_image_width();
 
   // ... the copy will be 2-level deep - fine for the task
