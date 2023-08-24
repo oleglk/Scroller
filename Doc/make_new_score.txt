@@ -38,7 +38,7 @@ TODO: symbolic link to "Code\" subdirectory
 source C:/Oleg/GitWork/Scroller/Code/make_score.tcl
 
 2.3) (In Tcl shell) Invoke the score-maker
-make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov__01.gif" "Scores/Vals_by_Petrov__02.gif" "Scores/Vals_by_Petrov__03.gif"]screen :
+make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov__01.gif" "Scores/Vals_by_Petrov__02.gif" "Scores/Vals_by_Petrov__03.gif"]
 
 >>>>>> Sample screen output:
   (V02) 3 % make_score_file  "Vals_by_Petrov"  [list "Scores/Vals_by_Petrov__01.gif" "Scores/Vals_by_Petrov__02.gif" "Scores/Vals_by_Petrov__03.gif"]
