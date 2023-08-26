@@ -129,4 +129,19 @@ Several facts to be learned from the above:
 ==== Ensure the score images are comfortably visible with all the details ====
 !!! This stage is better performed with the display used while playing the piano; viewed from the real-world distance - e.g. by the user sitting near the piano keyboard !!!
 
-(5.1) Restart the Scroller in manual-step mode and carefully examinescore-images' content.
+(5.1) Restart the Scroller in manual-step mode and carefully examine score-images' content.
+
+==== If everything looks fine, the score is ready ====
+
+(5.2) A trick to address pale color or low contrast in some of the score features:
+turn gray into black.
+This essentially converts the images into straight black-and-white while increasing the contrast
+The conversion could be done by so-called threshold transformation - where pixels brighter than the specified threshold become white, while all the other become black
+ * >>>>> Example of converting to black-and-white in Tcl shell
+ * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+ * file mkdir BW
+ * foreach f [glob {RESIZED/*.jpg}]  {$IMCONVERT $f -black-threshold 80% -quality 92 [file join "BW" [file tail $f]]}
+
+(5.3) A trick to address score-image features being too small.
+While we cannot increase page height - need to reserve vertical space - wecan stretch the score horizontally. Up to 1.5x proven to be acceptable.
+TODO
