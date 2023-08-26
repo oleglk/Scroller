@@ -297,6 +297,7 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
     
     let iStation = -1;
     let totalTimeSec = 0;
+    let cntLinesTooQuick = 0; //num lines too short-played for progress indicator
 
 //debugger;  // OK_TMP
     for ( let i1 = 0;  i1 < linePlayOrderArray.length;
@@ -322,6 +323,10 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
           console.log(`-D- Computing progress markers for line {${playedLine}}(yOnPage=${scoreline.yOnPage}) for step ${iStation}`);
           // note, -0.7 to ensure deleting the last progress marker before scroll
           let lastMarkerAtSec = playedLine.timeBeat * 60.0 / tempo - 0.7;
+          if ( !(lastMarkerAtSec > 0) )  {
+            cntLinesTooQuick += 1;
+            console.log(`-W- Play time of line ${playedLine.pageId}:(yOnPage=${scoreline.yOnPage}) for step ${iStation} - ${playedLine.timeBeat} beat(s) - is too short for tempo of ${tempo} beats/min`);
+          }
           for ( let t = 0;  t <= lastMarkerAtSec;  t += 1 )  {
             let relTime = (t * tempo / 60.0) / playedLine.timeBeat;
             /* at this time in-window Y-coordinates unavailable - store local Y,
@@ -331,9 +336,9 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
             markerXY.push( [Math.min(relTime*100, 100),
                             playedLinePageOccurencesArray[j]/*==occId-for-line*/,
                             scoreline.yOnPage + 0.4*lineHeight] );
-          }
+          }//__loop_over_markers_for_single_line
         }
-      }
+      }//__loop_over_markers_for_single_line
       if ( perStationScorePositionMarkersArray !== null )
         perStationScorePositionMarkersArray.push(markerXY);//all lines in station
       const timeInStationSec = timeInStationBeat * 60.0 / tempo;
@@ -342,6 +347,11 @@ _DBG__scoreDataLines = this.scoreDataLines;  // OK_TMP: reveal for console
       totalTimeSec += timeInStationSec;
     }
     console.log(`-I- Done computing score station duration(s) in ${scoreStationsData.length} station(s) for tempo of ${tempo} beats/sec. Total playing time is ${totalTimeSec} second(s)`);
+    if ( cntLinesTooQuick > 0 )  {
+      let err = `-E- Encountered ${cntLinesTooQuick} score line(s) with play time too short for tempo of ${tempo}`;
+      console.log(err);
+      throw new Error(err);
+    }
     return;
   }
 
