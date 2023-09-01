@@ -144,10 +144,11 @@ turn gray into black.
  * foreach f [glob {RESIZED/*.jpg}]  {$IMCONVERT $f  -black-threshold 80%  -quality 92 [file join "ENHANCED" [file tail $f]]}
 
 (5.3) A trick to address score-image features being too small: horizontal stretch
-- With typical widescreen dosplays we cannot increase page height - vertical space is limited - we can stretch the score horizontally. Up to 1.5x proven to be acceptable.
+- With typical widescreen displays we cannot increase page height - vertical space is limited
+- We can stretch the score horizontally. Up to 1.5x proven to be acceptable.
 - In Imagemagick resizing could be specified in percentage to the original, separately for width and length - by "-resize <WIDTH>%x<HEIGHT>%" flag; value of 100% tells to leave the corresponding dimension unchanged.
-_ In the example below, the first "-resize" flag increases width-to-height ratio,, while the second one - forces a fixed width while preserving the ratio achieved by the first flag.
- * >>>>> Example of converting to black-and-white using Imagemagick in Tcl shell:
+- In the example below, the first "-resize" flag increases width-to-height ratio,, while the second one - forces a fixed width while preserving the ratio achieved by the first flag.
+ * >>>>> Example of widening (horizontal stretch) using Imagemagick in Tcl shell:
  * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
  * file mkdir ENHANCED
  * foreach f [glob {RESIZED/*.jpg}]  {$IMCONVERT $f  -resize 150%x100%  -resize 1050x -quality 92 [file join "ENHANCED" [file tail $f]]}
