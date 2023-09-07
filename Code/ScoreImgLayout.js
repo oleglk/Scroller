@@ -169,7 +169,7 @@ async function render_img_crop_height(htmlId, url, yTop, yBottom, forcedWidth=-1
         inputHeight = origHeight; // let it go with yTop == 0 or 1 confusion
       }
       if ( inputHeight > origHeight )  {
-        const wrn = `-W- Cannot crop image "${url}" from height ${origHeight} to target height ${inputHeight}`; 
+        const wrn = `-W- Cannot crop image "${url}" from height ${origHeight} to target height ${inputHeight}. Does actual image match the one used for score generation?`; 
         console.log(wrn);  //alert(wrn);  // TODO: remove alert
         reject(new Error(wrn));  // Error() provides call stack and std format
       }
