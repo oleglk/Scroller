@@ -100,45 +100,47 @@ Several facts to be learned from the above:
 !!! This stage is better performed with the display used while playing the piano; viewed from the real-world distance - e.g. by the user sitting near the piano keyboard !!!
 
 (4.1) Restart the Scroller in manual-step mode and carefully examine score-images' content.
-- Note, while marked images are used, their appearance is equal to the original.
--- We'll do all transformations on both original- and marked score images in order to keep them synchronized
+- Note, it's OK to look at the marked sc images, since their appearance is equal to the originals (except for the marks).
+-- We'll do all transformations on both original- and marked score images in order to keep them synchronized.
+-- Recall, unmarked images are JPEG-s (.jpg), while marked images are GIF-s (.gif).
+- Command examples here store the transformed images under ENHANCED/ subdirectory.
 
 ==== If everything looks fine, skip to the next section (Return to unmarked score images) ====
 
 (4.2) A moderate trick to address pale color or low contrast in some of the score features: reduce gamma to, say, 0.5.
-- This is a  transformation from the standard toolbox of general color photography.
-- Moderately dark features become darker; white remains white; colors preserved.
+- This is a transformation from the standard toolbox of general color photography.
+- Moderately dark features become darker; white remains white; colors sre preserved.
 - Gamma transformation in Imagemagick is specified by "-gamma <AMOUNT>" flag; the lower the AMOUNT (0..1), the darker the image gets.
- * >>>>> Example of converting to black-and-white using Imagemagick in Tcl shell:
- * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
- * file mkdir ENHANCED
- * foreach f [concat [glob {RESIZED/*.jpg}] [glob {MARKED/*.gif}]]  {$IMCONVERT $f  -gamma 0.5  -quality 92 [file join "ENHANCED" [file tail $f]]}
+  # >>>>> Example of converting to black-and-white using Imagemagick in Tcl shell:
+  set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+  file mkdir ENHANCED
+  foreach f [concat [glob {RESIZED/*.jpg}] [glob {MARKED/*.gif}]]  {$IMCONVERT $f  -gamma 0.5  -quality 92 [file join "ENHANCED" [file tail $f]]}
 
 (4.3) An extreme trick to address pale color or low contrast in some of the score features: turn gray into black.
 - This essentially converts the images into straight black-and-white which inherently increases the contrast
-- The conversion could be done by so-called threshold transformation - where pixels brighter than the specified threshold become white, while all the other become black
+- The conversion could be done by so-called threshold transformation - where pixels brighter than the specified threshold become white, while all the others become black
 - Threshold transformation in Imagemagick is specified by "-black-threshold <AMOUNT>%" flag
- * >>>>> Example of converting to black-and-white using Imagemagick in Tcl shell:
- * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
- * file mkdir ENHANCED
- * foreach f [concat [glob {RESIZED/*.jpg}] [glob {MARKED/*.gif}]]  {$IMCONVERT $f  -black-threshold 80%  -quality 92 [file join "ENHANCED" [file tail $f]]}
+ # >>>>> Example of converting to black-and-white using Imagemagick in Tcl shell:
+   set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+   file mkdir ENHANCED
+   foreach f [concat [glob {RESIZED/*.jpg}] [glob {MARKED/*.gif}]]  {$IMCONVERT $f  -black-threshold 80%  -quality 92 [file join "ENHANCED" [file tail $f]]}
 
 (4.4) A trick to address score-image features being too small: horizontal stretch
 - With typical widescreen displays we cannot increase page height - vertical space is limited
 - We can stretch the score horizontally. Up to 1.5x proven to be acceptable.
 - !!! Resizing the score-image(s) requires rerunning score auto-generation !!!
 - In Imagemagick resizing could be specified in percentage to the original, separately for width and length - by "-resize <WIDTH>%x<HEIGHT>%" flag; value of 100% tells to leave the corresponding dimension unchanged.
-- In the example below, the first "-resize" flag increases width-to-height ratio, while the second one - forces a fixed width while preserving the ratio achieved by the first flag.
- * >>>>> Example of widening (horizontal stretch) using Imagemagick in Tcl shell:
- * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
- * file mkdir ENHANCED
- * foreach f [concat [glob {RESIZED/*.jpg}] [glob {MARKED/*.gif}]]  {$IMCONVERT $f  -resize 150%x100%  -resize 1050x -quality 92 [file join "ENHANCED" [file tail $f]]}
+- In the example below, the first "-resize" flag increases width-to-height ratio, while the second one - forces a fixed reasonable width while preserving the ratio achieved by the first flag.
+  >>>>> Example of widening (horizontal stretch) using Imagemagick in Tcl shell:
+   set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+   file mkdir ENHANCED
+   foreach f [concat [glob {RESIZED/*.jpg}] [glob {MARKED/*.gif}]]  {$IMCONVERT $f  -resize 150%x100%  -resize 1050x -quality 92 [file join "ENHANCED" [file tail $f]]}
 
 (4.5) If decided to apply both color transformation (conversion to black-and-white or gamma reduction) and widening, specify the two groups of flags in one command.
- * >>>>> Example of widening and contrast-enhancing using Imagemagick in Tcl shell:
- * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
- * file mkdir ENHANCED
- * foreach f [concat [glob {RESIZED/*.jpg}] [glob {MARKED/*.gif}]]  {$IMCONVERT $f  -resize 150%x100%  -resize 1050x  -gamma 0.5  [file join "ENHANCED" [file tail $f]]}
+ # >>>>> Example of widening AND contrast-enhancing using Imagemagick in Tcl shell:
+   set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+   file mkdir ENHANCED
+   foreach f [concat [glob {RESIZED/*.jpg}] [glob {MARKED/*.gif}]]  {$IMCONVERT $f  -resize 150%x100%  -resize 1050x  -gamma 0.5  [file join "ENHANCED" [file tail $f]]}
 
 (4.6) Copy the enhanced score-page images into the directory of autogenerated score file
   >>>>> Example (Windows cmd):
@@ -152,7 +154,7 @@ Several facts to be learned from the above:
 - Perform steps of (2) again - except for copying the inputs (2.1) (we already put the enhanced versions of the marked score images where the score-maker expects them).
 
 (4.8) Load the Scroller with the new autogenerated score in a browser window to verify that everything works - go over the full score either in manual or auto mode.
-
+- A more pedantic approach would be to repeat all steps of section 3; but the suggested transformations by their design should not break the autogeneration.
 
 
 
@@ -161,12 +163,16 @@ Several facts to be learned from the above:
 
 
 ==== Return to unmarked score images ====
-(5.1) Copy the relevant unmarked score-page images into the directory of autogenerated score file
-  >>>>> Example (Windows cmd):
-  C:\Oleg\GitWork\Scroller\Scores\V02>copy RESIZED\Vals_by_Petrov__*.jpg Scores\
-  RESIZED\Vals_by_Petrov__01.jpg
-  RESIZED\Vals_by_Petrov__02.jpg
-  RESIZED\Vals_by_Petrov__03.jpg
+(5.1) Copy the relevant (enhanced or original) unmarked score-page images into the directory of autogenerated score file
+- The enhanced score-page images are refered to as postprocessed versions of the unmarked score-page images
+- The original and the enhanced score-page images have same names, but stay in different subdirectories:
+-- The unmarked original score-page images are in RESIZED/ subdirectory.
+-- The unmarked enhanced score-page images are in ENHANCED/ subdirectory.
+  >>>>> Example (Windows cmd) - copies the enhanced images:
+  C:\Oleg\GitWork\Scroller\Scores\V02>copy ENHANCED\Vals_by_Petrov__*.jpg Scores\
+  ENHANCED\Vals_by_Petrov__01.jpg
+  ENHANCED\Vals_by_Petrov__02.jpg
+  ENHANCED\Vals_by_Petrov__03.jpg
         3 file(s) copied.
 
 (5.2) Change score-page images' extensions in the autogenerated score file from .gif to .jpg
@@ -187,16 +193,19 @@ Several facts to be learned from the above:
   ]);
 - it's recommended to save the modified score file under a different name, say, "Vals_by_Petrov__g.html"
 
-(5.3) Verify that the Scroller works correctly after extension change - perform the procedures from (3.2).
+==== From now on we deal with the modified copy of autogenerated score file ====
+
+
+(5.3) Verify that the Scroller works correctly after extension change - perform the procedures from (3.2) with the modified copy of autogenerated score file.
 
 ==== If everything looks fine, the score template is ready ====
 
 
-==6== At this point the automation did its work; now some manual tuning is required ====
+==== At this point the automation did its work; now some manual tuning is required ====
 
 
 
-==== Define score lines' playing order and timing =====
+==6== Define score lines' playing order and timing =====
 
 (6.1) Open the (modified copy of) autogenerated score file in a text editor.
 
@@ -206,12 +215,12 @@ Several facts to be learned from the above:
 - You will create a similar array that matches your own desired score-line play order.
 - Do keep in mind that Musical Score Scroller doesn't _play_ the score; it just shows score-lines to be played in the correct order for the specified time.
 - Meaning of one code-line of "g_linePlayOrder_straight":
--- {pageId:"pg02", lineIdx:3, timeBeat:3} tells to _show_ line number 3 (counted from 0, thus the fourth) on page named "pg02" for a duration of 3 "beats"
+-- {pageId:"pg02", lineIdx:3, timeBeat:3} tells to _show_ line number 4 (counted from 0, thus the fourth) on page named "pg02" for a duration of 3 "beats"
 -- you can learn which score page corresponds to "pg02" from Javascript collection "g_pageImgPathsMap" placed right above the "g_linePlayOrder_straight" array:
 --- ["pg02", "Vals_by_Petrov__02.jpg"] tells that page name "pg02" refers to score-page image in the file named "Vals_by_Petrov__02.jpg"
 -- "beats" used to represent score-line show duration independently of the tempo
---- one measure in time signature of 2/4 lasts 2 beats
---- two measures in time signature of 3/4 last 6 beats
+--- one measure/bar in time signature of 2/4 lasts 2 beats
+--- two measures/bars in time signature of 3/4 last 6 beats
 
 
 (6.3) Replicate (copy-paste) the declaration (of "g_linePlayOrder_straight") and change array name of the copy. For example to "g_linePlayOrder_full".
@@ -231,8 +240,8 @@ Several facts to be learned from the above:
 ---- var g_linePlayOrder = _TwoLevelCopy( g_linePlayOrder_full );
 
 (6.6) Choose how many lines to scroll in one step
-- The Scroller allows to jump 1, 2, or 3 score-lines at each step. The assumption is that 3 lines fit in the browser window, which is very realistic,
-- For autoscroll 1 line is best - to see the previous, the current, and the next score-lines at every step.
+- The Scroller allows to jump 1, 2, or 3 score-lines at each step. The assumption is that 3 lines fit in the browser window, which is pretty realistic.
+- For autoscroll jumping 1 line each time is best - to see the previous, the current, and the next score-lines at every step.
 - For manual stepping the optimal number is one less than number of lines in the browser window; in the assumed scenario it means jumping 3-1=2 lines in a step.
 - In order to set your preference, find "g_numLinesInStep = " in the (modified copy of) autogenerated score file and type 1, 2, or 3 on the right of assignment there.
  
@@ -247,5 +256,5 @@ TODO
 
 
 ==== Copy all the files for the resulting score into the ultimate directory for the scores.
-- "All files for the resulting score" are: autogenerated HTML score file
+- "All files for the resulting score" are: autogenerated HTML score file and postprocessed versions of the unmarked score-page images
 TODO
