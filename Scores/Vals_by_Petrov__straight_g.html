@@ -1,0 +1,131 @@
+
+
+<!-- Score/notes for "Vals_by_Petrov" -->
+<!DOCTYPE HTML>
+<html>
+<head>
+<style>
+img {
+width: 75%;
+}
+</style>
+
+<script type="text/javascript">
+////////////////////////////////////////////////////////////////////////////////
+
+
+const g_scoreName = "Vals_by_Petrov";
+
+//=========== Begin: user-configurable settings ===========
+const g_numLinesInStep = 1;  // how many lines to scroll in one step - 1...3
+
+const g_tempo = 60;  // assumed play speed - beats per minute
+//=========== End:   user-configurable settings ===========
+
+
+/* Images are first resized to equal width, then measured:
+ * set IMCONVERT {C:\Program Files\Imagemagick_711_3\convert.exe}
+ * #### exec $IMCONVERT --version
+ * foreach f [glob {TMP/*.jpg}]  {$IMCONVERT $f -resize 800x -quality 92 [file tail $f]}
+ * !Having page-width close to screen resolution makes fading alerts visible!
+ * More possible enhancements: widen by 1.5, turn gray into black: 
+ * foreach f [glob {*.jpg}]  {$IMCONVERT $f  -resize 150%x100%  -resize 1050x  -black-threshold 80% -quality 92 [file join "ENH" [file tail $f]]}
+****************************************************************************/
+
+
+// g_scoreLines: score-lines' locations (page + vertical coord.) and durations
+var g_scoreLines = [
+// Score data lines for page 'pg01'
+{tag:"line-0101-Begin", pageId:"pg01", x:0, y:117,  timeBeat:3},
+{tag:"line-0102-Begin", pageId:"pg01", x:0, y:291,  timeBeat:3},
+{tag:"line-0103-Begin", pageId:"pg01", x:0, y:490,  timeBeat:3},
+{tag:"line-0104-Begin", pageId:"pg01", x:0, y:695,  timeBeat:3},
+{tag:"line-0105-Begin", pageId:"pg01", x:0, y:889,  timeBeat:3},
+// Score data lines for page 'pg02'
+{tag:"line-0201-Begin", pageId:"pg02", x:0, y:33,  timeBeat:3},
+{tag:"line-0202-Begin", pageId:"pg02", x:0, y:239,  timeBeat:3},
+{tag:"line-0203-Begin", pageId:"pg02", x:0, y:447,  timeBeat:3},
+{tag:"line-0204-Begin", pageId:"pg02", x:0, y:659,  timeBeat:3},
+{tag:"line-0205-Begin", pageId:"pg02", x:0, y:871,  timeBeat:3},
+// Score data lines for page 'pg03'
+{tag:"line-0301-Begin", pageId:"pg03", x:0, y:33,  timeBeat:3},
+{tag:"line-0302-Begin", pageId:"pg03", x:0, y:279,  timeBeat:3},
+{tag:"line-0303-Begin", pageId:"pg03", x:0, y:490,  timeBeat:3},
+{tag:"line-0304-Begin", pageId:"pg03", x:0, y:687,  timeBeat:3},
+// Score control lines for page 'pg01'
+{tag:"Control-Bottom", pageId:"pg01", x:0, y:1080,  timeBeat:0},
+{tag:"Control-Height", pageId:"pg01", x:0, y:1131,  timeBeat:0},
+// Score control lines for page 'pg02'
+{tag:"Control-Bottom", pageId:"pg02", x:0, y:1053,  timeBeat:0},
+{tag:"Control-Height", pageId:"pg02", x:0, y:1125,  timeBeat:0},
+// Score control lines for page 'pg03'
+{tag:"Control-Bottom", pageId:"pg03", x:0, y:917,  timeBeat:0},
+{tag:"Control-Height", pageId:"pg03", x:0, y:1131,  timeBeat:0},
+];
+
+
+/* g_pageImgPathsMap: file-paths of score pages' images
+ * Image paths should be relative to the location of score files */
+var g_pageImgPathsMap = new Map([
+["pg01", "Vals_by_Petrov__01.jpg"],
+["pg02", "Vals_by_Petrov__02.jpg"],
+["pg03", "Vals_by_Petrov__03.jpg"],
+]);
+
+
+/* g_linePlayOrder: specifies play order of the score-lines with actual times
+ * Example of line play order spec: straight - without repetitions
+ * Line format:  {pageId:<line-page-id>, lineIdx:<line-index-from-0>, timeBeat:<line-play-time-in-beats>}  */
+var g_linePlayOrder_straight = [
+{pageId:"pg01", lineIdx:0, timeBeat:18},
+{pageId:"pg01", lineIdx:1, timeBeat:18},
+{pageId:"pg01", lineIdx:2, timeBeat:18},
+{pageId:"pg01", lineIdx:3, timeBeat:18},
+{pageId:"pg01", lineIdx:4, timeBeat:18},
+{pageId:"pg02", lineIdx:0, timeBeat:15},
+{pageId:"pg02", lineIdx:1, timeBeat:15},
+{pageId:"pg02", lineIdx:2, timeBeat:21},
+{pageId:"pg02", lineIdx:3, timeBeat:21},
+{pageId:"pg02", lineIdx:4, timeBeat:21},
+{pageId:"pg03", lineIdx:0, timeBeat:18},
+{pageId:"pg03", lineIdx:1, timeBeat:21},
+{pageId:"pg03", lineIdx:2, timeBeat:12},
+{pageId:"pg03", lineIdx:3, timeBeat:15},
+];
+
+
+// a helper function for safe selection of play-order spec
+function _TwoLevelCopy(arrayOfObjects)
+{  return  arrayOfObjects.map(a => {return {...a}});  }
+
+
+/* Example of choosing one of the pre-built line play orders:
+   - point at the "straight" order */ 
+var g_linePlayOrder = _TwoLevelCopy( g_linePlayOrder_straight );
+
+
+////////////////////////////////////////////////////////////////////////////////
+</script>
+</head>
+
+<body>
+</body>
+
+<!-- ..................... In the very end ................................. -->
+
+<!-- Load the generic Dialog class code -->
+<script src="../Code/ModalDialog.js"></script>
+<!-- Load the utility code -->
+<script src="../Code/ScrollerCommonUtils.js"></script>
+<!-- Load the layout code -->
+<script src="../Code/PlayOrder.js"></script>
+<script src="../Code/ScoreImgLayout.js"></script>
+
+<!-- Load and execute the scrolling code                                     -->
+<!-- (... then create the play-order layout)                                 -->
+<!-- (... then prepare global data for the scroller and start it)            -->
+<script src="../Code/img_scroll.js"></script> 
+
+</html>
+
+
